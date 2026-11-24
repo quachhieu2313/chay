@@ -319,7 +319,7 @@ function render(){
   if(S.stale&&!S.ready)top+='<p class="warn">Chưa kết nối được dữ liệu. Trang sẽ tự cập nhật khi có kết nối.</p>';
   if(S.ro)top+='<p class="warn">Bạn đang ở chế độ chỉ xem. Nhờ Hiếu thêm email của bạn vào Firestore rules để lưu được.</p>';
   if(!r&&S.me&&S.me.id&&canW())top+=claimBox();
-  if(S.ready&&canW()&&!Object.keys(S.wo).length&&!Object.keys(S.ch).length&&!Object.keys(S.meals).length)top+='<p class="warn">Chưa có dữ liệu. Bấm "Nhập từ file" ở cuối trang và chọn file du_lieu_ban_dau.json để nạp lịch tập, việc nhà và thực đơn mẫu.</p>';
+  if(S.ready&&canW()&&!Object.keys(S.wo).length&&!Object.keys(S.ch).length&&!Object.keys(S.meals).length)top+='<div class="warn"><p style="margin:0 0 10px">Chưa có dữ liệu. Bấm nút dưới đây và chọn file du_lieu_ban_dau.json (ở Desktop\\chay trên máy tính) để nạp lịch tập, việc nhà và thực đơn.</p><button class="btn sm" data-act="import">Nhập từ file</button></div>';
   m.innerHTML=top+({today:vToday,train:vTrain,cal:vCal,chores:vChores,meals:vMeals}[S.view])();
 }
 
