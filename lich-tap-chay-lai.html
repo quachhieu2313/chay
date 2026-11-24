@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch tập chạy lại</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday: a coach's training card, calm and practical
+   IDEA a printed athletics training card in the running track's red, with lane lines
+   PICTURE each exercise drawn as a figure on a mat, the moving part in track red
+   COLOUR white ground, track red band, near-black ink, Garmin heart-rate zone colours
+   TYPE Barlow Condensed 700 (bib numbers) + Be Vietnam Pro
+   LAYOUT red band: title + 7-day strip; below: the day's check, then cards in 3 columns, 1 on phone */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121316);--ink:light-dark(#16171b,#eceef2);--mut:light-dark(#5b5f67,#a3a8b0);--line:light-dark(#e2e3e6,#2c2e34);--pan:light-dark(#f4f4f5,#1b1d22);--trk:light-dark(#c63f1f,#e2593b);--z1:#8b949e;--z2:#2f7fe0;--z3:#26a454;--z4:#ee8716;--z5:#dc2f29}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+.band{padding-block:clamp(24px,4vw,48px);padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3,.km,.dose,.day,.dot,.z,.prog{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+.hdr{background:var(--trk);color:#fff}
+.hdr .band{padding-bottom:20px}
+h1{font-size:clamp(38px,6.5vw,52px);line-height:1.05;letter-spacing:-.01em;margin:0 0 6px;text-wrap:balance}
+.lede{margin:0;max-width:64ch;opacity:.94}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:22px;max-width:640px}
+.day{appearance:none;position:relative;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:12px;padding:8px 2px 7px;min-height:76px;display:grid;justify-items:center;align-content:center;cursor:pointer}
+.day b{font-size:15px;font-weight:600;opacity:.9}
+.day .dn{font-size:27px;font-weight:700;line-height:1}
+.day i{font-style:normal;font-size:14px;font-weight:600;white-space:nowrap}
+.day[aria-pressed=true]{background:#fff;color:var(--trk);border-color:#fff}
+.day:hover{border-color:#fff}
+.day:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.tdot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:currentColor}
+.home{display:inline-block;margin:0 16px 8px 0;color:#fff;opacity:.9;font-size:14px;font-weight:600;text-decoration:none}
+.home:hover{opacity:1;text-decoration:underline}
+.lanes{height:30px;background:var(--trk) repeating-linear-gradient(to bottom,rgba(255,255,255,.42) 0 2px,transparent 2px 10px)}
+.ph{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:20px}
+.kick{margin:0 0 4px;color:var(--mut);font-size:15px;font-weight:500}
+h2{font-size:clamp(34px,5vw,46px);line-height:1.05;margin:0;text-wrap:balance}
+.sub{margin:8px 0 0;max-width:62ch}
+.pr{display:flex;align-items:center;gap:12px}
+.prog{font-size:22px;font-weight:700;white-space:nowrap}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px "Be Vietnam Pro",sans-serif;cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn:focus-visible,.dot:focus-visible,input:focus-visible{outline:3px solid var(--trk);outline-offset:2px}
+.chk{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:12px 16px;align-items:end;background:var(--pan);border-radius:14px;padding:16px;margin-bottom:20px}
+.chk .kick{grid-column:1/-1;margin:0;color:var(--ink);font-weight:600}
+.f{display:grid;gap:4px;font-size:14px;color:var(--mut)}
+input{font:16px "Be Vietnam Pro",sans-serif;min-height:44px;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);width:100%}
+input.n{width:8em}
+.vd{padding:10px 14px;border-radius:10px;font-weight:600;min-height:44px;display:flex;align-items:center}
+.vd.ok{background:color-mix(in srgb,var(--z3) 18%,var(--bg))}
+.vd.no{background:color-mix(in srgb,var(--z5) 18%,var(--bg))}
+.vd.na{background:var(--bg);color:var(--mut);font-weight:500}
+.minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.card{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.mini{flex-direction:row;align-items:center;gap:12px;padding:12px 16px;background:var(--pan);border:0}
+.mini .t{flex:1}
+.mini h3{font-size:22px}
+.mini p{margin:2px 0 0;font-size:15px;color:var(--mut)}
+.fg{background:var(--pan);padding:10px 10px 0}
+.fg svg{display:block;width:100%;height:auto;aspect-ratio:240/140}
+.cb{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+h3{font-size:26px;line-height:1.05;margin:0}
+.dose{font-size:21px;font-weight:700;color:var(--trk);white-space:nowrap}
+.cues{margin:0 0 4px;padding-left:18px;font-size:15px}
+.cues li+li{margin-top:3px}
+.hint{margin:0;font-size:13px;color:var(--mut)}
+.sets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto}
+.dot{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--bg);color:var(--mut);font-size:17px;font-weight:700;cursor:pointer;flex:none}
+.dot.wide{width:auto;padding:0 18px;border-radius:22px}
+.dot[aria-pressed=true]{background:var(--trk);border-color:var(--trk);color:#fff}
+.tm{margin-left:auto;min-width:118px;font-variant-numeric:tabular-nums}
+.tm.run{background:var(--trk);border-color:var(--trk);color:#fff}
+svg .b{stroke:var(--ink);stroke-width:9;stroke-linecap:round}
+svg .a{stroke:var(--trk);stroke-width:9;stroke-linecap:round}
+svg .hd{fill:var(--ink)}
+svg .fl{stroke:var(--mut);stroke-width:1.5;opacity:.5}
+svg .mat{fill:color-mix(in srgb,var(--z2) 24%,var(--pan))}
+svg .gd{stroke:var(--trk);stroke-width:2;stroke-dasharray:5 5;fill:none}
+svg .ar{stroke:var(--trk);stroke-width:2.5}
+svg .ah{fill:var(--trk)}
+svg .cup{fill:color-mix(in srgb,var(--z2) 45%,var(--bg));stroke:var(--ink);stroke-width:1.5}
+svg .ch{stroke:var(--mut);stroke-width:2.5;stroke-dasharray:4 4;fill:none}
+svg .st{fill:color-mix(in srgb,var(--mut) 32%,var(--pan))}
+svg .wl{stroke:var(--mut);stroke-width:3;opacity:.6}
+svg .tg{fill:none;stroke:var(--trk);stroke-width:2}
+svg .dk{fill:color-mix(in srgb,var(--mut) 42%,var(--pan))}
+svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;stroke-linecap:round}
+svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;padding:4px;border:1.5px solid var(--line);border-radius:14px;margin-bottom:14px}
+.seg button{min-height:44px;padding:0 16px;border:0;border-radius:10px;background:transparent;color:var(--ink);font:600 15px "Be Vietnam Pro",sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.seg button:focus-visible{outline:3px solid var(--trk);outline-offset:2px}
+.note{margin:0 0 16px;max-width:70ch;color:var(--mut);font-size:15px}
+.subh{font-size:28px;margin:28px 0 14px}
+.run{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px 40px;border:1.5px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,28px)}
+.km{font-size:clamp(76px,13vw,112px);font-weight:700;line-height:.9;color:var(--trk)}
+.km small{font-size:.38em;margin-left:6px;color:var(--ink)}
+.rw{display:grid;grid-template-columns:7em minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.rw span{color:var(--mut)}
+.rw b{font-weight:600}
+.lg{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr);gap:12px;margin-top:18px}
+.zb{position:relative;padding-top:26px;margin-top:16px}
+.zs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+.z{height:36px;border-radius:6px;color:#fff;font-size:18px;font-weight:700;display:grid;place-items:center}
+.z.dim{opacity:.3}
+.zl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;margin-top:6px;font-size:13px;color:var(--mut);text-align:center;line-height:1.3}
+.zl b{display:block;color:var(--ink);font-weight:600;white-space:nowrap}
+.mk{position:absolute;top:0;transform:translateX(-50%);font-size:13px;font-weight:700;white-space:nowrap;text-align:center;line-height:18px}
+.mk::after{content:"";display:block;width:3px;height:44px;background:var(--ink);margin:2px auto 0;border-radius:2px}
+.rest{background:var(--pan);border-radius:16px;padding:24px;max-width:640px}
+.rest p{margin:0}
+.zone{background:var(--pan)}
+.zgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px 48px;align-items:center}
+.zgrid h2{font-size:clamp(30px,4vw,40px)}
+.zgrid p{margin:8px 0 0}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:20px 32px;margin-top:20px}
+.notes h3{font-size:24px}
+.notes p{margin:4px 0 0;font-size:15px}
+.foot{font-size:13px;color:var(--mut);margin:28px 0 0}
+@media(max-width:720px){.run,.zgrid{grid-template-columns:1fr}}
+@media(max-width:600px){.chk{grid-template-columns:1fr 1fr}.chk .vd{grid-column:1/-1}input.n{width:100%}.day{min-height:70px}.day .dn{font-size:24px}.day i{font-size:13px}.lg{grid-template-columns:1fr}.tm{margin-left:0}}
+@media(prefers-reduced-motion:no-preference){.dot{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="band"><div class="wrap">
+    <a class="home" href="./">← Trang chủ</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình →</a>
+    <h1>Lịch tập chạy lại</h1>
+    <p class="lede">Tuần 23–29/11/2026: 22 km chạy nhẹ và 2 buổi sức mạnh chân. Chạy theo nhịp tim, không theo pace.</p>
+    <nav class="week" id="week" aria-label="Các ngày trong tuần"></nav>
+  </div></div>
+  <div class="lanes"></div>
+</header>
+
+<main>
+  <section class="band"><div class="wrap" id="panel"></div></section>
+
+  <section class="band zone"><div class="wrap">
+    <div class="zgrid">
+      <div>
+        <h2>Vùng nhịp tim của bạn</h2>
+        <p>Tính theo công thức Karvonen, từ nhịp tim nghỉ 61 và nhịp tim tối đa 191 trên Garmin. Chạy nhẹ là Z2, từ 139 đến 152. Buổi 14,5 km ngày 22/11 có trung bình 170, nằm giữa Z4.</p>
+      </div>
+      <div id="zones"></div>
+    </div>
+  </div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Luôn nhớ</h2>
+    <div class="notes">
+      <div><h3>Đau nhói thì dừng</h3><p>Đau nhói hoặc đau tăng dần khác với mỏi cơ. Dừng buổi tập và nghỉ thêm một ngày.</p></div>
+      <div><h3>Ăn đủ để hồi phục</h3><p>Đạm 75–90 g mỗi ngày. Ngày chạy ăn thêm một bữa phụ, ví dụ chuối với sữa.</p></div>
+      <div><h3>Ngủ trước 23h</h3><p>Thể lực tăng lên trong lúc ngủ và nghỉ, không phải trong lúc tập.</p></div>
+      <div><h3>Cân mỗi tuần</h3><p>Cân giảm nghĩa là bạn đang ăn thiếu so với lượng tập.</p></div>
+    </div>
+    <p class="foot">Ô đánh dấu và các số bạn nhập chỉ được lưu trên trình duyệt này.</p>
+  </div></section>
+</main>
+
+<script>
+{
+const K='lich-tap-chay-lai-v1';
+const arr=(x1,y1,x2,y2)=>{const a=Math.atan2(y2-y1,x2-x1),h=7,w=4.5,bx=x2-h*Math.cos(a),by=y2-h*Math.sin(a),px=-Math.sin(a)*w,py=Math.cos(a)*w,f=n=>n.toFixed(1);return `<line class="ar" x1="${x1}" y1="${y1}" x2="${f(bx)}" y2="${f(by)}"/><path class="ah" d="M${x2} ${y2}L${f(bx+px)} ${f(by+py)}L${f(bx-px)} ${f(by-py)}Z"/>`};
+
+/* Each figure: joints j (start pose), b (joints that move in the second pose), segments s as joint pairs, 1 = moving part in red. */
+const DESK=(a,b)=>`<rect class="dk" x="${a}" y="84" width="${b-a}" height="6" rx="1.5"/><line class="dl" x1="${a+5}" y1="90" x2="${a+5}" y2="132"/><line class="dl" x1="${b-5}" y1="90" x2="${b-5}" y2="132"/>`;
+const STAND={to:[92,131],an:[106,130],kn:[106,101],hp:[106,72],sh:[106,34],hd:[104,22],el:[92,56],ha:[78,82]};
+const LEG1=[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha']];
+const FOURS=[['sh','hp'],['sh','el'],['el','ha'],['hp','kn'],['kn','an'],['sh','el2',1],['el2','ha2',1],['hp','kn2',1],['kn2','an2',1]];
+const F={
+  plank:{dy:10,mat:1,j:{hd:[54,86],sh:[72,90],el:[72,118],ha:[46,118],hp:[140,104],kn:[172,111],an:[200,118]},s:[['sh','hp',1],['sh','el'],['el','ha'],['hp','kn'],['kn','an']],pre:'<line class="gd" x1="40" y1="69" x2="212" y2="107"/>'},
+  side:{dy:10,mat:1,j:{hd:[60,72],sh:[78,82],el:[80,118],ha:[56,118],el2:[82,54],ha2:[86,26],hp:[140,114],kn:[172,117],an:[204,118]},b:{hp:[140,102],kn:[172,110]},s:[['sh','hp',1],['sh','el'],['el','ha'],['sh','el2'],['el2','ha2'],['hp','kn'],['kn','an']]},
+  bug:{dy:10,mat:1,j:{hd:[48,108],sh:[66,114],hp:[130,114],el:[66,88],ha:[66,62],el2:[66,88],ha2:[66,62],kn:[130,82],an:[162,82],kn2:[130,82],an2:[162,82]},b:{el2:[46,96],ha2:[22,90],kn2:[164,108],an2:[198,102]},s:FOURS},
+  bird:{dy:10,mat:1,j:{hd:[62,67],sh:[80,80],hp:[150,80],el:[80,100],ha:[80,118],kn:[150,118],an:[182,118],el2:[80,100],ha2:[80,118],kn2:[150,118],an2:[182,118]},b:{el2:[54,76],ha2:[26,72],kn2:[184,80],an2:[218,80]},s:FOURS,post:'<rect class="cup" x="109" y="62" width="13" height="13" rx="2"/>'},
+  push:{dy:10,mat:1,j:{hd:[58,80],sh:[74,86],el:[76,102],ha:[78,118],hp:[130,106],kn:[160,118],an:[186,104]},b:{hd:[53,106],sh:[70,108],el:[86,102],hp:[128,114]},s:[['sh','hp'],['hp','kn'],['kn','an'],['sh','el',1],['el','ha',1]]},
+  bridge:{dy:10,mat:1,j:{hd:[40,112],sh:[56,114],hp:[118,112],kn:[156,80],an:[170,118],to:[184,120],el:[84,118],ha:[110,118]},b:{hp:[120,91],kn:[164,76]},s:[['kn','an'],['an','to'],['sh','el'],['el','ha'],['sh','hp',1],['hp','kn',1]]},
+  squat:{j:{to:[96,131],an:[112,130],kn:[110,101],hp:[112,72],sh:[112,34],hd:[110,22],el:[92,36],ha:[72,38]},b:{kn:[90,108],hp:[118,100],sh:[100,66],hd:[94,54],el:[78,70],ha:[56,72]},s:[['an','to'],['an','kn'],['hp','sh'],['sh','el'],['el','ha'],['kn','hp',1]],pre:'<path class="ch" d="M120 102H150V70M122 102V132M148 102V132"/>'},
+  calf:{r:8,j:{to:[76,120],hl:[102,126],an:[98,122],kn:[98,94],hp:[98,66],sh:[98,36],hd:[96,26],el:[64,44],ha:[30,46]},b:{hl:[100,111],an:[98,108],kn:[98,80],hp:[98,52],sh:[98,22],hd:[96,12],el:[64,32],ha:[30,36]},s:[['to','hl',1],['an','kn',1],['kn','hp'],['hp','sh'],['sh','el'],['el','ha']],pre:'<rect class="st" x="30" y="120" width="62" height="12"/><line class="wl" x1="24" y1="4" x2="24" y2="132"/>'},
+  clam:{dy:10,mat:1,j:{hd:[44,104],sh:[62,113],ha:[30,118],hp:[128,112],kn:[160,120],an:[196,114],kn2:[160,113],an2:[196,114]},b:{kn2:[162,86]},s:[['sh','ha'],['sh','hp'],['hp','kn'],['kn','an'],['hp','kn2',1],['kn2','an2',1]]},
+  bal:{j:{to:[96,131],an:[110,130],kn:[106,101],hp:[110,72],sh:[110,34],hd:[108,22],el:[124,54],ha:[134,72],el2:[96,50],ha2:[88,60],kn2:[84,76],an2:[88,102]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha'],['sh','el2'],['el2','ha2'],['hp','kn2',1],['kn2','an2',1]],pre:'<line class="gd" x1="96" y1="22" x2="30" y2="22"/><circle class="tg" cx="20" cy="22" r="7"/><circle class="ah" cx="20" cy="22" r="2.5"/>'},
+  dcalf:{j:STAND,b:{an:[106,120],kn:[106,91],hp:[106,62],sh:[106,24],hd:[104,12],el:[94,52]},s:[['to','an',1],['an','kn',1],['kn','hp'],['hp','sh'],['sh','el'],['el','ha']],pre:DESK(16,80)},
+  kick:{j:{...STAND,sh:[100,35],hd:[96,23],el:[88,58],kn2:[106,101],an2:[106,130]},b:{kn2:[120,98],an2:[135,122]},s:[...LEG1,['hp','kn2',1],['kn2','an2',1]],pre:DESK(16,80)},
+  abd:{j:{hd:[120,22],ne:[120,34],sl:[108,38],sr:[132,38],hp:[120,72],hl:[112,74],hr:[128,74],el:[98,58],ha:[88,80],el2:[136,56],ha2:[138,76],kn:[110,102],an:[110,130],to:[104,131],kn2:[130,102],an2:[130,130]},b:{kn2:[144,97],an2:[160,120]},s:[['ne','hp'],['sl','sr'],['hl','hr'],['sl','el'],['el','ha'],['sr','el2'],['el2','ha2'],['hl','kn'],['kn','an'],['an','to'],['hr','kn2',1],['kn2','an2',1]],pre:DESK(16,90)},
+  sit:{j:{to:[82,131],an:[96,130],kn:[94,96],hp:[124,96],sh:[120,58],hd:[116,46],el:[100,64],ha:[78,66]},b:{kn:[96,101],hp:[98,72],sh:[96,34],hd:[94,22],el:[78,40],ha:[58,42]},s:[['an','to'],['an','kn'],['hp','sh'],['sh','el'],['el','ha'],['kn','hp',1]],pre:'<path class="chs" d="M112 102H146V66M114 102V132M144 102V132"/>'},
+  dpush:{j:{to:[142,131],an:[150,128],kn:[127,107],hp:[104,86],sh:[74,58],hd:[64,48],el:[72,71],ha:[66,84]},b:{kn:[124,112],hp:[97,96],sh:[62,74],hd:[50,67],el:[80,72]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el',1],['el','ha',1]],pre:DESK(16,70)},
+  quad:{j:{...STAND,kn2:[108,102],an2:[126,79],el2:[116,54],ha2:[125,77]},s:[...LEG1,['sh','el2'],['el2','ha2'],['hp','kn2',1],['kn2','an2',1]],pre:DESK(16,80)},
+  hipf:{j:{to:[66,131],an:[82,130],kn:[86,96],hp:[112,80],sh:[114,42],hd:[113,30],el:[102,60],ha:[110,78],kn2:[134,104],an2:[156,124],to2:[148,131]},s:[...LEG1,['an2','to2'],['hp','kn2',1],['kn2','an2',1]],post:arr(140,70,124,70)}
+};
+
+const E={
+  walk:{mini:1,name:'Đi bộ nhanh',dose:'30 phút',note:'Giờ trưa hoặc chiều tối, tim dưới 120.'},
+  stretch:{mini:1,name:'Giãn cơ và lăn foam roller',dose:'10–15 phút',note:'Bắp chân, đùi trước, đùi sau, hông.'},
+  plank:{name:'Plank',dose:'3 × 30 giây',sets:3,t:30,cues:['Thẳng một đường từ đầu đến gót','Siết bụng và mông','Hông không võng xuống, không nhô lên']},
+  side:{name:'Plank nghiêng',dose:'2 × 20 giây mỗi bên',sets:4,side:1,t:20,cues:['Khuỷu tay đặt ngay dưới vai','Đẩy hông lên cho thân thẳng','Khó quá thì hạ gối dưới chạm sàn']},
+  bug:{name:'Dead bug',dose:'2 × 10 lần',sets:2,cues:['Ép lưng dưới sát sàn suốt bài','Duỗi tay và chân đối bên thật chậm, rồi đổi bên','Lưng bật khỏi sàn là đang duỗi quá xa']},
+  bird:{name:'Bird dog',dose:'2 × 10 lần',sets:2,cues:['Duỗi tay và chân đối bên thành một đường, giữ 2 giây','Lưng phẳng như đặt ly nước lên không đổ']},
+  push:{name:'Chống đẩy chống gối',dose:'3 × 8–12 lần',sets:3,cues:['Người thẳng từ gối đến đầu','Hạ ngực xuống gần sàn','Khuỷu tay khép khoảng 45° so với thân']},
+  bridge:{name:'Glute bridge',dose:'3 × 12 lần',sets:3,cues:['Hai chân, đẩy bằng gót','Siết mông nâng hông, giữ 2 giây ở trên','Vai, hông, gối thành một đường']},
+  squat:{name:'Squat',dose:'3 × 10 lần',sets:3,cues:['Chân rộng bằng vai','Đẩy hông ra sau như ngồi xuống ghế','Gối theo hướng mũi chân, gót không nhấc']},
+  calf:{name:'Nhón gót',dose:'3 × 15 lần',sets:3,cues:['Đứng mép bậc thang, vịn tường nếu cần','Nhón lên nhanh, hạ xuống chậm khoảng 3 giây']},
+  clam:{name:'Clamshell',dose:'2 × 15 lần mỗi bên',sets:4,side:1,cues:['Nằm nghiêng, co gối khoảng 45°, hai bàn chân chạm nhau','Mở gối trên lên như vỏ sò','Hông giữ yên, không ngửa người ra sau']},
+  bal:{name:'Đứng thăng bằng 1 chân',dose:'3 × 30 giây mỗi bên',sets:6,side:1,t:30,cues:['Gối chân trụ hơi chùng','Mắt nhìn một điểm cố định','Thấy dễ thì nhắm mắt hoặc đứng trên gối mềm']},
+  dcalf:{name:'Nhón gót vịn bàn',dose:'15 lần × 2 vòng',sets:2,cues:['Tay vịn nhẹ mép bàn','Nhón lên nhanh, hạ xuống chậm khoảng 3 giây']},
+  kick:{name:'Đá chân ra sau',dose:'12 lần mỗi bên × 2 vòng',sets:4,side:1,cues:['Vịn bàn, chân giữ thẳng đưa ra sau','Siết mông, không ưỡn lưng','Thay cho glute bridge']},
+  abd:{name:'Đưa chân sang ngang',dose:'12 lần mỗi bên × 2 vòng',sets:4,side:1,cues:['Người đứng thẳng, mũi chân hướng ra trước','Đưa chân sang ngang khoảng 30–40°, hạ xuống chậm','Thay cho clamshell']},
+  sit:{name:'Đứng lên ngồi xuống ghế',dose:'10 lần × 2 vòng',sets:2,cues:['Dùng ghế cố định, không dùng ghế có bánh xe','Đẩy bằng gót để đứng lên, ngồi xuống chậm','Đùi trước còn ê thì chỉ hạ nửa đường hoặc bỏ bài này']},
+  obal:{fig:'bal',name:'Đứng thăng bằng 1 chân',dose:'30 giây mỗi bên × 2 vòng',sets:4,side:1,t:30,cues:['Gối chân trụ hơi chùng','Mắt nhìn một điểm cố định']},
+  dpush:{name:'Chống đẩy vào cạnh bàn',dose:'10 lần × 2 vòng',sets:2,cues:['Chọn bàn chắc chắn, không trượt','Người thẳng từ gót đến đầu','Hạ ngực xuống gần mép bàn rồi đẩy lên']},
+  quad:{name:'Giãn đùi trước',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Vịn bàn, kéo gót chân về phía mông','Hai gối sát nhau, không ưỡn lưng','Giúp chỗ ê ngay trên gối']},
+  hipf:{name:'Giãn cơ gập hông',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Một chân trước một chân sau như bước dài','Siết mông, đẩy hông ra trước, thân giữ thẳng','Thấy căng ở phía trước hông của chân sau là đúng']}
+};
+const OFF_EX=['dcalf','kick','abd','sit','obal','dpush'],OFF_ST=['quad','hipf'];
+
+const LEG=['bridge','squat','calf','clam','bal'];
+const W=[
+  {id:'t2',d:'T2',n:23,iso:'2026-11-23',full:'Thứ 2, 23/11',tag:'Core',kind:'gym',title:'Phục hồi và core',sub:'Không chạy. Trưa hoặc chiều đi bộ nhanh, tối tập core và thân trên, không dùng chân.',mini:['walk','stretch'],ex:['plank','side','bug','bird','push']},
+  {id:'t3',d:'T3',n:24,iso:'2026-11-24',full:'Thứ 3, 24/11',tag:'Chân',kind:'gym',office:1,title:'Sức mạnh chân',sub:'Chỉ tập khi kiểm tra buổi sáng đạt và chân chỉ còn ê nhẹ. Nếu chưa, hôm nay chỉ đi bộ 30 phút và giãn cơ.',mini:['stretch'],ex:LEG},
+  {id:'t4',d:'T4',n:25,iso:'2026-11-25',full:'Thứ 4, 25/11',tag:'6 km',kind:'run',km:6,title:'Chạy nhẹ 6 km',sub:'Buổi chạy đầu tiên sau 14,5 km hôm 22/11. Chạy đều, không tăng tốc ở cuối.'},
+  {id:'t5',d:'T5',n:26,iso:'2026-11-26',full:'Thứ 5, 26/11',tag:'Chân',kind:'gym',office:1,title:'Sức mạnh chân',sub:'Lặp lại bài của thứ 3. Nếu chân còn mỏi sau buổi chạy hôm qua thì bớt một hiệp mỗi bài.',mini:['stretch'],ex:LEG},
+  {id:'t6',d:'T6',n:27,iso:'2026-11-27',full:'Thứ 6, 27/11',tag:'6 km',kind:'run',km:6,title:'Chạy nhẹ 6 km',sub:'Giống thứ 4. Ở cùng pace mà nhịp tim thấp hơn thứ 4 là thể lực đang quay lại.'},
+  {id:'t7',d:'T7',n:28,iso:'2026-11-28',full:'Thứ 7, 28/11',tag:'Nghỉ',kind:'rest',title:'Nghỉ',sub:'Nghỉ hoàn toàn hoặc chỉ đi bộ nhẹ. Ngủ đủ 7–8 tiếng để chủ nhật chạy dài.'},
+  {id:'cn',d:'CN',n:29,iso:'2026-11-29',full:'Chủ nhật, 29/11',tag:'10 km',kind:'run',km:10,long:1,title:'Chạy dài 10 km',sub:'Buổi dài nhất tuần nhưng vẫn ở vùng nhẹ. Chạy trước 6h để tránh nóng.'}
+];
+
+const Z=[['Z1',126,139,'Hồi phục','--z1'],['Z2',139,152,'Chạy nhẹ','--z2'],['Z3',152,165,'Trung bình','--z3'],['Z4',165,178,'Ngưỡng','--z4'],['Z5',178,191,'VO2max','--z5']];
+const pc=b=>((b-126)/(191-126)*100).toFixed(1);
+const zbar=(mk,hi)=>`<div class="zb">${mk.map(([b,t])=>`<div class="mk" style="left:${pc(b)}%">${t}</div>`).join('')}<div class="zs">${Z.map((z,i)=>`<div class="z${hi>=0&&i!==hi?' dim':''}" style="background:var(${z[4]})">${z[0]}</div>`).join('')}</div><div class="zl">${Z.map(z=>`<span><b>${z[1]}–${z[2]}</b>${z[3]}</span>`).join('')}</div></div>`;
+
+const def=()=>({done:{},chk:{t2:{hr:64,hrv:31}},log:{},mode:{}});
+let S;
+try{S=JSON.parse(localStorage.getItem(K))||def()}catch(e){S=def()}
+S.mode=S.mode||{};S.done=S.done||{};S.chk=S.chk||{};S.log=S.log||{};
+const RM=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}})();
+const mode=id=>S.mode[id]||'office';
+const lists=d=>(d.office&&mode(d.id)==='office')?{mini:[],ex:OFF_EX,st:OFF_ST}:{mini:d.mini||[],ex:d.ex||[],st:[]};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+
+const now=new Date();
+const iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+const todayId=(W.find(d=>d.iso===iso)||{}).id;
+let cur=(W.find(d=>'#'+d.id===location.hash)||{}).id||todayId||'t2';
+
+const KT='0;.4;.55;.95;1',KS='.42 0 .58 1;0 0 1 1;.42 0 .58 1;0 0 1 1';
+const am=(at,a,b,d)=>a===b?'':`<animate attributeName="${at}" values="${a};${b};${b};${a};${a}" keyTimes="${KT}" calcMode="spline" keySplines="${KS}" dur="${d}s" repeatCount="indefinite"/>`;
+function fig(k,name){
+  const f=F[k],A=f.j,B={...A,...(f.b||{})},mv=!!f.b&&!RM,P=RM?B:A,d=f.dur||3.2;
+  const segs=[...f.s].sort((p,q)=>(p[2]||0)-(q[2]||0));
+  const l=segs.map(([p,q,x])=>{
+    const a=P[p],c=P[q],kids=mv?am('x1',A[p][0],B[p][0],d)+am('y1',A[p][1],B[p][1],d)+am('x2',A[q][0],B[q][0],d)+am('y2',A[q][1],B[q][1],d):'';
+    const tag=`<line class="${x?'a':'b'}" x1="${a[0]}" y1="${a[1]}" x2="${c[0]}" y2="${c[1]}"`;
+    return kids?`${tag}>${kids}</line>`:`${tag}/>`;
+  }).join('');
+  const h=P.hd,hk=mv?am('cx',A.hd[0],B.hd[0],d)+am('cy',A.hd[1],B.hd[1],d):'';
+  return `<svg viewBox="0 0 240 140" role="img" aria-label="Minh họa ${name}">${f.mat?'<rect class="mat" x="12" y="126" width="216" height="6" rx="3"/>':''}<line class="fl" x1="6" y1="132" x2="234" y2="132"/><g transform="translate(0,${f.dy||0})">${f.pre||''}${l}<circle class="hd" cx="${h[0]}" cy="${h[1]}" r="${f.r||9}">${hk}</circle>${f.post||''}</g></svg>`;
+}
+const isDone=(k,i)=>!!(S.done[k]||[])[i];
+
+function miniCard(id,k){
+  const e=E[k],key=id+':'+k;
+  return `<article class="card mini"><div class="t"><h3>${e.name}: <span class="dose">${e.dose}</span></h3><p>${e.note}</p></div><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">Xong</button></article>`;
+}
+function exCard(id,k){
+  const e=E[k],key=id+':'+k;
+  const dots=Array.from({length:e.sets},(_,i)=>`<button class="dot" data-k="${key}" data-i="${i}" aria-pressed="${isDone(key,i)}" aria-label="Hiệp ${i+1}">${e.side?(i%2?'P':'T')+(Math.floor(i/2)+1):i+1}</button>`).join('');
+  const tm=e.t?`<button class="btn tm" data-k="${key}" data-t="${e.t}">Bấm giờ ${e.t}s</button>`:'';
+  return `<article class="card"><div class="fg">${fig(e.fig||k,e.name)}</div><div class="cb"><h3>${e.name}</h3><div class="dose">${e.dose}</div><ul class="cues">${e.cues.map(c=>`<li>${c}</li>`).join('')}</ul>${e.side?'<p class="hint">T là bên trái, P là bên phải</p>':''}<div class="sets">${dots}${tm}</div></div></article>`;
+}
+function verdict(c){
+  if(!c||c.hr===''||c.hr==null||c.hrv===''||c.hrv==null)return['na','Nhập hai số trên Garmin sau khi thức dậy'];
+  return (+c.hr<=73&&+c.hrv>=29)?['ok','Đạt. Tập theo lịch hôm nay.']:['no','Chưa đạt. Hôm nay chỉ đi bộ 30 phút và giãn cơ.'];
+}
+function check(id){
+  const c=S.chk[id]||{},[cl,t]=verdict(c);
+  return `<div class="chk"><p class="kick">Kiểm tra lúc thức dậy: đạt khi nhịp tim khi ngủ không quá 73 và HRV từ 29 trở lên</p><label class="f" for="hr-${id}">Nhịp tim khi ngủ<input class="n" id="hr-${id}" data-c="${id}" data-f="hr" type="number" inputmode="numeric" min="30" max="130" value="${c.hr??''}"></label><label class="f" for="hrv-${id}">HRV qua đêm (ms)<input class="n" id="hrv-${id}" data-c="${id}" data-f="hrv" type="number" inputmode="numeric" min="5" max="200" value="${c.hrv??''}"></label><div class="vd ${cl}" id="vd">${t}</div></div>`;
+}
+function runCard(d){
+  const lg=S.log[d.id]||{},key=d.id+':run';
+  const rows=[['Nhịp tim','139–152, không quá 155'],['Cadence','172–175 bước/phút (22/11 là 167)'],['Pace','Để nhịp tim quyết định. 7:30–8:00 là bình thường'],['Vượt 155','Đi bộ đến khi tim về khoảng 145 rồi chạy tiếp']];
+  if(d.long)rows.push(['Nước','Mang nước có điện giải, uống mỗi 20–30 phút']);
+  return `<div class="run"><div><div class="km">${d.km}<small>km</small></div><p class="sub">Không tăng tốc ở cuối buổi. Nhịp tim lên quá cao thì đi bộ xen kẽ là đúng.</p><div class="sets" style="margin-top:16px"><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">Đã chạy xong</button></div></div><div>${rows.map(r=>`<div class="rw"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}${zbar([[155,'Trần 155']],1)}<div class="lg"><label class="f" for="lh-${d.id}">Nhịp tim TB<input id="lh-${d.id}" data-l="${d.id}" data-f="hr" type="number" inputmode="numeric" value="${lg.hr??''}"></label><label class="f" for="ln-${d.id}">Ghi chú sau buổi<input id="ln-${d.id}" data-l="${d.id}" data-f="nt" type="text" placeholder="Pace, chỗ đau, cảm giác" value="${(lg.nt??'').replace(/"/g,'&quot;')}"></label></div></div></div>`;
+}
+function counts(d){
+  let t=0,n=0;
+  const L=lists(d);
+  for(const k of [...L.mini,...L.ex,...L.st]){const e=E[k],c=e.mini?1:e.sets,a=S.done[d.id+':'+k]||[];t+=c;for(let i=0;i<c;i++)if(a[i])n++;}
+  return [n,t];
+}
+function prog(){const d=W.find(x=>x.id===cur),el=document.getElementById('pg');if(el&&d.ex){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
+
+function render(){
+  document.getElementById('week').innerHTML=W.map(d=>`<button class="day" data-id="${d.id}" aria-pressed="${d.id===cur}" aria-label="${d.full}: ${d.title}">${d.id===todayId?'<span class="tdot"></span>':''}<b>${d.d}</b><span class="dn">${d.n}</span><i>${d.tag}</i></button>`).join('');
+  const d=W.find(x=>x.id===cur);
+  let body='';
+  if(d.kind==='gym'){
+    const L=lists(d),off=d.office&&mode(d.id)==='office';
+    const seg=d.office?`<div class="seg" role="group" aria-label="Nơi tập"><button data-m="office" aria-pressed="${off}">Ở công ty, 12 phút</button><button data-m="home" aria-pressed="${!off}">Ở nhà, có thảm</button></div>`:'';
+    body=check(d.id)+seg
+      +(off?'<p class="note">Đứng cạnh bàn làm việc, không cần thảm, ít ra mồ hôi. Tập lần lượt 6 bài rồi lặp lại thêm một vòng. Ăn xong thì đi bộ nhẹ 10 phút rồi mới tập, hoặc tập xong rồi mới ăn.</p>':'')
+      +(L.mini.length?`<div class="minis">${L.mini.map(k=>miniCard(d.id,k)).join('')}</div>`:'')
+      +`<div class="grid">${L.ex.map(k=>exCard(d.id,k)).join('')}</div>`
+      +(L.st.length?`<h3 class="subh">Giãn cơ cuối buổi</h3><div class="grid">${L.st.map(k=>exCard(d.id,k)).join('')}</div><p class="note" style="margin-top:16px">Ngoài giờ trưa, cứ 45–60 phút bạn đứng dậy đi lại khoảng 2 phút.</p>`:'');
+  }
+  else if(d.kind==='run')body=check(d.id)+runCard(d);
+  else body=`<div class="rest"><p>Không có bài tập. Đây là ngày để cơ thể hấp thụ cả tuần tập.</p></div>`;
+  const right=d.ex?`<div class="pr"><span class="prog" id="pg"></span><button class="btn" id="rst">Bỏ đánh dấu</button></div>`:'';
+  document.getElementById('panel').innerHTML=`<div class="ph"><div><p class="kick">${d.full}${d.id===todayId?', hôm nay':''}</p><h2>${d.title}</h2><p class="sub">${d.sub}</p></div>${right}</div>${body}`;
+  prog();
+}
+
+function setDot(k,i,v){
+  const a=S.done[k]||(S.done[k]=[]);a[i]=v?1:0;save();
+  const b=document.querySelector(`.dot[data-k="${k}"][data-i="${i}"]`);if(b)b.setAttribute('aria-pressed',String(!!v));
+  prog();
+}
+const TM={};let AC=null;
+function stopT(k){const t=TM[k];if(!t)return;clearInterval(t.iv);try{t.o&&t.o.stop()}catch(e){}delete TM[k];const b=document.querySelector(`.tm[data-k="${k}"]`);if(b){b.classList.remove('run');b.textContent='Bấm giờ '+b.dataset.t+'s';}}
+function startT(b){
+  const k=b.dataset.k,s=+b.dataset.t;
+  if(TM[k]){stopT(k);return;}
+  let o=null;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.resume)AC.resume();o=AC.createOscillator();const g=AC.createGain(),t0=AC.currentTime+s;o.frequency.value=880;g.gain.setValueAtTime(0.0001,AC.currentTime);g.gain.setValueAtTime(0.3,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+0.6);o.connect(g);g.connect(AC.destination);o.start();o.stop(t0+0.7);}catch(e){o=null}
+  const end=Date.now()+s*1000;
+  b.classList.add('run');b.textContent=s+'s';
+  TM[k]={o,iv:setInterval(()=>{
+    const left=Math.max(0,Math.ceil((end-Date.now())/1000)),btn=document.querySelector(`.tm[data-k="${k}"]`);
+    if(btn&&left>0){btn.textContent=left+'s';btn.classList.add('run');}
+    if(left<=0){
+      clearInterval(TM[k].iv);delete TM[k];
+      try{navigator.vibrate&&navigator.vibrate(300)}catch(e){}
+      const a=S.done[k]||[],n=E[k.split(':')[1]].sets;for(let i=0;i<n;i++){if(!a[i]){setDot(k,i,1);break;}}
+      if(btn){btn.classList.remove('run');btn.textContent='Xong';setTimeout(()=>{if(!TM[k]){const x=document.querySelector(`.tm[data-k="${k}"]`);if(x)x.textContent='Bấm giờ '+s+'s';}},2500);}
+    }
+  },200)};
+}
+
+function select(id){if(!W.some(d=>d.id===id))return;cur=id;render();if(location.hash!=='#'+id)location.hash=id;}
+
+document.addEventListener('click',ev=>{
+  const day=ev.target.closest('.day');if(day){select(day.dataset.id);return;}
+  const sm=ev.target.closest('.seg button');if(sm){S.mode[cur]=sm.dataset.m;save();render();return;}
+  const dot=ev.target.closest('.dot');if(dot){const k=dot.dataset.k,i=+dot.dataset.i;setDot(k,i,!isDone(k,i));return;}
+  const tm=ev.target.closest('.tm');if(tm){startT(tm);return;}
+  if(ev.target.closest('#rst')){Object.keys(S.done).forEach(k=>{if(k.startsWith(cur+':'))delete S.done[k]});Object.keys(TM).forEach(k=>{if(k.startsWith(cur+':'))stopT(k)});save();render();}
+});
+document.addEventListener('input',ev=>{
+  const t=ev.target;
+  if(t.dataset.c){const c=S.chk[t.dataset.c]||(S.chk[t.dataset.c]={});c[t.dataset.f]=t.value;save();const v=document.getElementById('vd');if(v){const[cl,tx]=verdict(c);v.className='vd '+cl;v.textContent=tx;}}
+  else if(t.dataset.l){const l=S.log[t.dataset.l]||(S.log[t.dataset.l]={});l[t.dataset.f]=t.value;save();}
+});
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id!==cur&&W.some(d=>d.id===id)){cur=id;render();}});
+
+document.getElementById('zones').innerHTML=zbar([[170,'22/11: TB 170']],-1);
+render();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+rules_version = '2';
+// Dán vào Firebase console → Firestore Database → Rules → Publish.
+// Thay 2 email bên dưới bằng email Google của Hiếu và của vợ (chỉ sửa trên console, KHÔNG commit email thật lên GitHub).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function nguoiNha() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in ['EMAIL_CUA_HIEU@gmail.com', 'EMAIL_CUA_VO@gmail.com'];
+    }
+    match /{collection}/{docId} {
+      allow read, write: if nguoiNha()
+        && collection in ['people', 'workouts', 'events', 'chores', 'meals', 'habits'];
+    }
+  }
+}
