@@ -247,7 +247,7 @@ function lane(w,d){
 
 function vToday(){
   const d=TODAY,ev=evOn(d),ch=chOn(d),m=S.meals[d]||{};
-  const inv=role()==='hieu'&&!(S.people.vo&&S.people.vo.uid)?'<p class="warn">Vợ bạn chưa vào trang. Thêm email Google của cô ấy vào Firestore rules, gửi link trang này, cô ấy đăng nhập Google và bấm "Nhận hồ sơ" là xong.</p>':'';
+  const inv=role()==='hieu'&&!(S.people.vo&&S.people.vo.uid)?'<p class="warn">Vợ bạn chưa vào trang. Thêm email Google của cô ấy vào Firestore rules, gửi link trang này, cô ấy đăng nhập Google và bấm "Tôi là vợ của Hiếu" là xong.</p>':'';
   return `${inv}<p class="kick">Hôm nay</p><h2>${DOWF[dow(d)]}, ${fmt(d)}</h2><div class="duo">${(role()==='vo'?['vo','hieu']:SLOTS).map(w=>lane(w,d)).join('')}</div>
   <div class="tri">
     <section class="box"><h3>Lịch chung${canW()?`<button class="btn sm ghost" data-act="add-ev" data-date="${d}">Thêm</button>`:''}</h3>${ev.length?ev.map(x=>`<div class="row"><span class="tm">${esc(x.time||'Cả ngày')}</span><span class="tt">${esc(x.title)}</span>${whoChip(x.who)}</div>`).join(''):'<p class="none">Không có lịch hôm nay.</p>'}</section>
@@ -316,7 +316,7 @@ function render(){
   if(S.denied){m.innerHTML=`<div class="claim"><h3>Tài khoản này chưa được cấp quyền</h3><p>${esc(S.me&&S.me.email||'Tài khoản này')} chưa có trong danh sách được xem. Nhờ Hiếu thêm email này vào Firestore rules, hoặc đăng xuất và đăng nhập bằng tài khoản khác.</p><div><button class="btn" data-act="signout">Đăng xuất</button></div></div>`;return}
   if(!S.ready&&!S.stale){m.innerHTML='<p class="load">Đang tải dữ liệu…</p>';return}
   let top='';
-  if(S.stale&&!S.ready)top+='<p class="warn">Chưa kết nối được dữ liệu. Trang sẽ tự cập nhật khi có kết nối.</p>';
+  if(S.stale&&!S.ready)top+='<p class="warn">Chưa kết nối được dữ liệu. Trang sẽ tự cập nhật khi có kết nối. Nếu đang dùng mạng công ty, thử bấm Ctrl+F5 hoặc mở bằng mạng khác (4G, wifi nhà).</p>';
   if(S.ro)top+='<p class="warn">Bạn đang ở chế độ chỉ xem. Nhờ Hiếu thêm email của bạn vào Firestore rules để lưu được.</p>';
   if(!r&&S.me&&S.me.id&&canW())top+=claimBox();
   if(S.ready&&canW()&&!Object.keys(S.wo).length&&!Object.keys(S.ch).length&&!Object.keys(S.meals).length)top+='<div class="warn"><p style="margin:0 0 10px">Chưa có dữ liệu. Bấm nút dưới đây và chọn file du_lieu_ban_dau.json (ở Desktop\\chay trên máy tính) để nạp lịch tập, việc nhà và thực đơn.</p><button class="btn sm" data-act="import">Nhập từ file</button></div>';
@@ -448,7 +448,9 @@ function stopSubs(){UNSUB.forEach(u=>{try{u()}catch(e){}});UNSUB=[];GOT=new Set(
 async function firebase(cfg){
   const [A,U,F]=await Promise.all([import(FB+'firebase-app.js'),import(FB+'firebase-auth.js'),import(FB+'firebase-firestore.js')]);
   const app=A.initializeApp(cfg),auth=U.getAuth(app);
-  let fs;try{fs=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}catch(e){fs=F.getFirestore(app)}
+  /* experimentalForceLongPolling: mạng công ty, proxy hay phần mềm diệt virus hay chặn kết nối streaming của Firestore
+     (gọi lẻ như nhận hồ sơ vẫn chạy nhưng dữ liệu không về). Long polling chạy qua được các mạng đó, chậm hơn không đáng kể. */
+  let fs;try{fs=F.initializeFirestore(app,{experimentalForceLongPolling:true,localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})})}catch(e){fs=F.getFirestore(app)}
   const prov=new U.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});
   const db={
     doc:path=>({set:data=>F.setDoc(F.doc(fs,path),data),delete:()=>F.deleteDoc(F.doc(fs,path))}),
