@@ -133,7 +133,7 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
 <body>
 <header class="hdr">
   <div class="band"><div class="wrap">
-    <a class="home" href="./">← Trang chủ</a> <a class="home" href="bai-tap-bo-tro.html">Bài tập bổ trợ →</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình →</a> <button class="home anim" id="anim" type="button">Tắt hình chuyển động</button>
+    <a class="home" href="./">← Trang chủ</a> <a class="home" href="bai-tap-bo-tro.html">Bài tập bổ trợ →</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình →</a> <button class="home anim" id="anim" type="button">Tắt hình chuyển động</button> <button class="home" id="sync" type="button" hidden></button>
     <h1>Lịch tập chạy lại</h1>
     <p class="lede">Tuần 23–29/11/2026: 22 km chạy nhẹ và 2 buổi sức mạnh chân. Chạy theo nhịp tim, không theo pace.</p>
     <nav class="week" id="week" aria-label="Các ngày trong tuần"></nav>
@@ -166,6 +166,8 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
   </div></section>
 </main>
 
+<script src="firebase-config.js"></script>
+<script src="dong-bo.js"></script>
 <script>
 {
 const K='lich-tap-chay-lai-v1';
@@ -245,7 +247,10 @@ const animLabel=()=>RM()?'Bật hình chuyển động':'Tắt hình chuyển đ
 {const b=document.getElementById('anim');if(b)b.textContent=animLabel();}
 const mode=id=>S.mode[id]||'office';
 const lists=d=>(d.office&&mode(d.id)==='office')?{mini:[],ex:OFF_EX,st:OFF_ST}:{mini:d.mini||[],ex:d.ex||[],st:[]};
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(SYNC)SYNC.changed()};
+/* Đồng bộ giữa các máy khi đăng nhập Google (dong-bo.js). Nút "Tắt hình chuyển động" chỉ áp dụng cho từng máy. */
+const SYNC=window.DongBo?DongBo.start({key:'lich-tap',btn:document.getElementById('sync'),get:()=>S,local:['anim'],
+  apply:d=>{const a=S.anim;S={...def(),...d};if(a!==undefined)S.anim=a;S.mode=S.mode||{};S.done=S.done||{};S.chk=S.chk||{};S.log=S.log||{};save();render();}}):null;
 
 const now=new Date();
 const iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');

@@ -2,8 +2,10 @@
 
 Trang tĩnh (HTML + CSS + JS, không cần build), chạy trên GitHub Pages:
 
-- `index.html`: trang chủ, có link tới 2 trang dưới.
-- `lich-tap-chay-lai.html`: lịch tập chạy lại tuần 23–29/11/2026. Ô đánh dấu và số nhập vào chỉ lưu trên trình duyệt đang dùng (localStorage), không cần đăng nhập.
+- `index.html`: trang chủ, có link tới các trang dưới.
+- `lich-tap-chay-lai.html`: lịch tập chạy lại tuần 23–29/11/2026.
+- `bai-tap-bo-tro.html`: bài tập bổ trợ (kỹ thuật chạy, sức mạnh, tạ, core, giãn cơ) và buổi mẫu.
+- `dong-bo.js`: đồng bộ đánh dấu, ghi chép, mức tạ của 2 trang trên giữa các máy. Chưa đăng nhập thì chỉ lưu trên trình duyệt đang dùng (localStorage); bấm "Đăng nhập Google để lưu lên mạng" ở đầu trang (cùng tài khoản với trang Kế hoạch) thì lưu thêm lên Firestore ở `habits/lich-tap_<uid>` và `habits/bo-tro_<uid>`. Không cần sửa Rules. Nút tắt hình chuyển động và tab đang xem vẫn riêng từng máy.
 - `ke-hoach-nha-minh.html`: kế hoạch chung của hai vợ chồng (tập luyện, lịch chung, việc nhà, bữa ăn, thói quen). Đăng nhập bằng Google, dữ liệu lưu trên Firebase Firestore nên hai người thấy cùng một dữ liệu.
 
 Trang công khai: ai có link cũng mở được phần chữ cố định trong HTML (kể cả số nhịp tim trong lịch tập). Dữ liệu trong trang Kế hoạch thì chỉ 2 email được cho phép mới đọc, ghi được.

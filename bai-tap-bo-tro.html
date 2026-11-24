@@ -109,7 +109,7 @@ svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;strok
 <body>
 <header class="hdr">
   <div class="band"><div class="wrap">
-    <a class="home" href="./">← Trang chủ</a> <a class="home" href="lich-tap-chay-lai.html">Lịch tập chạy lại</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình</a> <button class="home" id="anim" type="button">Tắt hình chuyển động</button>
+    <a class="home" href="./">← Trang chủ</a> <a class="home" href="lich-tap-chay-lai.html">Lịch tập chạy lại</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình</a> <button class="home" id="anim" type="button">Tắt hình chuyển động</button> <button class="home" id="sync" type="button" hidden></button>
     <h1>Bài tập bổ trợ</h1>
     <p class="lede">Kỹ thuật chạy, sức mạnh có và không có tạ, core, giãn cơ. Chọn một buổi mẫu để tập theo, hoặc xem từng nhóm bài. Dụng cụ: 1–2 quả tạ đơn, một ghế hoặc bậc chắc chắn cao 30–40 cm, một dây kháng lực mini band.</p>
     <nav class="tabs" id="tabs" aria-label="Nhóm bài tập"></nav>
@@ -143,6 +143,8 @@ svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;strok
   </div></section>
 </main>
 
+<script src="firebase-config.js"></script>
+<script src="dong-bo.js"></script>
 <script>
 {
 const K='bai-tap-bo-tro-v1';
@@ -271,7 +273,10 @@ try{S=JSON.parse(localStorage.getItem(K))||{}}catch(e){S={}}
 S.done=S.done||{};S.kg=S.kg||{};
 Object.keys(S.done).forEach(d=>{if(d!==TODAY)delete S.done[d]});
 const DN=()=>S.done[TODAY]||(S.done[TODAY]={});
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(SYNC)SYNC.changed()};
+/* Đồng bộ đánh dấu và mức tạ giữa các máy khi đăng nhập Google (dong-bo.js). Tab đang xem và nút tắt hình chỉ áp dụng cho từng máy. */
+const SYNC=window.DongBo?DongBo.start({key:'bo-tro',btn:document.getElementById('sync'),get:()=>S,local:['anim','view','ses'],
+  apply:d=>{const keep={anim:S.anim,view:S.view,ses:S.ses};S={...d};Object.keys(keep).forEach(k=>{if(keep[k]!==undefined)S[k]=keep[k]});S.done=S.done||{};S.kg=S.kg||{};Object.keys(S.done).forEach(x=>{if(x!==TODAY)delete S.done[x]});save();render();}}):null;
 let view=TABS.some(t=>t[0]===S.view)?S.view:'ses',ses=SES.some(x=>x.id===S.ses)?S.ses:'kt';
 {const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h))view=h;else if(SES.some(x=>x.id===h)){view='ses';ses=h;}}
 
