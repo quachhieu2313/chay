@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121316);--ink:light-dark(#16171b,#eceef2);--mut:light-dark(#5b5f67,#a3a8b0);--line:light-dark(#e2e3e6,#2c2e34);--pan:light-dark(#f4f4f5,#1b1d22);--trk:light-dark(#c63f1f,#e2593b);--p2:light-dark(#0b7285,#30b6cc)}
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121316);--ink:light-dark(#16171b,#eceef2);--mut:light-dark(#5b5f67,#a3a8b0);--line:light-dark(#e2e3e6,#2c2e34);--pan:light-dark(#f4f4f5,#1b1d22);--trk:light-dark(#c63f1f,#e2593b);--p2:light-dark(#0b7285,#30b6cc);--p3:light-dark(#2c7a34,#5cc165)}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif}
 .in{max-width:960px;margin:0 auto;padding:clamp(28px,6vw,64px) max(5vw,16px)}
@@ -30,9 +30,10 @@ a.card:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 <div class="lanes" aria-hidden="true"></div>
 <main class="in">
   <h1>Chạy và nhà mình</h1>
-  <p class="lede">Lịch tập chạy lại sau chấn thương và kế hoạch chung của hai vợ chồng: tập luyện, lịch, việc nhà, bữa ăn.</p>
+  <p class="lede">Lịch tập chạy lại sau chấn thương, bài tập bổ trợ, và kế hoạch chung của hai vợ chồng: tập luyện, lịch, việc nhà, bữa ăn.</p>
   <div class="grid">
     <a class="card" href="lich-tap-chay-lai.html" style="--c:var(--trk)"><h2>Lịch tập chạy lại</h2><p>Bài tập từng ngày có hình minh họa, bấm giờ, vùng nhịp tim. Đánh dấu lưu trên máy đang dùng.</p><span>Mở lịch tập →</span></a>
+    <a class="card" href="bai-tap-bo-tro.html" style="--c:var(--p3)"><h2>Bài tập bổ trợ</h2><p>Kỹ thuật chạy, sức mạnh có và không có tạ, core, giãn cơ. Buổi mẫu có hình động, bấm giờ, ghi mức tạ.</p><span>Mở bài bổ trợ →</span></a>
     <a class="card" href="ke-hoach-nha-minh.html" style="--c:var(--p2)"><h2>Kế hoạch nhà mình</h2><p>Dùng chung cho hai người: hôm nay ai tập gì, lịch chung, việc nhà, thực đơn tuần. Đăng nhập bằng Google.</p><span>Mở kế hoạch →</span></a>
   </div>
 </main>
