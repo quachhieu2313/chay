@@ -310,6 +310,104 @@ async function napFile(file,ngay){
   save();
   if(dich!==CUR)go(dich);else keep(render);
 }
+/* ---------- Nhập lịch sử: CSV danh sách hoạt động của Garmin Connect, hoặc nhiều file cùng lúc ---------- */
+function csvRows(txt,sep){
+  const rows=[];let r=[],f='',q=false;
+  for(let i=0;i<txt.length;i++){const c=txt[i];
+    if(q){if(c==='"'){if(txt[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;
+    else if(c===sep){r.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&txt[i+1]==='\n')i++;r.push(f);f='';if(r.some(x=>x.trim()!==''))rows.push(r);r=[]}
+    else f+=c}
+  r.push(f);if(r.some(x=>x.trim()!==''))rows.push(r);return rows;
+}
+/* Số trong CSV: "10.02", "10,02", "1,234" (nghìn), "--" là trống */
+const soCsv=(v,nghin)=>{v=String(v??'').trim().replace(/\s/g,'');if(!v||v==='--')return null;
+  if(v.includes(',')&&v.includes('.'))v=v.replace(/,/g,'');
+  else if(v.includes(','))v=nghin&&/^\d{1,3}(,\d{3})+$/.test(v)?v.replace(/,/g,''):v.replace(',','.');
+  const x=parseFloat(v);return isFinite(x)?x:null};
+const giayCsv=v=>{v=String(v??'').trim();if(!v||v==='--')return null;const a=v.split(':').map(x=>+x.replace(',','.'));return a.some(x=>!isFinite(x))?null:a.reduce((t,x)=>t*60+x,0)};
+const ngayCsv=v=>{v=String(v??'').trim();let m=v.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+  m=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m){const a=+m[1],b=+m[2];return m[3]+'-'+pad(a>12?b:a)+'-'+pad(a>12?a:b)}
+  const d=new Date(v);return isNaN(d)?null:LC.ymd(d)};
+function docCsv(txt){
+  txt=txt.replace(/^\uFEFF/,'');const l1=txt.split(/\r?\n/)[0];
+  const rows=csvRows(txt,l1.split(';').length>l1.split(',').length?';':',');if(rows.length<2)throw new Error('file trống');
+  const H=rows[0].map(h=>h.trim().toLowerCase());
+  const col=(...re)=>{for(const r of re){const i=H.findIndex(h=>r.test(h));if(i>=0)return i}return -1};
+  const C={loai:col(/^activity type$/,/loại hoạt động/,/^loại$/),ngay:col(/^date$/,/^ngày$/,/start time/,/ngày/),ten:col(/^title$/,/tiêu đề/,/^tên/),
+    km:col(/^distance$/,/khoảng cách/,/quãng đường/,/distance/),tg:col(/^time$/,/^thời gian$/,/moving time/,/elapsed time/,/thời gian/),
+    hr:col(/^avg hr$/,/avg.*(hr|heart)/,/nhịp tim.*(tb|trung bình)/),hrmax:col(/^max hr$/,/max.*(hr|heart)/,/nhịp tim.*(tối đa|cao nhất)/),
+    cad:col(/avg run cadence/,/avg.*cadence/,/(nhịp|guồng).*(tb|trung bình)/),leo:col(/total ascent/,/elev.*gain/,/tổng.*(lên|leo)/)};
+  if(C.ngay<0||C.km<0||C.tg<0)throw new Error('không thấy cột Date, Distance, Time. Hãy xuất CSV từ danh sách Activities trên connect.garmin.com');
+  const ds=[];let bo=0;
+  for(const r of rows.slice(1)){
+    const loai=C.loai>=0?(r[C.loai]||''):'running';
+    if(!/run|chạy/i.test(loai)){bo++;continue}
+    const date=ngayCsv(r[C.ngay]),km=soCsv(r[C.km]),giay=giayCsv(r[C.tg]);
+    if(!date||!km||!giay||km<0.5||km>400){bo++;continue}
+    const g=(k,n)=>C[k]>=0?soCsv(r[C[k]],n):null;
+    ds.push({date,km,giay,hr:g('hr'),hrmax:g('hrmax'),cad:g('cad'),leo:g('leo',1),trail:/trail|địa hình/i.test(loai),ten:C.ten>=0?(r[C.ten]||'').trim():''});
+  }
+  return {ds,bo};
+}
+/* Ghi các buổi vào nhật ký. Nhiều buổi cùng ngày thì cộng lại. Ngày đã ghi tay giữ nguyên. */
+function ghiNhieu(list,nguon){
+  const P=plan(),g={},gan=LC.addD(TODAY,-60);let moi=0,capNhat=0,giu=0;
+  for(const x of list)if(x.date<=TODAY)(g[x.date]=g[x.date]||[]).push(x);
+  for(const[date,xs]of Object.entries(g)){
+    const L0=S.log[date];
+    if(L0&&!L0.nhap&&['km','tg','hr'].some(k=>L0[k])){giu++;continue}
+    const km=xs.reduce((a,x)=>a+x.km,0),gi=xs.reduce((a,x)=>a+x.giay,0);
+    const tb=k=>{const c=xs.filter(x=>x[k]!=null&&x[k]>0),w=c.reduce((a,x)=>a+x.giay,0);return w?Math.round(c.reduce((a,x)=>a+x[k]*x.giay,0)/w):null};
+    const hr=tb('hr'),cad=tb('cad'),hrmax=Math.max(0,...xs.map(x=>x.hrmax||0)),leo=xs.some(x=>x.leo!=null)?Math.round(xs.reduce((a,x)=>a+(x.leo||0),0)):null;
+    const L=L0||(S.log[date]={});L0?capNhat++:moi++;
+    /* Nhiều buổi một ngày (giải + khởi động): km là tổng, còn "buổi chính" (VDOT cao nhất, từ 3 km) giữ riêng để tính thành tích */
+    const ch=xs.length>1?xs.filter(x=>x.km>=3).sort((a,b)=>LC.vdot(b.km,b.giay/60)-LC.vdot(a.km,a.giay/60))[0]:null;
+    if(ch)L.chinh={km:String(Math.round(ch.km*100)/100),tg:fmtGiay(ch.giay),hr:ch.hr?String(Math.round(ch.hr)):'',ten:ch.ten||''};else delete L.chinh;
+    Object.assign(L,{km:String(Math.round(km*100)/100),tg:fmtGiay(gi),hr:hr?String(hr):'',hrmax:hrmax?String(hrmax):'',src:xs.length>1?xs.length+' buổi, '+nguon:(xs[0].ten||nguon),nhap:1});
+    if(cad)L.cad=String(cad);if(leo!=null)L.leo=String(leo);
+    if(xs.length===1&&xs[0].km1&&date>=gan)Object.assign(L,{km1:xs[0].km1,troi:xs[0].troi,diBo:xs[0].diBo});
+    if(!L.giay&&date>=gan&&giayMac())L.giay=giayMac().id;
+    const trail=xs.some(x=>x.trail),d=P?dayOf(P,date):{dh:'road'};
+    if(trail!==((d.dh||'road')==='trail'))L.dh=trail?'trail':'road';else delete L.dh;
+    if(P&&P.byId[date]&&P.byId[date].km)(S.done[date+':run']=S.done[date+':run']||[])[0]=1;
+  }
+  return {moi,capNhat,giu};
+}
+async function nhapNhieu(files){
+  const msg=$('#nhmsg'),say=x=>{if(msg)msg.textContent=x};
+  const list=[],loi=[];let bo=0;
+  for(let i=0;i<files.length;i++){const f=files[i];say(`Đang đọc ${i+1}/${files.length}: ${f.name}…`);
+    try{
+      if(/\.csv$/i.test(f.name)){const r=docCsv(await f.text());list.push(...r.ds);bo+=r.bo}
+      else{const r=await window.DocFile.read(f);if(r&&r.km>=0.5)list.push({...r,trail:r.goiY==='trail',ten:r.ten||f.name});else bo++}
+    }catch(e){loi.push(f.name+': '+(e.message||e))}}
+  if(!list.length){say('Không có buổi chạy nào đọc được.'+(loi.length?' '+loi[0]:''));return}
+  const r=ghiNhieu(list,files.length===1?files[0].name:'Garmin'),ng=list.map(x=>x.date).sort();
+  save();
+  let t=`Đã đọc ${list.length} buổi chạy, từ ${dmy(ng[0])} đến ${dmy(ng[ng.length-1])}: thêm ${r.moi} ngày, cập nhật ${r.capNhat} ngày`+(r.giu?`, giữ nguyên ${r.giu} ngày bạn đã ghi tay`:'')+'.'
+    +(bo?` Bỏ qua ${bo} dòng không phải chạy bộ.`:'')+(loi.length?` Không đọc được ${loi.length} file (${loi.slice(0,2).join('; ')}).`:'');
+  if(JSON.stringify(S).length>450000)t+=' Dữ liệu đã gần giới hạn lưu trong tài khoản; nếu báo lỗi đồng bộ, hãy tải bản JSON về máy cho chắc.';
+  try{localStorage.setItem('lcn-nhap',t)}catch(e){}
+  if(location.hash!=='#/lo-trinh')location.hash='#/lo-trinh';else keep(render);
+}
+const nhapBox=()=>{let m='';try{m=localStorage.getItem('lcn-nhap')||'';localStorage.removeItem('lcn-nhap')}catch(e){}
+  return `${m?`<p class="msg ok">${esc(m)}</p>`:''}<div class="row up" style="margin:14px 0 4px"><label class="btn pri" for="nhieu">Nhập lịch sử từ Garmin<input id="nhieu" type="file" accept=".csv,.fit,.tcx,.gpx,.zip" multiple hidden></label><span class="mut" id="nhmsg" style="font-size:14px">File .csv danh sách hoạt động, hoặc chọn nhiều file .fit, .tcx, .gpx, .zip một lần</span></div>
+  <details class="km1"><summary>Cách lấy lịch sử từ Garmin Connect</summary><ol class="steps"><li>Mở <b>connect.garmin.com</b> trên máy tính và đăng nhập. Ứng dụng trên điện thoại không xuất được.</li><li>Vào <b>Hoạt động → Tất cả hoạt động</b> (Activities → All Activities). Lọc loại <b>Chạy</b> (Running) cho gọn.</li><li>Cuộn xuống cuối trang nhiều lần cho đến khi hiện hết các năm bạn muốn lấy. Garmin chỉ xuất những dòng đang hiện trên trang.</li><li>Bấm <b>Xuất CSV</b> (Export CSV) ở góc trên bên phải, rồi chọn file đó bằng nút ở trên.</li></ol>
+  <p class="note">Đơn vị khoảng cách trong Garmin phải là km. File CSV chỉ có số tổng của mỗi buổi; muốn có từng km và độ trôi nhịp tim thì nhập thêm file .fit hoặc .zip của buổi đó. Ngày bạn đã ghi tay được giữ nguyên; nhập lại cùng file thì chỉ cập nhật, không nhân đôi. File được đọc ngay trên máy bạn, không gửi đi đâu.</p></details>`};
+/* Buổi nhanh ở các cự ly chuẩn nhưng chưa đánh dấu: hỏi người dùng có phải chạy hết sức không */
+function goiYHetSuc(P,KL){
+  const out=[];
+  for(const D of [5,10,21.1,42.2]){
+    const c=Object.entries(S.log).filter(([dt,L])=>{const k=num(kq(L),'km'),m=tgPhut(kq(L).tg);return dt<=TODAY&&k&&m&&Math.abs(k-D)/D<=0.03&&(L.hetSuc==null||L.hetSuc==='')&&!hetSuc(dayOf(P,dt),L)&&dhOf(dayOf(P,dt))==='road'})
+      .map(([dt,L])=>({dt,D,t:tgPhut(kq(L).tg)*D/num(kq(L),'km'),hr:kq(L).hr,ten:L.chinh?L.chinh.ten:L.src&&L.nhap?L.src:''})).filter(x=>!KL[D]||x.t<KL[D].t*1.04).sort((a,b)=>a.t-b.t).slice(0,2);
+    out.push(...c);
+  }
+  return out;
+}
+/* Số liệu dùng để tính thành tích: buổi chính nếu ngày có nhiều buổi */
+const kq=L=>L.chinh&&L.chinh.km?L.chinh:L;
 const num=(L,k)=>{const v=L[k];if(v===''||v==null)return null;const x=+String(v).replace(',','.');return isFinite(x)?x:null};
 function paceOf(L){const k=num(L,'km'),m=tgPhut(L.tg);return k&&m?m*60/k:(L.pace?paceGiay(L.pace)||null:null)}
 function bpk(L){const h=num(L,'hr'),p=paceOf(L);return h&&p?Math.round(h*p/60):null}
@@ -559,7 +657,7 @@ function hetSuc(d,L){
   if(L.hetSuc!=null&&L.hetSuc!=='')return !!+L.hetSuc;
   if(!((d.loai==='thi'||d.loai==='kiem')&&dhOf(d)==='road'))return false;
   /* ngày thi/kiểm tra: chỉ tính là hết sức khi quãng đường khớp cự ly của buổi đó */
-  const k=num(L,'km'),D=d.loai==='thi'?(PLAN&&PLAN.X?PLAN.X.D:d.km):5;return !!k&&Math.abs(k-D)/D<=0.1;
+  const k=num(kq(L),'km'),D=d.loai==='thi'?(PLAN&&PLAN.X?PLAN.X.D:d.km):5;return !!k&&Math.abs(k-D)/D<=0.1;
 }
 const kmNgay=(a,b)=>Object.entries(S.log).filter(([dt])=>dt>a&&dt<=b).reduce((x,[,L])=>x+(num(L,'km')||0),0);
 /* Thể lực hiện tại tính từ nhật ký */
@@ -571,8 +669,8 @@ function theLuc(P){
   /* VDOT: kết quả hết sức tốt nhất trong 90 ngày; không có thì gần nhất trong 150 ngày */
   let V=null;const ds=[];
   for(const[dt,L]of Object.entries(S.log)){
-    if(dt<LC.addD(TODAY,-150)||dt>TODAY)continue;const d=dayOf(P,dt),k=num(L,'km'),m=tgPhut(L.tg);
-    if(k>=3&&m&&hetSuc(d,L)){const v=LC.vdot(k,m);if(v>15&&v<85)ds.push({V:Math.round(v*10)/10,ngay:dt,km:k,tg:L.tg})}
+    if(dt<LC.addD(TODAY,-150)||dt>TODAY)continue;const d=dayOf(P,dt),k=num(kq(L),'km'),m=tgPhut(kq(L).tg);
+    if(k>=3&&m&&hetSuc(d,L)){const v=LC.vdot(k,m);if(v>15&&v<85)ds.push({V:Math.round(v*10)/10,ngay:dt,km:k,tg:kq(L).tg})}
   }
   const g90=ds.filter(x=>x.ngay>LC.addD(TODAY,-90));
   if(g90.length)V=g90.reduce((a,b)=>b.V>a.V?b:a);else if(ds.length)V=ds.reduce((a,b)=>b.ngay>a.ngay?b:a);
@@ -582,7 +680,7 @@ function theLuc(P){
 /* Kỷ lục cá nhân từ các buổi hết sức */
 function kyLuc(P){
   const KL={5:null,10:null,21.1:null,42.2:null};
-  for(const[dt,L]of Object.entries(S.log)){const d=dayOf(P,dt),k=num(L,'km'),m=tgPhut(L.tg);if(!k||!m||!hetSuc(d,L))continue;
+  for(const[dt,L]of Object.entries(S.log)){const d=dayOf(P,dt),k=num(kq(L),'km'),m=tgPhut(kq(L).tg);if(!k||!m||!hetSuc(d,L))continue;
     for(const D of Object.keys(KL)){if(Math.abs(k-D)/D<=0.03){const t=m*(+D)/k;if(!KL[D]||t<KL[D].t)KL[D]={t,ngay:dt}}}}
   return KL;
 }
@@ -629,7 +727,7 @@ function vLoTrinh(P){
   const t=theLuc(P),KL=kyLuc(P),db=duBao(P,t),dh=S.hs.daiHan||{};
   const card=(lb,v,sub)=>`<div><span>${lb}</span><b>${v}</b>${sub?`<span style="margin-top:2px">${sub}</span>`:''}</div>`;
   const ac=t.acwr;
-  let h=`<h2>Lộ trình</h2><p class="sub">Thể lực tính từ nhật ký của bạn, khối tập đang chạy, dự báo vài năm tới và kỷ lục cá nhân. Ghi chép đều và đánh dấu các buổi chạy hết sức thì phần này càng chính xác.</p>
+  let h=`<h2>Lộ trình</h2><p class="sub">Mọi con số ở đây tính từ <b>Nhật ký</b> của bạn (các buổi đã ghi, đã tải file hoặc đã nhập từ Garmin), cộng với kết quả chạy hết sức ở Hồ sơ khi nhật ký chưa có. Có sẵn nhiều năm số liệu trên Garmin thì nhập một lần ở dưới.</p>${nhapBox()}
   <h3 style="margin-top:24px">Thể lực hiện tại</h3><div class="tgt" style="margin-top:10px">
     ${card('Km mỗi tuần (4 tuần qua)',LC.fmtKm(t.km4),t.ghi4?t.ghi4+' buổi đã ghi':'chưa có ghi chép')}
     ${card('Buổi dài nhất (8 tuần)',t.dai8?LC.fmtKm(t.dai8)+' km':'–')}
@@ -650,6 +748,10 @@ function vLoTrinh(P){
     h+=`<h3 style="margin-top:28px">Dự báo 3 năm</h3><p class="note">Ước tính nếu tập đều và khối lượng tăng dần khoảng 25% mỗi năm (đến khoảng 70 km mỗi tuần): thể lực tăng nhanh những năm đầu rồi chậm dần; chạy ít km thì tăng chậm hơn. Chỉ để định hướng, không phải cam kết. Mỗi lần chạy hết sức và ghi lại, dự báo được tính lại từ số mới.</p>${eta?`<p class="msg info">${eta}</p>`:''}
     <div style="overflow-x:auto"><table class="zt" style="max-width:none"><thead><tr><th>Thời điểm</th><th>VDOT</th><th>5 km</th><th>10 km</th><th>21,1 km</th><th>42,2 km</th></tr></thead><tbody>${db.filter(x=>x.q%2===0).map(x=>`<tr><td>${x.q?'Tháng '+(+x.ngay.slice(5,7))+'/'+x.ngay.slice(0,4):'Hiện tại'}</td><td><b>${String(x.V).replace('.',',')}</b></td>${x.t.map((m,i)=>`<td${gi===i&&gT&&m<=gT?' style="color:var(--ok);font-weight:700"':''}>${fmtGiay(m*60)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }else h+=`<p class="msg info" style="margin-top:24px">Chưa có kết quả chạy hết sức nên chưa dự báo được. Điền ở Hồ sơ, hoặc đánh dấu "chạy hết sức" khi ghi một buổi thi hay chạy kiểm tra.</p>`;
+  /* Gợi ý đánh dấu chạy hết sức */
+  const gy=goiYHetSuc(P,KL);
+  if(gy.length)h+=`<h3 style="margin-top:28px">Buổi nào là chạy hết sức?</h3><p class="note">Đây là các buổi nhanh nhất ở cự ly 5, 10, 21,1 và 42,2 km chưa được đánh dấu. Nếu là giải hoặc buổi chạy kiểm tra, bấm <b>Hết sức</b> để tính thể lực (VDOT), kỷ lục và dự báo. Buổi chạy thường thì bấm <b>Không</b>.</p>
+  <div style="overflow-x:auto"><table class="zt" style="max-width:none"><tbody>${gy.map(x=>`<tr><td><a href="${dayOf(P,x.dt).ngoai?'#/ghi/':'#/ngay/'}${x.dt}">${dmy(x.dt)}</a></td><td>${LC.fmtKm(x.D)} km</td><td><b>${fmtGiay(x.t*60)}</b></td><td class="mut">${x.hr?'tim '+esc(x.hr):''}${x.ten?' · '+esc(x.ten):''}</td><td style="white-space:nowrap"><button class="btn sm" type="button" data-hs="${x.dt}" data-v="1">Hết sức</button> <button class="btn sm" type="button" data-hs="${x.dt}" data-v="0">Không</button></td></tr>`).join('')}</tbody></table></div>`;
   /* Kỷ lục */
   h+=`<h3 style="margin-top:28px">Kỷ lục cá nhân</h3><p class="note">Từ các buổi road đánh dấu chạy hết sức, quãng đường lệch không quá 3%.</p><table class="zt"><tbody>${Object.entries(KL).map(([D,x])=>`<tr><td>${D==='42.2'?'Marathon':D==='21.1'?'Bán marathon':D+' km'}</td><td><b>${x?fmtGiay(x.t*60):'–'}</b></td><td class="mut">${x?dmy(x.ngay)+' · '+LC.fmtP(x.t*60/+D)+'/km':''}</td></tr>`).join('')}</tbody></table>`;
   /* Km theo tháng, 24 tháng */
@@ -658,6 +760,10 @@ function vLoTrinh(P){
   const mx=Math.max(10,...kmT.map(x=>x[0]+x[1])),W=900,H=200,bw=(W-40)/24,y=v=>14+(H-40)*(1-v/mx);
   h+=`<h3 style="margin-top:28px">Km mỗi tháng</h3><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Km mỗi tháng trong 24 tháng">${[0,.5,1].map(f=>{const v=Math.round(mx*f);return `<line x1="34" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="30" y="${y(v)+4}" text-anchor="end">${v}</text>`}).join('')}${kmT.map(([r,tr],i)=>{const x=40+i*bw+bw*.15,w=bw*.7;return `<rect x="${x}" y="${y(r)}" width="${w}" height="${y(0)-y(r)}" fill="var(--z2)"><title>${th[i]}: đường bằng ${LC.fmtKm(r)} km</title></rect><rect x="${x}" y="${y(r+tr)}" width="${w}" height="${y(r)-y(r+tr)}" fill="var(--z3)"><title>${th[i]}: trail ${LC.fmtKm(tr)} km</title></rect>${i%3===0?`<text x="${x+w/2}" y="${H-8}" text-anchor="middle">${+th[i].slice(5)}/${th[i].slice(2,4)}</text>`:''}`}).join('')}</svg>
   <div class="legend"><span><i style="background:var(--z2)"></i>Đường bằng</span><span><i style="background:var(--z3)"></i>Trail</span></div>`;
+  /* Km mỗi năm, khi có hơn 1 năm số liệu */
+  const nam={};for(const[dt,L]of Object.entries(S.log)){const k=num(L,'km');if(!k||dt>TODAY)continue;const y=dt.slice(0,4),o=nam[y]||(nam[y]={r:0,t:0,n:0,dai:0});if(dhOf(dayOf(P,dt))==='trail')o.t+=k;else o.r+=k;o.n++;o.dai=Math.max(o.dai,k)}
+  const ys=Object.keys(nam).sort();
+  if(ys.length>1)h+=`<h3 style="margin-top:28px">Km mỗi năm</h3><table class="zt"><thead><tr><th>Năm</th><th>Tổng</th><th>Đường bằng</th><th>Trail</th><th>Số buổi</th><th>Dài nhất</th></tr></thead><tbody>${ys.reverse().map(y=>{const o=nam[y];return `<tr><td>${y}</td><td><b>${LC.fmtKm(Math.round(o.r+o.t))}</b></td><td>${LC.fmtKm(Math.round(o.r))}</td><td>${LC.fmtKm(Math.round(o.t))}</td><td>${o.n}</td><td>${LC.fmtKm(Math.round(o.dai*10)/10)} km</td></tr>`}).join('')}</tbody></table>`;
   return h;
 }
 
@@ -693,7 +799,7 @@ function vHuongDan(){
   +q('Tập nhiều năm','<ul class="steps"><li>Bật <b>Tập liên tục nhiều năm</b> ở Hồ sơ (mặc định đã bật cho road) và đặt mục tiêu dài hạn, ví dụ 10 km dưới 50 phút.</li><li>Hết một khối tập (hoặc sau ngày thi), trang tự tạo khối tiếp theo từ nhật ký: km mỗi tuần 4 tuần qua, buổi dài nhất 8 tuần qua, kết quả chạy hết sức tốt nhất 90 ngày qua. Khối mới bắt đầu nhẹ hơn khoảng 15% để hồi phục.</li><li>Các khối nối theo chu kỳ: <b>Nền sức bền</b> (tăng khối lượng, chạy nhẹ) → <b>Tốc độ</b> (biến tốc, 5–10 km) → <b>Sức bền dài</b> (tempo, chạy dài, 21 km); mục tiêu marathon thì thêm khối Marathon khi đã chạy đều trên 35 km mỗi tuần.</li><li>Mỗi vòng, khối lượng đỉnh cao hơn khối trước khoảng 8% nếu bạn đã chạy được. Mỗi khối kết thúc bằng tuần chạy kiểm tra 5 km: ghi lại và tick "chạy hết sức" để thể lực được cập nhật.</li><li>Trang Lộ trình cho thấy thể lực hiện tại, các khối, dự báo 3 năm, kỷ lục và km mỗi tháng. Nếu 7 ngày qua chạy gấp hơn 1,5 lần trung bình 4 tuần, trang cảnh báo vì đó là lúc dễ chấn thương nhất.</li></ul>')
   +q('Các loại buổi chạy','<ul class="steps"><li><b>Chạy nhẹ:</b> vùng 2, nói chuyện được cả câu. Là phần lớn khối lượng, xây nền sức bền.</li><li><b>Chạy hồi phục:</b> chậm nhất tuần, sau ngày chạy dài.</li><li><b>Chạy dài:</b> buổi dài nhất tuần, vẫn ở vùng nhẹ.</li><li><b>Strides:</b> 4–6 lần tăng tốc 20 giây cuối buổi nhẹ, giữ dáng chạy và guồng chân.</li><li><b>Tempo (ngưỡng):</b> nhanh nhưng kiểm soát được, cảm giác 7–8/10, nâng tốc độ chịu được lâu.</li><li><b>Interval:</b> lần chạy 3–5 phút khó, nghỉ bằng thời gian chạy, nâng VO2max.</li><li><b>Chạy lên dốc ngắn:</b> sức mạnh chân mà ít va đập.</li><li><b>Leo dốc (trail):</b> chạy hoặc đi bộ nhanh lên dốc ở vùng 3–4; tập cả hai vì trong giải sẽ dùng cả hai.</li><li><b>Chạy dài hai ngày liền (trail):</b> tập chạy khi chân đã mỏi, như nửa sau giải dài.</li></ul>')
   +q('Ý nghĩa các con số','<ul class="steps"><li><b>Vùng nhịp tim:</b> tính từ nhịp nghỉ và nhịp tối đa (Karvonen), hoặc từ nhịp tim ngưỡng nếu bạn điền.</li><li><b>VDOT:</b> chỉ số thể lực tính từ một kết quả chạy hết sức (Jack Daniels). Từ đó ra pace cho từng loại bài và thời gian dự đoán.</li><li><b>Nhịp tim mỗi km:</b> nhịp tim trung bình × số phút mỗi km. Cùng loại đường mà số này giảm dần là thể lực đang lên. Trail tính trên km quy đổi: mỗi 100 m leo tính thêm 1 km.</li><li><b>Tim trôi:</b> nửa sau buổi chạy tim cao hơn nửa đầu bao nhiêu % ở cùng tốc độ. Dưới 5% là nền sức bền tốt; trên 8% là quá sức, nóng hoặc thiếu nước.</li><li><b>Điểm sương:</b> đo độ oi. Nhiệt độ và điểm sương càng cao, pace càng phải chậm lại.</li></ul>')
-  +q('Lấy file từ Garmin','<ol class="steps"><li>Mở connect.garmin.com trên máy tính hoặc trình duyệt điện thoại (ứng dụng Garmin Connect không xuất được file).</li><li>Mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc Export to GPX.</li><li>Trong trang này, mở ngày đó, bấm Tải file từ đồng hồ hoặc kéo thả file vào khung Sau buổi chạy.</li></ol><p class="note">File chỉ được đọc trên máy bạn; trang không lưu đường chạy.</p>')
+  +q('Lấy file từ Garmin','<ol class="steps"><li>Mở connect.garmin.com trên máy tính hoặc trình duyệt điện thoại (ứng dụng Garmin Connect không xuất được file).</li><li>Mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc Export to GPX.</li><li>Trong trang này, mở ngày đó, bấm Tải file từ đồng hồ hoặc kéo thả file vào khung Sau buổi chạy.</li></ol><p><b>Lấy nhiều năm một lần:</b> trên connect.garmin.com vào Hoạt động → Tất cả hoạt động, lọc Chạy, cuộn xuống đến khi hiện hết các năm, bấm Xuất CSV (Export CSV). Ở trang <a href="#/lo-trinh">Lộ trình</a> bấm Nhập lịch sử từ Garmin và chọn file đó. Cũng chọn được nhiều file .fit, .tcx, .gpx, .zip cùng lúc.</p><p class="note">File chỉ được đọc trên máy bạn; trang không lưu đường chạy.</p>')
   +q('Cài lên điện thoại','<ul class="steps"><li><b>Android (Chrome):</b> mở trang, bấm menu ⋮, chọn Thêm vào màn hình chính hoặc Cài đặt ứng dụng.</li><li><b>iPhone (Safari):</b> bấm nút Chia sẻ, chọn Thêm vào MH chính.</li><li>Sau khi cài, trang mở như ứng dụng và vẫn xem được lịch khi không có mạng; ghi chép sẽ gửi lên tài khoản khi có mạng lại.</li></ul>')
   +q('Giới hạn','<ul class="steps"><li>Lịch tạo theo quy tắc, không thay huấn luyện viên. Bạn hiểu cơ thể mình nhất: đau nhói, chóng mặt, tức ngực thì dừng và đi khám.</li><li>Pace từ "pace chạy nhẹ" kém chính xác hơn pace từ kết quả chạy hết sức.</li><li>Mỗi lúc chỉ theo một mục tiêu chính. Có cả giải road và trail thì chọn giải đến trước.</li></ul>');
 }
@@ -717,11 +823,12 @@ function vDuLieu(){
   return `<h2>Dữ liệu và quyền riêng tư</h2>
   <div class="hero"><div><h3>Lưu ở đâu</h3><p>Chưa đăng nhập: chỉ trên trình duyệt này. Đăng nhập Google: thêm một bản trong tài khoản của bạn trên Firebase (Google), để mở ở máy khác.</p></div>
   <div><h3>Ai đọc được</h3><p>Chỉ bạn. Quy tắc máy chủ chỉ cho chính tài khoản đó đọc, ghi dữ liệu của mình. Người khác có link trang cũng chỉ thấy trang trống của họ.</p></div>
-  <div><h3>Lưu những gì</h3><p>Hồ sơ bạn điền (tuổi, nhịp tim, mục tiêu, ngày rảnh), số liệu các buổi chạy và ô đánh dấu. Không lưu vị trí, không lấy dữ liệu từ đồng hồ.</p></div></div>
+  <div><h3>Lưu những gì</h3><p>Hồ sơ bạn điền (tuổi, nhịp tim, mục tiêu, ngày rảnh), số liệu các buổi chạy và ô đánh dấu. Từ file đồng hồ chỉ lấy các con số của buổi chạy, không lưu vị trí hay đường chạy.</p></div></div>
   <p class="msg info">${user?`Đang đăng nhập: <b>${esc(user.email)}</b>.`:'Chưa đăng nhập.'}</p>
   <div class="row"><button class="btn" type="button" data-a="xuat">Tải dữ liệu về máy (JSON)</button><label class="btn" for="nhap">Nhập từ file<input id="nhap" type="file" accept="application/json" hidden></label>
   <button class="btn" type="button" data-a="chuyen">Chuyển từ trang Lịch tập chạy lại</button>
   <button class="btn" type="button" data-a="xoa" style="color:var(--bd)">${user?'Xoá toàn bộ dữ liệu (máy này và tài khoản)':'Xoá dữ liệu trên máy này'}</button></div>
+  <h3 style="margin-top:28px">Nhập lịch sử từ Garmin</h3>${nhapBox()}
   <p class="foot">Dùng chung máy với người khác: đăng nhập tài khoản của mình, dùng xong bấm Đăng xuất. Đăng xuất sẽ xoá bản trên máy, dữ liệu vẫn còn trong tài khoản.</p>`;
 }
 
@@ -733,6 +840,7 @@ document.addEventListener('click',async ev=>{
   const dot=t.closest('.dot');if(dot){const k=dot.dataset.k,i=+dot.dataset.i,v=!isDone(k,i);const arr=S.done[k]||(S.done[k]=[]);arr[i]=v?1:0;if(!v&&!arr.some(Boolean))delete S.done[k];save();dot.setAttribute('aria-pressed',String(v));prog();
     if(k.endsWith(':run')){ttw();const b=document.querySelector(`.day[data-go="${k.slice(0,10)}"]`);if(b){const c=b.querySelector('.ck');if(v&&!c)b.insertAdjacentHTML('afterbegin','<span class="ck">✓</span>');if(!v&&c)c.remove()}}return}
   const dhb=t.closest('[data-dh]');if(dhb){const L=S.log[dhb.dataset.d]||(S.log[dhb.dataset.d]={});const P=plan(),d=dayOf(P,dhb.dataset.d);L.dh=dhb.dataset.dh===d.dh?undefined:dhb.dataset.dh;if(L.dh===undefined)delete L.dh;if(!Object.keys(L).length)delete S.log[dhb.dataset.d];save();const lg=document.querySelector('.log[data-log]');if(lg)keep(()=>{lg.outerHTML=logForm(P,dayOf(P,d.date))});return}
+  const hsb=t.closest('[data-hs]');if(hsb){const L=S.log[hsb.dataset.hs];if(L){L.hetSuc=+hsb.dataset.v;save();keep(render)}return}
   const tm=t.closest('.tm');if(tm){startT(tm);return}
   if(t.closest('#rst')){const d=CUR;Object.keys(S.done).forEach(k=>{if(k.startsWith(d+':')&&!k.endsWith(':run'))delete S.done[k]});save();render();return}
   const sg=t.closest('[data-seg]');if(sg){setP(D,sg.dataset.seg,sg.dataset.v);if(sg.dataset.seg==='muc.loai'){D.muc.km=sg.dataset.v==='trail'?'':10;D.muc.dPlus=''}keep(()=>{$('#view').innerHTML=vHoSo(!S.hs);xemTruoc()});return}
@@ -766,6 +874,7 @@ document.addEventListener('click',async ev=>{
 function keep(fn){const y=scrollY;fn();window.scrollTo(0,y)}
 document.addEventListener('change',ev=>{
   const t=ev.target;
+  if(t.id==='nhieu'&&t.files.length){nhapNhieu([...t.files]);t.value='';return}
   if(t.dataset.ff&&t.files[0]){napFile(t.files[0],t.dataset.ff);t.value='';return}
   if(t.id==='nhap'&&t.files[0]){t.files[0].text().then(x=>{try{const d=JSON.parse(x);if(!d||typeof d!=='object'||!('hs' in d))throw 0;if(!confirm('Thay dữ liệu hiện tại bằng dữ liệu trong file?'))return;S={...trong(),hs:d.hs,log:d.log||{},done:d.done||{},sang:d.sang||{},giay:d.giay||[],anim:S.anim};save();PLAN=null;D=null;location.hash='#/';render()}catch(e){alert('File không đúng định dạng.')}});return}
   if(t.dataset.l&&(t.tagName==='SELECT'||t.type==='checkbox')){luuLog(t);return}
