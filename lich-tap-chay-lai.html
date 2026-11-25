@@ -128,6 +128,29 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
 @media(max-width:720px){.run,.zgrid{grid-template-columns:1fr}}
 @media(max-width:600px){.chk{grid-template-columns:1fr 1fr}.chk .vd{grid-column:1/-1}input.n{width:100%}.day{min-height:70px}.day .dn{font-size:24px}.day i{font-size:13px}.lg{grid-template-columns:1fr}.tm{margin-left:0}}
 @media(prefers-reduced-motion:no-preference){.dot{transition:background .15s,border-color .15s}}
+.wk{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:20px;font-size:15px}
+.wk span{opacity:.95}
+.nv{appearance:none;min-width:44px;height:44px;padding:0 12px;border-radius:22px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font:600 22px/1 "Be Vietnam Pro",sans-serif;cursor:pointer}
+.nv.td{font-size:14px}
+.nv:hover:not(:disabled){border-color:#fff}
+.nv:disabled{opacity:.3;cursor:default}
+.nv:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.week{margin-top:12px}
+.note a{color:var(--trk);font-weight:600}
+.lgw{grid-column:1/-1;border-top:1.5px solid var(--line);padding-top:18px}
+.lgw h3{font-size:24px;margin-bottom:4px}
+.lg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5em),1fr));gap:12px;margin-top:12px;align-items:end}
+.lg2 .w{grid-column:1/-1}
+.rv{display:grid;gap:8px;margin-top:16px;max-width:80ch}
+.rv p{margin:0;padding:10px 14px;border-radius:10px;font-size:15px;background:var(--pan)}
+.rv .ok{background:color-mix(in srgb,var(--z3) 16%,var(--bg))}
+.rv .warn{background:color-mix(in srgb,var(--z4) 20%,var(--bg))}
+.rv .bad{background:color-mix(in srgb,var(--z5) 20%,var(--bg))}
+.rv .vh{font-weight:700;font-size:16px}
+.stt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:16px 0 8px}
+.stt div{background:var(--pan);border-radius:14px;padding:14px 16px}
+.stt b{display:block;font:700 34px/1 "Barlow Condensed","Arial Narrow",sans-serif;color:var(--trk)}
+.stt span{display:block;margin-top:6px;font-size:14px;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -135,7 +158,8 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
   <div class="band"><div class="wrap">
     <a class="home" href="./">← Trang chủ</a> <a class="home" href="bai-tap-bo-tro.html">Bài tập bổ trợ →</a> <a class="home" href="ke-hoach-nha-minh.html">Kế hoạch nhà mình →</a> <button class="home anim" id="anim" type="button">Tắt hình chuyển động</button> <button class="home" id="sync" type="button" hidden></button>
     <h1>Lịch tập chạy lại</h1>
-    <p class="lede">Tuần 23–29/11/2026: 22 km chạy nhẹ và 2 buổi sức mạnh chân. Chạy theo nhịp tim, không theo pace.</p>
+    <p class="lede" id="lede"></p>
+    <div class="wk" id="wk"></div>
     <nav class="week" id="week" aria-label="Các ngày trong tuần"></nav>
   </div></div>
   <div class="lanes"></div>
@@ -143,6 +167,24 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
 
 <main>
   <section class="band"><div class="wrap" id="panel"></div></section>
+
+  <section class="band"><div class="wrap">
+    <h2>Trạng thái và mục tiêu</h2>
+    <p class="note" style="margin-top:8px">Đánh giá từ buổi 6 km sáng 25/11 trên Garmin, trời khoảng 26°C và ẩm.</p>
+    <div class="stt">
+      <div><b>8:28/km</b><span>Pace cả buổi, tim trung bình 148. Riêng lúc chạy khoảng 8:15/km (ước tính, bỏ các đoạn đi bộ).</span></div>
+      <div><b>5 phút</b><span>Đi bộ xen kẽ trong 51 phút để giữ tim dưới 155. Cao nhất 158.</span></div>
+      <div><b>167</b><span>Guồng chân lúc chạy (km 3, 4, 6). Số 162 Garmin báo là tính cả lúc đi bộ.</span></div>
+      <div><b>7:10/km</b><span>Km đầu nhanh nhất buổi, guồng 157, bước dài 0,88 m: lao đi quá sớm. Cần sửa nhất.</span></div>
+      <div><b>147 → 150</b><span>Tim km 2 so với km 6, dù km 6 nhanh hơn. Tim không trôi lên, nền sức bền ổn.</span></div>
+      <div><b>0/10</b><span>Không đau. Đây là điều kiện để tăng dần khối lượng.</span></div>
+    </div>
+    <div class="notes">
+      <div><h3>Mục tiêu đến 17/1/2027</h3><p>Ở tim 145–150 chạy liên tục không phải đi bộ, pace khoảng 7:45–8:00/km. Chạy dài 14 km. 4 buổi mỗi tuần, 30–35 km.</p></div>
+      <div><h3>Khi nào lên tuần mới</h3><p>Tuần trước không đau, tim trung bình các buổi chạy nhẹ không quá 152, kiểm tra buổi sáng đạt ít nhất 4 ngày. Chưa đạt thì tuần này chạy lại số km của tuần trước.</p></div>
+      <div><h3>Cài trên đồng hồ</h3><p>Trong cài đặt bài Chạy: cảnh báo nhịp tim cao ở 155 và metronome 166. Vùng nhịp tim trên đồng hồ đang tính khác trang này (Easy là 148–161), cứ theo trần 155 ở đây.</p></div>
+    </div>
+  </div></section>
 
   <section class="band zone"><div class="wrap">
     <div class="zgrid">
@@ -162,7 +204,7 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
       <div><h3>Ngủ trước 23h</h3><p>Thể lực tăng lên trong lúc ngủ và nghỉ, không phải trong lúc tập.</p></div>
       <div><h3>Cân mỗi tuần</h3><p>Cân giảm nghĩa là bạn đang ăn thiếu so với lượng tập.</p></div>
     </div>
-    <p class="foot">Ô đánh dấu và các số bạn nhập chỉ được lưu trên trình duyệt này.</p>
+    <p class="foot">Ô đánh dấu và số liệu lưu trên trình duyệt này. Đăng nhập Google bằng nút ở đầu trang thì lưu thêm lên mạng, mở ở máy khác vẫn thấy.</p>
   </div></section>
 </main>
 
@@ -222,25 +264,78 @@ const E={
 };
 const OFF_EX=['dcalf','kick','abd','sit','obal','dpush'],OFF_ST=['quad','hipf'];
 
-const LEG=['bridge','squat','calf','clam','bal'];
-const W=[
-  {id:'t2',d:'T2',n:23,iso:'2026-11-23',full:'Thứ 2, 23/11',tag:'Core',kind:'gym',title:'Phục hồi và core',sub:'Không chạy. Trưa hoặc chiều đi bộ nhanh, tối tập core và thân trên, không dùng chân.',mini:['walk','stretch'],ex:['plank','side','bug','bird','push']},
-  {id:'t3',d:'T3',n:24,iso:'2026-11-24',full:'Thứ 3, 24/11',tag:'Chân',kind:'gym',office:1,title:'Sức mạnh chân',sub:'Chỉ tập khi kiểm tra buổi sáng đạt và chân chỉ còn ê nhẹ. Nếu chưa, hôm nay chỉ đi bộ 30 phút và giãn cơ.',mini:['stretch'],ex:LEG},
-  {id:'t4',d:'T4',n:25,iso:'2026-11-25',full:'Thứ 4, 25/11',tag:'6 km',kind:'run',km:6,title:'Chạy nhẹ 6 km',sub:'Buổi chạy đầu tiên sau 14,5 km hôm 22/11. Chạy đều, không tăng tốc ở cuối.'},
-  {id:'t5',d:'T5',n:26,iso:'2026-11-26',full:'Thứ 5, 26/11',tag:'Chân',kind:'gym',office:1,title:'Sức mạnh chân',sub:'Lặp lại bài của thứ 3. Nếu chân còn mỏi sau buổi chạy hôm qua thì bớt một hiệp mỗi bài.',mini:['stretch'],ex:LEG},
-  {id:'t6',d:'T6',n:27,iso:'2026-11-27',full:'Thứ 6, 27/11',tag:'6 km',kind:'run',km:6,title:'Chạy nhẹ 6 km',sub:'Giống thứ 4. Ở cùng pace mà nhịp tim thấp hơn thứ 4 là thể lực đang quay lại.'},
-  {id:'t7',d:'T7',n:28,iso:'2026-11-28',full:'Thứ 7, 28/11',tag:'Nghỉ',kind:'rest',title:'Nghỉ',sub:'Nghỉ hoàn toàn hoặc chỉ đi bộ nhẹ. Ngủ đủ 7–8 tiếng để chủ nhật chạy dài.'},
-  {id:'cn',d:'CN',n:29,iso:'2026-11-29',full:'Chủ nhật, 29/11',tag:'10 km',kind:'run',km:10,long:1,title:'Chạy dài 10 km',sub:'Buổi dài nhất tuần nhưng vẫn ở vùng nhẹ. Chạy trước 6h để tránh nóng.'}
+const LEG=['bridge','squat','calf','clam','bal'],CORE=['plank','side','bug','bird','push'],CORE2=['plank','side','bug','bird'];
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addD=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return ymd(d)};
+const dm=s=>(+s.slice(8,10))+'/'+(+s.slice(5,7));
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* Lịch 8 tuần soạn theo buổi 6 km ngày 25/11 (Garmin): tim TB 148, khoảng 8:15/km lúc chạy, đi bộ 5 phút, không đau.
+   r: số km theo thứ trong tuần (0 = thứ 2 … 6 = chủ nhật). st: ngày có strides. test: ngày chạy kiểm tra 5 km. de: tuần giảm tải.
+   Ngày không có km: thứ 2 phục hồi và core, thứ 3 và thứ 5 sức mạnh chân, thứ 7 nghỉ. */
+const START='2026-11-23';
+const PLAN=[
+  {r:{2:6,4:6,6:10},f:'Tuần đầu sau buổi 14,5 km ngày 22/11: giữ tim dưới 155, chưa tăng khối lượng.',
+   s:{2:'Buổi chạy đầu tiên sau 22/11. Chạy đều, không tăng tốc ở cuối.',4:'Giống thứ 4 nhưng km đầu chậm hơn: hôm thứ 4 km 1 nhanh nhất buổi (7:10/km, guồng 157, bước dài). Bật metronome 166 trên đồng hồ.'}},
+  {r:{2:6,4:7,6:11},f:'24 km. Chỉ tăng khi tuần trước không đau và tim trung bình các buổi chạy nhẹ không quá 152.'},
+  {r:{2:7,4:7,6:12},st:[4],f:'26 km. Thêm 4 lần chạy nhanh 20 giây (strides) cuối buổi thứ 6 để tập lại guồng chân.'},
+  {r:{2:6,4:5,6:9},test:4,de:1,f:'Tuần giảm tải, 20 km, để cơ thể hấp thụ 3 tuần trước. Thứ 6 chạy kiểm tra 5 km để so với ngày 25/11.'},
+  {r:{2:7,4:8,6:13},st:[4],f:'28 km. Đã 4 tuần không đau thì buổi tập chân ở nhà chuyển sang bài có tạ.'},
+  {r:{0:4,2:7,4:7,6:13},st:[4],f:'31 km. Thêm buổi chạy thứ 4 rất nhẹ vào thứ 2, chạy xong tập core.'},
+  {r:{0:5,2:7,4:8,6:14},st:[4],f:'34 km, tuần nặng nhất của giai đoạn này.'},
+  {r:{0:4,2:6,4:5,6:10},test:4,de:1,f:'Tuần giảm tải, 25 km, và kiểm tra lại 5 km. Sau tuần này gửi số liệu Garmin để soạn giai đoạn tiếp theo.'}
 ];
+const DN=['T2','T3','T4','T5','T6','T7','CN'],DF=['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật'];
+const SUB={
+  core:'Không chạy. Trưa hoặc chiều đi bộ nhanh, tối tập core và thân trên, không dùng chân.',
+  leg1:'Chỉ tập khi kiểm tra buổi sáng đạt và chân chỉ còn ê nhẹ. Nếu chưa, hôm nay chỉ đi bộ 30 phút và giãn cơ.',
+  leg2:'Lặp lại bài của thứ 3. Nếu chân còn mỏi sau buổi chạy hôm qua thì bớt một hiệp mỗi bài.',
+  rest:'Nghỉ hoàn toàn hoặc chỉ đi bộ nhẹ. Ngủ đủ 7–8 tiếng để chủ nhật chạy dài.',
+  rec:'Chậm nhất tuần, tim dưới 145, đi bộ xen kẽ thoải mái. Chạy xong tập core ở dưới.',
+  easy:'Chạy đều ở Z2. Km đầu chậm nhất buổi, bước ngắn, không tăng tốc ở cuối.',
+  st:'Chạy đều ở Z2, km đầu chậm nhất buổi. Cuối buổi chạy 4 lần nhanh 20 giây (strides).',
+  test:'Khởi động 10 phút, rồi chạy 5 km trên cung đường quen, giữ tim 145–150 suốt bài. Pace trung bình nhanh hơn ngày 25/11 là thể lực đã lên.',
+  long:'Buổi dài nhất tuần nhưng vẫn ở vùng nhẹ. Chạy trước 6h để tránh nóng. Nửa sau nếu tim hay chạm 155 thì chạy 4 phút, đi bộ 1 phút đến hết.'
+};
+const WEEKS=PLAN.map((p,w)=>{
+  const mon=addD(START,w*7),s=p.s||{};
+  const days=DN.map((dn,i)=>{
+    const iso=addD(mon,i),km=p.r[i],o={id:iso,w,d:dn,n:+iso.slice(8,10),full:DF[i]+', '+dm(iso)};
+    if(km){
+      const long=i===6,rec=i===0,test=p.test===i,st=(p.st||[]).includes(i);
+      Object.assign(o,{kind:'run',km,long,rec,test,st,tag:km+' km',
+        title:test?'Kiểm tra 5 km':rec?'Chạy hồi phục '+km+' km':long?'Chạy dài '+km+' km':'Chạy nhẹ '+km+' km',
+        sub:s[i]||SUB[test?'test':rec?'rec':long?'long':st?'st':'easy'],ex:rec?CORE2:undefined});
+    }
+    else if(i===0)Object.assign(o,{kind:'gym',tag:'Core',title:'Phục hồi và core',sub:s[i]||SUB.core,mini:['walk','stretch'],ex:CORE});
+    else if(i===1||i===3)Object.assign(o,{kind:'gym',office:1,tag:'Chân',title:'Sức mạnh chân',sub:(s[i]||SUB[i===1?'leg1':'leg2'])+(p.de?' Tuần giảm tải: mỗi bài bớt một hiệp.':''),mini:['stretch'],ex:LEG});
+    else Object.assign(o,{kind:'rest',tag:'Nghỉ',title:'Nghỉ',sub:s[i]||SUB.rest});
+    return o;
+  });
+  return {w,mon,days,km:Object.values(p.r).reduce((a,b)=>a+b,0),f:p.f,de:p.de};
+});
+const DAYS=WEEKS.flatMap(x=>x.days),byId=id=>DAYS.find(d=>d.id===id);
+const FIRST=DAYS[0].id,LAST=DAYS[DAYS.length-1].id;
 
 const Z=[['Z1',126,139,'Hồi phục','--z1'],['Z2',139,152,'Chạy nhẹ','--z2'],['Z3',152,165,'Trung bình','--z3'],['Z4',165,178,'Ngưỡng','--z4'],['Z5',178,191,'VO2max','--z5']];
-const pc=b=>((b-126)/(191-126)*100).toFixed(1);
+const pc=b=>((Math.min(191,Math.max(126,b))-126)/(191-126)*100).toFixed(1);
 const zbar=(mk,hi)=>`<div class="zb">${mk.map(([b,t])=>`<div class="mk" style="left:${pc(b)}%">${t}</div>`).join('')}<div class="zs">${Z.map((z,i)=>`<div class="z${hi>=0&&i!==hi?' dim':''}" style="background:var(${z[4]})">${z[0]}</div>`).join('')}</div><div class="zl">${Z.map(z=>`<span><b>${z[1]}–${z[2]}</b>${z[3]}</span>`).join('')}</div></div>`;
 
-const def=()=>({done:{},chk:{t2:{hr:64,hrv:31}},log:{},mode:{}});
+/* Bản cũ dùng mã ngày t2…cn của tuần 23–29/11; đổi sang ngày thật để các tuần không lẫn đánh dấu của nhau. */
+const OLD={t2:'2026-11-23',t3:'2026-11-24',t4:'2026-11-25',t5:'2026-11-26',t6:'2026-11-27',t7:'2026-11-28',cn:'2026-11-29'};
+function migrate(s){
+  s.mode=s.mode||{};s.done=s.done||{};s.chk=s.chk||{};s.log=s.log||{};
+  for(const o of [s.done,s.chk,s.log,s.mode])for(const k of Object.keys(o)){const p=k.split(':');if(OLD[p[0]]){p[0]=OLD[p[0]];const nk=p.join(':');if(!(nk in o))o[nk]=o[k];delete o[k];}}
+  /* Điền sẵn số liệu Garmin của buổi 25/11 một lần (ô nào đã có số thì giữ). */
+  if(!s.pf25){const l=s.log['2026-11-25']||(s.log['2026-11-25']={}),pf={hr:'148',hrmax:'158',pace:'8:28',cad:'167',walk:'5',pain:'0'};for(const k in pf)if(l[k]===''||l[k]==null)l[k]=pf[k];s.pf25=1;}
+  return s;
+}
+const def=()=>({done:{},chk:{'2026-11-23':{hr:64,hrv:31}},log:{},mode:{}});
 let S;
 try{S=JSON.parse(localStorage.getItem(K))||def()}catch(e){S=def()}
-S.mode=S.mode||{};S.done=S.done||{};S.chk=S.chk||{};S.log=S.log||{};
+migrate(S);
+try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}
 /* Hình minh họa mặc định luôn chuyển động (kể cả khi máy bật "giảm chuyển động"); nút trên đầu trang cho tắt, lưu trên máy. */
 const RM=()=>S.anim===false;
 const animLabel=()=>RM()?'Bật hình chuyển động':'Tắt hình chuyển động';
@@ -250,12 +345,11 @@ const lists=d=>(d.office&&mode(d.id)==='office')?{mini:[],ex:OFF_EX,st:OFF_ST}:{
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(SYNC)SYNC.changed()};
 /* Đồng bộ giữa các máy khi đăng nhập Google (dong-bo.js). Nút "Tắt hình chuyển động" chỉ áp dụng cho từng máy. */
 const SYNC=window.DongBo?DongBo.start({key:'lich-tap',btn:document.getElementById('sync'),get:()=>S,local:['anim'],
-  apply:d=>{const a=S.anim;S={...def(),...d};if(a!==undefined)S.anim=a;S.mode=S.mode||{};S.done=S.done||{};S.chk=S.chk||{};S.log=S.log||{};save();render();}}):null;
+  apply:d=>{const a=S.anim;S=migrate({...def(),...d});if(a!==undefined)S.anim=a;save();render();}}):null;
 
-const now=new Date();
-const iso=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-const todayId=(W.find(d=>d.iso===iso)||{}).id;
-let cur=(W.find(d=>'#'+d.id===location.hash)||{}).id||todayId||'t2';
+const TODAY=ymd(new Date());
+function hashDay(){const h=decodeURIComponent(location.hash.slice(1)),id=OLD[h]||h;return byId(id)?id:null}
+let cur=hashDay()||(byId(TODAY)?TODAY:(TODAY<FIRST?FIRST:LAST));
 
 const KT='0;.4;.55;.95;1',KS='.42 0 .58 1;0 0 1 1;.42 0 .58 1;0 0 1 1';
 const am=(at,a,b,d)=>a===b?'':`<animate attributeName="${at}" values="${a};${b};${b};${a};${a}" keyTimes="${KT}" calcMode="spline" keySplines="${KS}" dur="${d}s" repeatCount="indefinite"/>`;
@@ -288,13 +382,72 @@ function verdict(c){
 }
 function check(id){
   const c=S.chk[id]||{},[cl,t]=verdict(c);
-  return `<div class="chk"><p class="kick">Kiểm tra lúc thức dậy: đạt khi nhịp tim khi ngủ không quá 73 và HRV từ 29 trở lên</p><label class="f" for="hr-${id}">Nhịp tim khi ngủ<input class="n" id="hr-${id}" data-c="${id}" data-f="hr" type="number" inputmode="numeric" min="30" max="130" value="${c.hr??''}"></label><label class="f" for="hrv-${id}">HRV qua đêm (ms)<input class="n" id="hrv-${id}" data-c="${id}" data-f="hrv" type="number" inputmode="numeric" min="5" max="200" value="${c.hrv??''}"></label><div class="vd ${cl}" id="vd">${t}</div></div>`;
+  return `<div class="chk"><p class="kick">Kiểm tra lúc thức dậy: đạt khi nhịp tim khi ngủ không quá 73 và HRV từ 29 trở lên</p><label class="f" for="hr-${id}">Nhịp tim khi ngủ<input class="n" id="hr-${id}" data-c="${id}" data-f="hr" type="number" inputmode="numeric" min="30" max="130" value="${esc(c.hr)}"></label><label class="f" for="hrv-${id}">HRV qua đêm (ms)<input class="n" id="hrv-${id}" data-c="${id}" data-f="hrv" type="number" inputmode="numeric" min="5" max="200" value="${esc(c.hrv)}"></label><div class="vd ${cl}" id="vd">${t}</div></div>`;
 }
+
+/* ---- Nhận xét sau buổi chạy ---- */
+function paceS(v){
+  if(v==null||v==='')return null;
+  const m=String(v).trim().match(/^(\d{1,2})\s*[:.'’,]\s*(\d{1,2})$/);
+  if(m)return +m[1]*60+ +m[2];
+  const x=parseFloat(String(v).replace(',','.'));return isFinite(x)&&x>=3&&x<=20?Math.round(x*60):null;
+}
+const fmtP=s=>Math.floor(s/60)+':'+pad(Math.round(s%60));
+const logNum=(l,k)=>{const v=l[k];if(v===''||v==null)return null;const x=+String(v).replace(',','.');return isFinite(x)?x:null};
+const bpk=l=>{const h=logNum(l,'hr'),p=paceS(l.pace);return h&&p?Math.round(h*p/60):null};
+function review(d){
+  const L=S.log[d.id]||{},hr=logNum(L,'hr'),mx=logNum(L,'hrmax'),cad=logNum(L,'cad'),wk=logNum(L,'walk'),pn=logNum(L,'pain'),ps=paceS(L.pace);
+  if([hr,mx,cad,wk,pn,ps].every(x=>x==null))return '<p class="info">Chạy xong, nhập số liệu từ Garmin vào các ô trên. Nhận xét sẽ hiện ở đây.</p>';
+  const o=[],add=(c,t)=>o.push([c,t]),top=d.rec?145:152;
+  if(pn!=null){
+    if(pn>=4)add('bad',`Đau ${pn}/10: nghỉ chạy ít nhất 2 ngày, chỉ đi bộ và giãn cơ. Sau 3 ngày vẫn đau thì nên đi khám.`);
+    else if(pn>=1)add('warn',`Đau nhẹ ${pn}/10: theo dõi sáng mai. Còn đau thì buổi chạy tới bớt 1–2 km, đau tăng thì nghỉ.`);
+    else add('ok','Không đau: đi tiếp theo lịch.');
+  }
+  if(hr!=null){
+    if(hr>top)add('warn',`Nhịp tim trung bình ${hr}, cao hơn ${top}. Buổi tới chạy chậm hơn 15–30 giây mỗi km hoặc đi bộ sớm hơn. Trời nóng ẩm và ngủ ít cũng đẩy tim lên.`);
+    else if(hr>=(d.rec?120:139))add('ok',`Nhịp tim trung bình ${hr}: đúng vùng ${d.rec?'hồi phục':'chạy nhẹ'}.`);
+    else add('ok',`Nhịp tim trung bình ${hr}: thấp, rất nhẹ nhàng. Vẫn ổn, không cần cố chạy nhanh hơn.`);
+  }
+  if(mx!=null){
+    if(mx>160)add('warn',`Có lúc tim lên ${mx}. Khi đồng hồ báo 155 thì đi bộ ngay, đừng đợi.`);
+    else if(mx>155)add('info',`Cao nhất ${mx}, vượt trần 155 một chút. Chỉ vài chục giây thì không sao.`);
+  }
+  if(cad!=null){
+    if(cad<160)add('warn',`Guồng chân ${cad}: thấp, bước đang dài. Bật metronome 166, bước ngắn lại, chân đặt xuống ngay dưới người.${wk?' Nếu đây là số trung bình cả buổi thì đã bị các đoạn đi bộ kéo xuống, nên lấy số của các km chạy liên tục.':''}`);
+    else if(cad<166)add('info',`Guồng chân ${cad}: hơi thấp, nhắm 166–170. Metronome 166 giúp giữ nhịp.`);
+    else add('ok',`Guồng chân ${cad}: tốt.`);
+  }
+  if(wk!=null&&wk>0){const tot=ps?ps*d.km/60:null,p=tot?Math.round(wk/tot*100):null;add('info',`Đi bộ ${wk} phút${p!=null?` (khoảng ${p}% thời gian)`:''} để giữ tim là đúng cách. Các tuần tới số phút đi bộ sẽ giảm dần ở cùng nhịp tim, đó là dấu hiệu thể lực lên.`)}
+  else if(wk===0&&hr!=null&&hr<=top)add('ok','Chạy liên tục không phải đi bộ mà tim vẫn trong vùng.');
+  const b=bpk(L);
+  if(b){
+    const prev=[...DAYS].reverse().find(x=>x.kind==='run'&&x.id<d.id&&bpk(S.log[x.id]||{}));
+    let t=`Mỗi km tốn khoảng ${b} nhịp tim (nhịp tim trung bình × số phút mỗi km). Số này giảm dần là thể lực đang lên.`;
+    if(prev){const pb=bpk(S.log[prev.id]),ch=(b-pb)/pb*100;t+=` Buổi ${dm(prev.id)}: ${pb}.`;
+      if(ch<=-2)add('ok',t+' Lần này ít hơn: tốt.');
+      else if(ch>=3)add('info',t+' Lần này nhiều hơn: có thể do nóng, đường khác, hoặc cơ thể chưa hồi phục. Xem lại kiểm tra buổi sáng.');
+      else add('info',t+' Gần như không đổi.');}
+    else add('info',t);
+  }
+  if(d.test&&ps)add('info',`Kiểm tra 5 km: pace ${fmtP(ps)}/km. Ngày 25/11 khoảng 8:15/km lúc chạy ở tim 148.`);
+  const lv=o.some(x=>x[0]==='bad')?['bad','nghỉ và theo dõi']:o.some(x=>x[0]==='warn')?['warn','được, nhưng buổi tới cần chỉnh']:['ok','tốt, đi tiếp theo lịch'];
+  return `<p class="vh ${lv[0]}">Nhận xét: ${lv[1]}</p>`+o.map(([c,t])=>`<p class="${c}">${t}</p>`).join('');
+}
+const LF=[['hr','Nhịp tim TB',1],['hrmax','Nhịp tim cao nhất',1],['pace','Pace TB (phút/km)',0,'8:28'],['cad','Guồng chân lúc chạy',1],['walk','Số phút đi bộ',1],['pain','Đau (0–10)',1,'0 là không đau']];
 function runCard(d){
-  const lg=S.log[d.id]||{},key=d.id+':run';
-  const rows=[['Nhịp tim','139–152, không quá 155'],['Cadence','172–175 bước/phút (22/11 là 167)'],['Pace','Để nhịp tim quyết định. 7:30–8:00 là bình thường'],['Vượt 155','Đi bộ đến khi tim về khoảng 145 rồi chạy tiếp']];
-  if(d.long)rows.push(['Nước','Mang nước có điện giải, uống mỗi 20–30 phút']);
-  return `<div class="run"><div><div class="km">${d.km}<small>km</small></div><p class="sub">Không tăng tốc ở cuối buổi. Nhịp tim lên quá cao thì đi bộ xen kẽ là đúng.</p><div class="sets" style="margin-top:16px"><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">Đã chạy xong</button></div></div><div>${rows.map(r=>`<div class="rw"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}${zbar([[155,'Trần 155']],1)}<div class="lg"><label class="f" for="lh-${d.id}">Nhịp tim TB<input id="lh-${d.id}" data-l="${d.id}" data-f="hr" type="number" inputmode="numeric" value="${lg.hr??''}"></label><label class="f" for="ln-${d.id}">Ghi chú sau buổi<input id="ln-${d.id}" data-l="${d.id}" data-f="nt" type="text" placeholder="Pace, chỗ đau, cảm giác" value="${(lg.nt??'').replace(/"/g,'&quot;')}"></label></div></div></div>`;
+  const lg=S.log[d.id]||{},key=d.id+':run',r=[];
+  r.push(['Nhịp tim',d.rec?'Dưới 145, chậm nhất tuần':d.test?'145–150 suốt 5 km, không quá 155':'139–152, không quá 155']);
+  r.push(['Guồng chân','166–172 bước/phút. Km đầu bước ngắn, không lao đi']);
+  r.push(d.test?['Pace','Ghi lại để so: 25/11 khoảng 8:15/km lúc chạy ở tim 148']:['Pace','Để nhịp tim quyết định. Hiện 8:15–8:45/km là đúng']);
+  r.push(['Vượt 155','Đi bộ đến khi tim về khoảng 145 rồi chạy tiếp']);
+  if(d.test)r.push(['Khởi động','10 phút đi bộ nhanh rồi chạy thật chậm, xong mới bắt đầu tính 5 km']);
+  if(d.st)r.push(['Cuối buổi','4 × 20 giây chạy nhanh thoải mái (strides), đi bộ 1 phút giữa các lần']);
+  if(d.long)r.push(['Nước','Mang nước có điện giải, uống mỗi 20–30 phút']);
+  r.push(['Thời gian','Khoảng '+Math.round(d.km*8.5/5)*5+' phút']);
+  const f=LF.map(([k,lb,n,ph])=>`<label class="f" for="l${k}-${d.id}">${lb}<input id="l${k}-${d.id}" data-l="${d.id}" data-f="${k}" type="${n?'number':'text'}" inputmode="${n?'numeric':'decimal'}"${ph?` placeholder="${ph}"`:''} value="${esc(lg[k])}"></label>`).join('');
+  return `<div class="run"><div><div class="km">${d.km}<small>km</small></div><p class="sub">Không tăng tốc ở cuối buổi. Nhịp tim lên quá cao thì đi bộ xen kẽ là đúng.</p><div class="sets" style="margin-top:16px"><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">Đã chạy xong</button></div></div><div>${r.map(x=>`<div class="rw"><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}${zbar([[155,'Trần 155']],1)}</div>
+  <div class="lgw"><h3>Sau buổi chạy</h3><p class="hint">Lấy số trên Garmin Connect. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p><div class="lg2">${f}<label class="f w" for="lgl-${d.id}">Link Garmin công khai (nếu muốn gửi Claude xem chi tiết)<input id="lgl-${d.id}" data-l="${d.id}" data-f="gl" type="url" placeholder="https://connect.garmin.com/app/activity/…" value="${esc(lg.gl)}"></label><label class="f w" for="ln-${d.id}">Ghi chú<input id="ln-${d.id}" data-l="${d.id}" data-f="nt" type="text" placeholder="Cảm giác, chỗ mỏi, thời tiết" value="${esc(lg.nt)}"></label></div><div class="rv" id="rv">${review(d)}</div></div></div>`;
 }
 function counts(d){
   let t=0,n=0;
@@ -302,26 +455,34 @@ function counts(d){
   for(const k of [...L.mini,...L.ex,...L.st]){const e=E[k],c=e.mini?1:e.sets,a=S.done[d.id+':'+k]||[];t+=c;for(let i=0;i<c;i++)if(a[i])n++;}
   return [n,t];
 }
-function prog(){const d=W.find(x=>x.id===cur),el=document.getElementById('pg');if(el&&d.ex){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
+function prog(){const d=byId(cur),el=document.getElementById('pg');if(el&&d.ex){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
+function zones(){
+  const mk=[[170,'22/11: TB 170']],last=[...DAYS].reverse().find(x=>x.kind==='run'&&x.id<=TODAY&&logNum(S.log[x.id]||{},'hr'));
+  if(last){const h=logNum(S.log[last.id],'hr');if(Math.abs(pc(h)-pc(170))<16)mk.length=0;mk.push([h,dm(last.id)+': TB '+h]);}
+  document.getElementById('zones').innerHTML=zbar(mk,-1);
+}
 
 function render(){
-  document.getElementById('week').innerHTML=W.map(d=>`<button class="day" data-id="${d.id}" aria-pressed="${d.id===cur}" aria-label="${d.full}: ${d.title}">${d.id===todayId?'<span class="tdot"></span>':''}<b>${d.d}</b><span class="dn">${d.n}</span><i>${d.tag}</i></button>`).join('');
-  const d=W.find(x=>x.id===cur);
+  const d=byId(cur),wk=WEEKS[d.w];
+  document.getElementById('lede').textContent=wk.f+(TODAY>LAST?' Đã hết lịch 8 tuần: gửi số liệu Garmin để soạn giai đoạn tiếp theo.':' Chạy theo nhịp tim, không theo pace.');
+  document.getElementById('wk').innerHTML=`<button class="nv" data-nw="-1" type="button" aria-label="Tuần trước"${wk.w===0?' disabled':''}>‹</button><span><b>Tuần ${wk.w+1}/${WEEKS.length}</b> · ${dm(wk.mon)}–${dm(addD(wk.mon,6))} · ${wk.km} km${wk.de?' · giảm tải':''}</span><button class="nv" data-nw="1" type="button" aria-label="Tuần sau"${wk.w===WEEKS.length-1?' disabled':''}>›</button>${byId(TODAY)&&byId(TODAY).w!==wk.w?'<button class="nv td" data-td="1" type="button">Hôm nay</button>':''}`;
+  document.getElementById('week').innerHTML=wk.days.map(x=>`<button class="day" data-id="${x.id}" aria-pressed="${x.id===cur}" aria-label="${x.full}: ${x.title}">${x.id===TODAY?'<span class="tdot"></span>':''}<b>${x.d}</b><span class="dn">${x.n}</span><i>${x.tag}</i></button>`).join('');
   let body='';
   if(d.kind==='gym'){
     const L=lists(d),off=d.office&&mode(d.id)==='office';
     const seg=d.office?`<div class="seg" role="group" aria-label="Nơi tập"><button data-m="office" aria-pressed="${off}">Ở công ty, 12 phút</button><button data-m="home" aria-pressed="${!off}">Ở nhà, có thảm</button></div>`:'';
-    body=check(d.id)+seg
+    const more=d.office&&!off&&d.w>=2?`<p class="note">${d.w>=4?'Từ tuần này, ở nhà nên làm buổi <a href="bai-tap-bo-tro.html#ta">Sức mạnh với tạ</a> trên trang Bài tập bổ trợ. Không có tạ thì làm các bài dưới.':'Thấy các bài dưới đã nhẹ thì làm buổi <a href="bai-tap-bo-tro.html#kt">Sức mạnh không tạ</a> trên trang Bài tập bổ trợ.'}</p>`:'';
+    body=check(d.id)+seg+more
       +(off?'<p class="note">Đứng cạnh bàn làm việc, không cần thảm, ít ra mồ hôi. Tập lần lượt 6 bài rồi lặp lại thêm một vòng. Ăn xong thì đi bộ nhẹ 10 phút rồi mới tập, hoặc tập xong rồi mới ăn.</p>':'')
       +(L.mini.length?`<div class="minis">${L.mini.map(k=>miniCard(d.id,k)).join('')}</div>`:'')
       +`<div class="grid">${L.ex.map(k=>exCard(d.id,k)).join('')}</div>`
       +(L.st.length?`<h3 class="subh">Giãn cơ cuối buổi</h3><div class="grid">${L.st.map(k=>exCard(d.id,k)).join('')}</div><p class="note" style="margin-top:16px">Ngoài giờ trưa, cứ 45–60 phút bạn đứng dậy đi lại khoảng 2 phút.</p>`:'');
   }
-  else if(d.kind==='run')body=check(d.id)+runCard(d);
+  else if(d.kind==='run')body=check(d.id)+runCard(d)+(d.ex?`<h3 class="subh">Core sau buổi chạy</h3><div class="grid">${d.ex.map(k=>exCard(d.id,k)).join('')}</div>`:'');
   else body=`<div class="rest"><p>Không có bài tập. Đây là ngày để cơ thể hấp thụ cả tuần tập.</p></div>`;
   const right=d.ex?`<div class="pr"><span class="prog" id="pg"></span><button class="btn" id="rst">Bỏ đánh dấu</button></div>`:'';
-  document.getElementById('panel').innerHTML=`<div class="ph"><div><p class="kick">${d.full}${d.id===todayId?', hôm nay':''}</p><h2>${d.title}</h2><p class="sub">${d.sub}</p></div>${right}</div>${body}`;
-  prog();
+  document.getElementById('panel').innerHTML=`<div class="ph"><div><p class="kick">${d.full}${d.id===TODAY?', hôm nay':''}</p><h2>${d.title}</h2><p class="sub">${d.sub}</p></div>${right}</div>${body}`;
+  prog();zones();
 }
 
 function setDot(k,i,v){
@@ -350,10 +511,12 @@ function startT(b){
   },200)};
 }
 
-function select(id){if(!W.some(d=>d.id===id))return;cur=id;render();if(location.hash!=='#'+id)location.hash=id;}
+function select(id){if(!byId(id))return;cur=id;render();if(location.hash!=='#'+id)location.hash=id;}
 
 document.addEventListener('click',ev=>{
   if(ev.target.closest('#anim')){S.anim=RM();save();ev.target.closest('#anim').textContent=animLabel();render();return;}
+  const nw=ev.target.closest('[data-nw]');if(nw){const i=DAYS.findIndex(x=>x.id===cur)+7*(+nw.dataset.nw);if(DAYS[i])select(DAYS[i].id);return;}
+  if(ev.target.closest('[data-td]')){select(TODAY);return;}
   const day=ev.target.closest('.day');if(day){select(day.dataset.id);return;}
   const sm=ev.target.closest('.seg button');if(sm){S.mode[cur]=sm.dataset.m;save();render();return;}
   const dot=ev.target.closest('.dot');if(dot){const k=dot.dataset.k,i=+dot.dataset.i;setDot(k,i,!isDone(k,i));return;}
@@ -363,11 +526,10 @@ document.addEventListener('click',ev=>{
 document.addEventListener('input',ev=>{
   const t=ev.target;
   if(t.dataset.c){const c=S.chk[t.dataset.c]||(S.chk[t.dataset.c]={});c[t.dataset.f]=t.value;save();const v=document.getElementById('vd');if(v){const[cl,tx]=verdict(c);v.className='vd '+cl;v.textContent=tx;}}
-  else if(t.dataset.l){const l=S.log[t.dataset.l]||(S.log[t.dataset.l]={});l[t.dataset.f]=t.value;save();}
+  else if(t.dataset.l){const l=S.log[t.dataset.l]||(S.log[t.dataset.l]={});l[t.dataset.f]=t.value;save();const rv=document.getElementById('rv'),d=byId(t.dataset.l);if(rv&&d)rv.innerHTML=review(d);zones();}
 });
-window.addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id!==cur&&W.some(d=>d.id===id)){cur=id;render();}});
+window.addEventListener('hashchange',()=>{const id=hashDay();if(id&&id!==cur){cur=id;render();}});
 
-document.getElementById('zones').innerHTML=zbar([[170,'22/11: TB 170']],-1);
 render();
 }
 </script>
