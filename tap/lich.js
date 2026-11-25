@@ -147,6 +147,7 @@ function taoLich(p,homNay){
   const ranh=(p.ngayRanh&&p.ngayRanh.length?p.ngayRanh:[1,3,5,6]).map(Number);
   const nBuoi=clamp(+p.soBuoi||4,2,6);
   const {chay,dai:L}=chonNgay(ranh,nBuoi,p.ngayDai==null?6:+p.ngayDai,X.trail&&X.D>=30);
+  if(ranh.length<nBuoi)canhBao.push(['warn',`Bạn chọn ${nBuoi} buổi mỗi tuần nhưng chỉ có ${ranh.length} ngày rảnh, nên lịch xếp ${chay.length} buổi. Chọn thêm ngày rảnh nếu muốn chạy nhiều hơn.`]);
   if(chay.length<3)canhBao.push(['info','Chạy 2 buổi mỗi tuần thì tiến bộ chậm. Nếu được, thêm một buổi chạy nhẹ 30 phút.']);
 
   /* Khối lượng */

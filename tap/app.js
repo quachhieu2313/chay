@@ -160,9 +160,41 @@ function logForm(P,d){
   const f=fields.map(([k,lb,n,ph])=>`<label class="f" for="l-${k}">${lb}<input id="l-${k}" data-l="${d.date}" data-f="${k}" type="${n?'number':'text'}" inputmode="${n?'decimal':'numeric'}"${ph?` placeholder="${ph}"`:''} value="${esc(L[k])}"></label>`).join('');
   return `<div class="log"><div class="row" style="justify-content:space-between"><h3>Sau buổi chạy</h3><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">${d.loai==='thi'?'Đã thi xong':'Đã chạy xong'}</button></div>
     <div class="row" style="margin:8px 0 4px"><span class="mut" style="font-size:14px">Buổi này chạy trên</span><div class="seg" role="group" aria-label="Địa hình">${[['road','Đường bằng'],['trail','Trail']].map(([v,t])=>`<button type="button" data-dh="${v}" data-d="${d.date}" aria-pressed="${dh===v}">${t}</button>`).join('')}</div></div>
-    <p class="hint">Road và trail được theo dõi riêng: mỗi buổi chỉ so với buổi cùng loại. Lấy số trên đồng hồ hoặc ứng dụng chạy. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p>
+    <div class="row up"><label class="btn" for="ff">Tải file từ đồng hồ<input id="ff" type="file" accept=".fit,.tcx,.gpx,.zip" data-ff="${d.date}" hidden></label><button type="button" class="tip tip-r" data-tip="Trên connect.garmin.com (bản web): mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc GPX. Chọn file đó ở đây, hoặc kéo thả vào khung này. File chỉ được đọc trên máy bạn, không gửi đi đâu và không lưu đường chạy." aria-label="Cách lấy file từ Garmin">?</button><span class="mut" id="ffmsg" style="font-size:14px">${L.src?'Đã đọc từ file '+esc(L.src):'Tự điền các ô dưới từ file .fit, .tcx, .gpx hoặc .zip'}</span></div>
+    ${fileTomTat(L)}
+    <p class="hint">Road và trail được theo dõi riêng: mỗi buổi chỉ so với buổi cùng loại. Không có file thì lấy số trên đồng hồ hoặc ứng dụng chạy. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p>
     <div class="lg">${f}<label class="f w" for="l-nt">Ghi chú<input id="l-nt" data-l="${d.date}" data-f="nt" type="text" placeholder="Cảm giác, chỗ mỏi, thời tiết, đường chạy" value="${esc(L.nt)}"></label></div>
     <div class="rv" id="rv">${review(P,d)}</div></div>`;
+}
+/* Thông tin chỉ có khi tải file: phút đi bộ, tim trôi, từng km */
+function fileTomTat(L){
+  if(!L.src)return '';
+  const c=[];
+  if(L.diBo!=null)c.push('Đi bộ '+L.diBo+' phút');
+  if(L.troi!=null)c.push('Tim trôi '+String(L.troi).replace('.',',')+'%');
+  if(L.km1&&L.km1.length)c.push(L.km1.length+' km đầy đủ');
+  const tb=L.km1&&L.km1.length?`<details class="km1"><summary>Từng km</summary><table class="zt"><thead><tr><th>Km</th><th>Pace</th><th>Nhịp tim TB</th></tr></thead><tbody>${L.km1.map((k,i)=>`<tr><td>${i+1}</td><td>${LC.fmtP(k[0])}</td><td>${k[1]??'–'}</td></tr>`).join('')}</tbody></table></details>`:'';
+  return `<div class="chips" style="margin:6px 0 4px">${c.map(x=>`<span>${esc(x)}</span>`).join('')}</div>${tb}`;
+}
+const fmtGiay=g=>{g=Math.round(g);const h=Math.floor(g/3600),m=Math.floor(g%3600/60),x=g%60;return h?h+':'+pad(m)+':'+pad(x):m+':'+pad(x)};
+async function napFile(file,ngay){
+  const msg=$('#ffmsg');if(msg)msg.textContent='Đang đọc '+file.name+'…';
+  let r;
+  try{r=await window.DocFile.read(file)}catch(e){if(msg)msg.textContent='Không đọc được: '+(e.message||e);return}
+  const P=plan();let dich=ngay;
+  if(r.date!==ngay){
+    if(P.byId[r.date]&&P.byId[r.date].km){if(confirm(`File này là buổi chạy ngày ${dmy(r.date)}. Ghi vào ngày ${dmy(r.date)}?\n(Bấm Huỷ để ghi vào ngày đang xem, ${dmy(ngay)}.)`))dich=r.date}
+    else if(!confirm(`File này là buổi chạy ngày ${dmy(r.date)}, không có trong lịch. Vẫn ghi vào ngày ${dmy(ngay)}?`)){if(msg)msg.textContent='Đã huỷ.';return}
+  }
+  const L=S.log[dich]||(S.log[dich]={}),d=P.byId[dich];
+  if(Object.keys(L).some(k=>['km','tg','hr'].includes(k)&&L[k])&&L.src!==r.ten&&!confirm('Ngày này đã có số liệu. Thay bằng số trong file?')){if(msg)msg.textContent='Đã huỷ.';return}
+  Object.assign(L,{km:String(r.km),tg:fmtGiay(r.giay),hr:r.hr!=null?String(r.hr):'',hrmax:r.hrmax!=null?String(r.hrmax):'',src:r.ten,diBo:r.diBo,troi:r.troi,km1:r.km1});
+  if(r.cad)L.cad=String(r.cad);
+  if(r.leo!=null)L.leo=String(r.leo);
+  if(d&&r.goiY!==(d.dh||'road'))L.dh=r.goiY;else delete L.dh;
+  (S.done[dich+':run']=S.done[dich+':run']||[])[0]=1;
+  save();
+  if(dich!==CUR)go(dich);else keep(render);
 }
 const num=(L,k)=>{const v=L[k];if(v===''||v==null)return null;const x=+String(v).replace(',','.');return isFinite(x)?x:null};
 function paceOf(L){const k=num(L,'km'),m=tgPhut(L.tg);return k&&m?m*60/k:null}
@@ -208,6 +240,13 @@ function review(P,d){
     else if(r>1.25)add('warn',`Chạy ${LC.fmtKm(km)} km, nhiều hơn lịch ${LC.fmtKm(d.km)} km. Tăng quá nhanh là nguyên nhân chấn thương hay gặp nhất.`);
   }
   if(ps&&d.loai==='thi')add('ok',`Về đích ${L.tg}, pace ${LC.fmtP(ps)}/km. Vào Hồ sơ điền kết quả này để lịch sau có pace chính xác.`);
+  if(L.diBo>0&&nhe){const tot=tgPhut(L.tg);add('info',`Đi bộ ${L.diBo} phút${tot?` (khoảng ${Math.round(L.diBo/tot*100)}% thời gian)`:''}. Đi bộ để giữ nhịp tim trong vùng là đúng; các tuần tới số phút này giảm dần ở cùng nhịp tim là thể lực đang lên.`)}
+  if(L.troi!=null&&nhe&&dhOf(d)==='road'){
+    if(L.troi>8)add('warn',`Tim trôi ${String(L.troi).replace('.',',')}%: nửa sau tim cao hơn hẳn nửa đầu ở cùng tốc độ. Buổi này hơi quá sức, hoặc do nóng, thiếu nước. Lần sau chạy nửa đầu chậm hơn và mang nước.`);
+    else if(L.troi>5)add('info',`Tim trôi ${String(L.troi).replace('.',',')}%, hơi cao. Dưới 5% là nền sức bền tốt cho quãng này.`);
+    else add('ok',`Tim trôi ${String(L.troi).replace('.',',')}%: nhịp tim ổn định cả buổi, nền sức bền tốt.`);
+  }
+  if(L.km1&&L.km1.length>=3&&nhe&&dhOf(d)==='road'){const k1=L.km1[0][0],tb=L.km1.slice(1).reduce((a,k)=>a+k[0],0)/(L.km1.length-1);if(k1<tb-20)add('info',`Km đầu (${LC.fmtP(k1)}) nhanh hơn các km sau (${LC.fmtP(tb)}). Km đầu nên chậm nhất buổi để cơ thể ấm dần.`)}
   const dh=dhOf(d),b=hieuQua(L,dh);
   if(b&&nhe){
     const prev=[...P.days].reverse().find(x=>x.date<d.date&&EZ.includes(x.loai)&&dhOf(x)===dh&&hieuQua(S.log[x.date]||{},dh));
@@ -413,6 +452,7 @@ document.addEventListener('click',async ev=>{
 function keep(fn){const y=scrollY;fn();window.scrollTo(0,y)}
 document.addEventListener('change',ev=>{
   const t=ev.target;
+  if(t.dataset.ff&&t.files[0]){napFile(t.files[0],t.dataset.ff);t.value='';return}
   if(t.id==='nhap'&&t.files[0]){t.files[0].text().then(x=>{try{const d=JSON.parse(x);if(!d||typeof d!=='object'||!('hs' in d))throw 0;if(!confirm('Thay dữ liệu hiện tại bằng dữ liệu trong file?'))return;S={...trong(),hs:d.hs,log:d.log||{},done:d.done||{},anim:S.anim};save();PLAN=null;D=null;location.hash='#/';render()}catch(e){alert('File không đúng định dạng.')}});return}
   if(t.dataset.dow!=null){const i=+t.dataset.dow;D.ngayRanh=t.checked?[...new Set([...D.ngayRanh,i])].sort():D.ngayRanh.filter(x=>x!==i);xemTruoc();return}
   if(t.dataset.f&&D&&t.closest('#hsf')){
@@ -421,6 +461,9 @@ document.addEventListener('change',ev=>{
   }
 });
 let tPrev=null,tTt=null;
+document.addEventListener('dragover',ev=>{const lg=ev.target.closest&&ev.target.closest('.log');if(lg){ev.preventDefault();lg.classList.add('drop')}});
+document.addEventListener('dragleave',ev=>{const lg=ev.target.closest&&ev.target.closest('.log');if(lg&&!lg.contains(ev.relatedTarget))lg.classList.remove('drop')});
+document.addEventListener('drop',ev=>{const lg=ev.target.closest&&ev.target.closest('.log');if(!lg)return;ev.preventDefault();lg.classList.remove('drop');const f=ev.dataTransfer.files[0],inp=lg.querySelector('[data-ff]');if(f&&inp)napFile(f,inp.dataset.ff)});
 document.addEventListener('input',ev=>{
   const t=ev.target;
   if(t.dataset.l){const L=S.log[t.dataset.l]||(S.log[t.dataset.l]={});L[t.dataset.f]=t.value;if(!Object.values(L).some(v=>v!==''&&v!=null))delete S.log[t.dataset.l];save();const rv=$('#rv'),P=plan(),d=P&&P.byId[t.dataset.l];if(rv&&d)rv.innerHTML=review(P,d);clearTimeout(tTt);tTt=setTimeout(ttw,400);return}

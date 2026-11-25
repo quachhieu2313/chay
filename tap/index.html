@@ -123,7 +123,11 @@ svg .tg{fill:none;stroke:var(--trk);stroke-width:2}
 svg .dk{fill:color-mix(in srgb,var(--mut) 42%,var(--pan))}
 svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;stroke-linecap:round}
 /* ghi chép */
-.log{background:var(--pan);border-radius:16px;padding:16px;margin:8px 0 0}
+.log{background:var(--pan);border-radius:16px;padding:16px;margin:8px 0 0;border:2px dashed transparent}
+.log.drop{border-color:var(--trk)}
+.up{margin:10px 0 4px}
+.km1 summary{cursor:pointer;font-weight:600;font-size:14px;margin:6px 0}
+.km1 .zt{max-width:420px}
 .lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(8.6em,1fr));gap:10px 12px;align-items:end;margin:10px 0}
 label.f{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--mut)}
 label.f.w{grid-column:1/-1}
@@ -203,6 +207,7 @@ label.row{position:relative}
 <script src="../dong-bo.js"></script>
 <script src="../bai-tap-data.js"></script>
 <script src="lich.js"></script>
+<script src="doc-file.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
