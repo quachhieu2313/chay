@@ -6,6 +6,11 @@ Trang tĩnh (HTML + CSS + JS, không cần build), chạy trên GitHub Pages:
 - `lich-tap-chay-lai.html`: lịch tập chạy lại tuần 23–29/11/2026.
 - `bai-tap-bo-tro.html`: bài tập bổ trợ (kỹ thuật chạy, sức mạnh, tạ, core, giãn cơ) và buổi mẫu.
 - `dong-bo.js`: đồng bộ đánh dấu, ghi chép, mức tạ của 2 trang trên giữa các máy. Chưa đăng nhập thì chỉ lưu trên trình duyệt đang dùng (localStorage); bấm "Đăng nhập Google để lưu lên mạng" ở đầu trang (cùng tài khoản với trang Kế hoạch) thì lưu thêm lên Firestore ở `habits/lich-tap_<uid>` và `habits/bo-tro_<uid>`. Không cần sửa Rules. Nút tắt hình chuyển động và tab đang xem vẫn riêng từng máy.
+- `tap/`: **Lịch chạy cá nhân**, dùng cho nhiều người. Mỗi người điền hồ sơ (tuổi, nhịp tim nghỉ/tối đa, km mỗi tuần, kết quả gần đây, mục tiêu road hoặc trail, ngày rảnh), trang tự tạo lịch theo tuần và nhận xét sau mỗi buổi chạy.
+  - `tap/lich.js`: bộ tạo lịch (không cần mạng). Vùng nhịp tim Karvonen, pace theo VDOT, chia giai đoạn nền/tăng cường/cao điểm/giảm tải, tăng khối lượng tối đa khoảng 10% mỗi tuần, tuần giảm tải mỗi 4 tuần, tối đa 2 bài nặng không liền nhau, trail tính số mét leo và chạy dài hai ngày liền.
+  - `tap/app.js`: giao diện. Lịch không lưu mà tạo lại từ hồ sơ; chỉ lưu hồ sơ, ghi chép, ô đánh dấu.
+  - Dữ liệu: localStorage, và nếu đăng nhập Google thì `runners/<uid>` trên Firestore. Cần thêm khối `match /runners/{uid}` trong `firestore.rules` vào Rules trên console (không cần đổi email). Đăng xuất xoá bản trên máy; trang Dữ liệu có tải về JSON và xoá vĩnh viễn.
+- `bai-tap-data.js`: thư viện bài tập dùng chung (hình động, nội dung, buổi mẫu) cho `bai-tap-bo-tro.html` và `tap/`.
 - `ke-hoach-nha-minh.html`: kế hoạch chung của hai vợ chồng (tập luyện, lịch chung, việc nhà, bữa ăn, thói quen). Đăng nhập bằng Google, dữ liệu lưu trên Firebase Firestore nên hai người thấy cùng một dữ liệu.
 
 Trang công khai: ai có link cũng mở được phần chữ cố định trong HTML (kể cả số nhịp tim trong lịch tập). Dữ liệu trong trang Kế hoạch thì chỉ 2 email được cho phép mới đọc, ghi được.

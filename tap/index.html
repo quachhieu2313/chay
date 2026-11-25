@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lịch chạy cá nhân</title>
+<meta name="description" content="Tạo lịch chạy road và trail theo thể trạng của bạn: nhịp tim, kết quả gần đây, ngày rảnh. Có bài bổ trợ, nhận xét sau mỗi buổi chạy.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;
+  --bg:light-dark(#ffffff,#121316);--ink:light-dark(#16171b,#eceef2);--mut:light-dark(#5b5f67,#a3a8b0);--line:light-dark(#e2e3e6,#2c2e34);--pan:light-dark(#f4f4f5,#1b1d22);
+  --trk:light-dark(#c63f1f,#e2593b);--hd:#b8391c;--acc:var(--trk);
+  --z1:#8d99a6;--z2:#2f7fe0;--z3:#2fa66a;--z4:#ee8716;--z5:#dc2f29;
+  --ok:light-dark(#1d7a3a,#5cc77d);--okb:light-dark(#e6f4ea,#173222);--wn:light-dark(#9a5b00,#f0a640);--wnb:light-dark(#fdf3e1,#3a2a12);--bd:light-dark(#b42318,#f07066);--bdb:light-dark(#fdecea,#3c1a18);
+  --c-nen:#2f7fe0;--c-tang:#ee8716;--c-cao:#dc2f29;--c-giam:#2fa66a;--c-kiem:#8d99a6}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+a{color:var(--trk)}
+.band{padding-block:clamp(20px,4vw,40px);padding-inline:max(5vw,16px)}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3,.big,.dose,.dot,.prog,.num{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+h1{font-size:clamp(34px,6vw,48px);line-height:1.05;margin:0}
+h2{font-size:clamp(30px,5vw,42px);line-height:1.05;margin:0}
+h3{font-size:24px;line-height:1.1;margin:0}
+.hdr{background:var(--hd);color:#fff}
+.hdr .band{padding-block:16px 0}
+.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.brand{color:#fff;text-decoration:none;font:700 26px "Barlow Condensed",sans-serif;letter-spacing:.2px}
+.acct{display:flex;align-items:center;gap:10px;font-size:14px}
+.acct .st{opacity:.9}
+.hb{min-height:40px;padding:0 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font:600 14px "Be Vietnam Pro",sans-serif;cursor:pointer}
+.hb:hover{border-color:#fff}.hb.solid{background:#fff;color:var(--hd);border-color:#fff}
+.hb:focus-visible{outline:3px solid #fff;outline-offset:2px}
+nav.tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;display:block;padding:10px 14px 12px;color:#fff;opacity:.85;text-decoration:none;font-weight:600;font-size:15px;border-radius:10px 10px 0 0}
+nav.tabs a[aria-current=page]{background:var(--bg);color:var(--ink);opacity:1}
+nav.tabs a:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+.lanes{height:14px;background:var(--trk) repeating-linear-gradient(to bottom,rgba(255,255,255,.42) 0 2px,transparent 2px 7px)}
+.kick{margin:0 0 4px;color:var(--mut);font-size:15px;font-weight:500}
+.sub{margin:8px 0 0;max-width:70ch}
+.mut{color:var(--mut)}
+.note{margin:0 0 16px;max-width:76ch;color:var(--mut);font-size:15px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px "Be Vietnam Pro",sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn:hover{border-color:var(--ink)}
+.btn.pri{background:var(--trk);border-color:var(--trk);color:#fff}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px}
+.btn[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn:focus-visible,.dot:focus-visible,input:focus-visible,select:focus-visible,.seg button:focus-visible,.day:focus-visible,summary:focus-visible{outline:3px solid var(--trk);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.msg{padding:12px 16px;border-radius:12px;margin:0 0 12px;font-size:15px;background:var(--pan)}
+.msg.ok{background:var(--okb);color:var(--ok)}.msg.warn{background:var(--wnb);color:var(--wn)}.msg.bad{background:var(--bdb);color:var(--bd)}.msg.info{background:var(--pan);color:var(--ink)}
+.msg b{font-weight:700}
+/* tuần */
+.wkbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.wkbar .t{font-weight:600}
+.nv{min-width:44px;min-height:40px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 18px "Be Vietnam Pro",sans-serif;cursor:pointer}
+.nv:disabled{opacity:.35;cursor:default}
+.nv.td{font-size:14px;padding:0 12px}
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:0 0 22px}
+.day{appearance:none;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:8px 4px 9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;position:relative;border-top:5px solid var(--c,var(--line))}
+.day b{font-size:13px;color:var(--mut);font-weight:600}
+.day .dn{font:700 22px "Barlow Condensed",sans-serif;line-height:1}
+.day i{font-style:normal;font-size:12px;color:var(--mut);text-align:center;line-height:1.2}
+.day[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink);border-top-color:var(--c,var(--ink))}
+.day[aria-pressed=true] b,.day[aria-pressed=true] i{color:var(--bg);opacity:.85}
+.day .ck{position:absolute;top:4px;right:6px;font-size:12px;color:var(--ok)}
+.day .tdot{position:absolute;top:5px;left:6px;width:7px;height:7px;border-radius:50%;background:var(--trk)}
+/* ngày */
+.dhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 24px;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips span{font-size:14px;font-weight:600;padding:4px 12px;border-radius:14px;background:var(--pan)}
+.tgt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin:0 0 16px}
+.tgt div{background:var(--pan);border-radius:12px;padding:12px 14px}
+.tgt span{display:block;font-size:13px;color:var(--mut);font-weight:600}
+.tgt b{font:700 28px "Barlow Condensed",sans-serif}
+.steps{margin:0 0 8px;padding-left:22px;max-width:78ch}
+.steps li{margin:0 0 6px}
+details.blk{border-top:1.5px solid var(--line);padding:4px 0}
+details.blk>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;padding:14px 0}
+details.blk>summary::-webkit-details-marker{display:none}
+details.blk>summary h3::before{content:'▸ ';color:var(--mut)}
+details.blk[open]>summary h3::before{content:'▾ '}
+details.blk>summary .mut{font-size:14px}
+.blkin{padding:0 0 18px}
+/* thẻ bài tập (giống trang Bài tập bổ trợ) */
+.minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px}
+.card{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.mini{flex-direction:row;align-items:center;gap:12px;padding:12px 16px;background:var(--pan);border:0}
+.mini .t{flex:1}.mini h3{font-size:21px}.mini p{margin:2px 0 0;font-size:15px;color:var(--mut)}
+.fg{background:var(--pan);padding:8px 8px 0}
+.fg svg{display:block;width:100%;height:auto;aspect-ratio:240/140}
+.cb{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.cb h3{font-size:23px}
+.dose{font-size:20px;font-weight:700;color:var(--trk)}
+.cues{margin:0 0 4px;padding-left:18px;font-size:14.5px;color:var(--mut)}
+.hint{margin:0;font-size:13px;color:var(--mut)}
+.sets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto}
+.dot{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--bg);color:var(--mut);font-size:17px;font-weight:700;cursor:pointer;flex:none}
+.dot.wide{width:auto;padding:0 18px;border-radius:22px}
+.dot[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
+.tm{margin-left:auto;min-width:112px;font-variant-numeric:tabular-nums}
+.tm.run{background:var(--trk);border-color:var(--trk);color:#fff}
+svg .b{stroke:var(--ink);stroke-width:9;stroke-linecap:round}
+svg .a{stroke:var(--trk);stroke-width:9;stroke-linecap:round}
+svg .wt{stroke:light-dark(#3d4249,#c4c8ce);stroke-width:13;stroke-linecap:round}
+svg .bd{stroke:var(--z4);stroke-width:3.5;stroke-linecap:round}
+svg .hd{fill:var(--ink)}
+svg .fl{stroke:var(--mut);stroke-width:1.5;opacity:.5}
+svg .mat{fill:color-mix(in srgb,var(--z2) 24%,var(--pan))}
+svg .gd{stroke:var(--trk);stroke-width:2;stroke-dasharray:5 5;fill:none}
+svg .ar{stroke:var(--trk);stroke-width:2.5}
+svg .ah{fill:var(--trk)}
+svg .cup{fill:color-mix(in srgb,var(--z2) 45%,var(--bg));stroke:var(--ink);stroke-width:1.5}
+svg .ch{stroke:var(--mut);stroke-width:2.5;stroke-dasharray:4 4;fill:none}
+svg .st{fill:color-mix(in srgb,var(--mut) 32%,var(--pan))}
+svg .wl{stroke:var(--mut);stroke-width:3;opacity:.6}
+svg .tg{fill:none;stroke:var(--trk);stroke-width:2}
+svg .dk{fill:color-mix(in srgb,var(--mut) 42%,var(--pan))}
+svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;stroke-linecap:round}
+/* ghi chép */
+.log{background:var(--pan);border-radius:16px;padding:16px;margin:8px 0 0}
+.lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(8.6em,1fr));gap:10px 12px;align-items:end;margin:10px 0}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--mut)}
+label.f.w{grid-column:1/-1}
+input,select{font:16px "Be Vietnam Pro",sans-serif;min-height:44px;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);width:100%}
+input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--trk)}
+.rv p{margin:0 0 6px;padding:8px 12px;border-radius:10px;font-size:15px;background:var(--bg)}
+.rv .ok{background:var(--okb);color:var(--ok)}.rv .warn{background:var(--wnb);color:var(--wn)}.rv .bad{background:var(--bdb);color:var(--bd)}
+.rv .vh{font-weight:700}
+/* biểu đồ, bảng */
+.chart{width:100%;height:auto;display:block;margin:6px 0 4px}
+.chart text{font:12px "Be Vietnam Pro",sans-serif;fill:var(--mut)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--mut);margin:0 0 16px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.wks{display:flex;flex-direction:column;gap:8px}
+.wk{display:grid;grid-template-columns:5.2em 1fr auto;gap:4px 14px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--pan);text-decoration:none;color:inherit;border-left:6px solid var(--c)}
+.wk:hover{outline:2px solid var(--line)}
+.wk.cur{outline:2px solid var(--trk)}
+.wk .n{font:700 22px "Barlow Condensed",sans-serif}
+.wk .d{font-size:14px;color:var(--mut)}
+.wk .k{font:700 22px "Barlow Condensed",sans-serif;text-align:right;white-space:nowrap}
+.wk .ic{grid-column:2/4;display:flex;gap:4px;flex-wrap:wrap}
+.wk .ic span{font-size:12px;padding:1px 7px;border-radius:8px;background:var(--bg);color:var(--mut)}
+.wk .ic span.q{color:var(--z4);font-weight:600}.wk .ic span.l{color:var(--z2);font-weight:600}.wk .ic span.r{color:var(--trk);font-weight:700}
+table.zt{border-collapse:collapse;width:100%;max-width:760px;font-size:15px}
+table.zt th,table.zt td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+table.zt th{color:var(--mut);font-weight:600;font-size:13px}
+table.zt td b{font:700 20px "Barlow Condensed",sans-serif}
+.zsw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+/* hồ sơ */
+.form{display:grid;gap:26px;max-width:860px}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:12px}
+legend{font:700 26px "Barlow Condensed",sans-serif;margin-bottom:8px;padding:0}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px}
+.help{font-size:13px;color:var(--mut);font-weight:400}
+.seg{display:inline-flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:44px;padding:0 16px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px "Be Vietnam Pro",sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dows{display:flex;flex-wrap:wrap;gap:6px}
+.dows label{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1.5px solid var(--line);border-radius:22px;cursor:pointer;font-weight:600;font-size:15px}
+.dows label:has(input:checked){border-color:var(--ink);background:var(--pan)}
+.prev{background:var(--pan);border-radius:16px;padding:16px 18px;border:2px solid var(--trk)}
+.prev .big{font-size:24px;font-weight:700;margin:0 0 4px}
+.foot{font-size:13px;color:var(--mut);margin:28px 0 0;max-width:80ch}
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px;margin:18px 0 6px}
+.hero div{background:var(--pan);border-radius:14px;padding:14px 16px}
+.hero h3{font-size:22px}.hero p{margin:4px 0 0;font-size:15px;color:var(--mut)}
+@media(max-width:600px){.tm{margin-left:0}.day i{font-size:11px}.day .dn{font-size:20px}.strip{gap:4px}.wk{grid-template-columns:4.4em 1fr auto}}
+@media(prefers-reduced-motion:no-preference){.dot{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="band"><div class="wrap">
+    <div class="top">
+      <a class="brand" href="#/">Lịch chạy cá nhân</a>
+      <div class="acct" id="acct"></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Mục chính"></nav>
+  </div></div>
+  <div class="lanes" aria-hidden="true"></div>
+</header>
+<main class="band"><div class="wrap" id="view" tabindex="-1"></div></main>
+<footer class="band" style="padding-top:0"><div class="wrap">
+  <p class="foot">Lịch được tạo tự động theo các nguyên tắc tập luyện phổ biến, không thay thế huấn luyện viên hay bác sĩ. Đau ngực, chóng mặt, khó thở bất thường thì dừng chạy và đi khám. Dữ liệu của bạn chỉ lưu trên trình duyệt này, và trong tài khoản của bạn nếu đăng nhập; không ai khác đọc được. <a href="#/du-lieu">Dữ liệu và quyền riêng tư</a> · <a href="../bai-tap-bo-tro.html">Thư viện bài bổ trợ</a></p>
+</div></footer>
+<script src="../firebase-config.js"></script>
+<script src="../dong-bo.js"></script>
+<script src="../bai-tap-data.js"></script>
+<script src="lich.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

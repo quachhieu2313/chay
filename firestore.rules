@@ -12,5 +12,15 @@ service cloud.firestore {
       allow read, write: if nguoiNha()
         && collection in ['people', 'workouts', 'events', 'chores', 'meals', 'habits'];
     }
+    // Ứng dụng Lịch chạy cá nhân (tap/): ai đăng nhập Google cũng dùng được,
+    // nhưng chỉ đọc/ghi/xoá được tài liệu của chính mình (runners/<uid>).
+    match /runners/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['s', 'v', 't'])
+        && request.resource.data.s is string
+        && request.resource.data.s.size() < 500000
+        && request.resource.data.v is int;
+    }
   }
 }

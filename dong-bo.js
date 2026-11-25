@@ -5,7 +5,11 @@
    - Chưa đăng nhập hoặc mất mạng: vẫn lưu trên máy (localStorage), đăng nhập lại sẽ gửi lên.
    Cách dùng trong trang:
      const SYNC=window.DongBo&&DongBo.start({key,btn,get:()=>S,apply:d=>{...},local:['anim']});
-     và gọi SYNC.changed() mỗi khi lưu. */
+     và gọi SYNC.changed() mỗi khi lưu.
+   Tuỳ chọn thêm: col = tên collection riêng (khi đó mã tài liệu là uid, ví dụ runners/<uid>),
+   onAuth(u) = báo khi đăng nhập/đăng xuất ({email,name} hoặc null), onState(st) = báo trạng thái đồng bộ,
+   rieng = mỗi tài khoản một dữ liệu riêng (nhiều người dùng chung máy): đổi tài khoản thì không gộp dữ liệu của người trước,
+   trong() = dữ liệu rỗng dùng khi tài khoản mới chưa có gì. */
 (function(){
 'use strict';
 const FB='https://www.gstatic.com/firebasejs/10.12.2/';
@@ -30,7 +34,7 @@ window.DongBo={start(o){
   const btn=o.btn;
   let st='',U=null,F=null,auth=null,fs=null,ref=null,uid=null,email='',unsub=null,timer=null,slowT=null,gen=0,applying=false,lastJSON=null,waiting=null;
 
-  const show=s=>{st=s;if(!btn)return;btn.hidden=false;btn.textContent=LABEL[s][0];btn.title=LABEL[s][1]+(s==='ok'&&email?' ('+email+')':'');btn.dataset.st=s};
+  const show=s=>{st=s;if(o.onState)try{o.onState(s)}catch(e){}if(!btn)return;btn.hidden=false;btn.textContent=LABEL[s][0];btn.title=LABEL[s][1]+(s==='ok'&&email?' ('+email+')':'');btn.dataset.st=s};
   const pick=()=>{const d=JSON.parse(JSON.stringify(o.get()||{}));(o.local||[]).forEach(k=>delete d[k]);return d};
   const typing=()=>{const a=document.activeElement;return !!a&&(a.tagName==='TEXTAREA'||a.tagName==='SELECT'||(a.tagName==='INPUT'&&!/^(checkbox|radio|button)$/.test(a.type)))};
   function apply(d){applying=true;try{o.apply(d)}finally{applying=false}}
@@ -54,7 +58,7 @@ window.DongBo={start(o){
     if(snap.metadata.hasPendingWrites||snap.metadata.fromCache)return;
     clearTimeout(slowT);
     if(typing()){waiting=snap;return}
-    if(!snap.exists()){M.uid=uid;M.v=0;M.dirty=true;saveM();push();return}
+    if(!snap.exists()){if(o.rieng&&M.uid&&M.uid!==uid&&o.trong)apply(o.trong());M.uid=uid;M.v=0;M.dirty=true;saveM();push();return}
     const r=snap.data()||{};let data;try{data=JSON.parse(r.s)}catch(e){show('err');return}
     if(!isObj(data)){show('err');return}
     const loc=pick(),rs=JSON.stringify(data);
@@ -62,7 +66,7 @@ window.DongBo={start(o){
     if(M.uid===uid&&(r.v||0)===M.v){lastJSON=rs;if(M.dirty)push();else show('ok');return}
     /* Bản trên mạng đã đổi ở máy khác (hoặc máy này mới đăng nhập lần đầu). */
     let next;
-    if(M.uid!==uid)next=merge(loc,data);            /* máy mới: lấy bản trên mạng, giữ thêm những gì máy này có */
+    if(M.uid!==uid)next=(o.rieng&&M.uid)?data:merge(loc,data);  /* máy mới: lấy bản trên mạng, giữ thêm những gì máy này có (trừ khi máy đang giữ dữ liệu của tài khoản khác) */
     else if(M.dirty)next=merge(data,loc);           /* cả hai cùng sửa: thay đổi chưa gửi của máy này thắng */
     else next=data;                                 /* máy này không sửa gì: lấy nguyên bản trên mạng */
     apply(next);
@@ -75,13 +79,22 @@ window.DongBo={start(o){
     if(unsub){try{unsub()}catch(e){}unsub=null}
     clearTimeout(slowT);
     if(!uid||!F)return;
-    ref=F.doc(fs,'habits',o.key+'_'+uid);
+    ref=o.col?F.doc(fs,o.col,uid):F.doc(fs,'habits',o.key+'_'+uid);
     show('loading');
     slowT=setTimeout(()=>{if(st==='loading')show('slow')},12000);
     unsub=F.onSnapshot(ref,{includeMetadataChanges:true},onSnap,e=>{clearTimeout(slowT);show(e&&e.code==='permission-denied'?'denied':'err')});
   }
 
   document.addEventListener('focusout',()=>{if(waiting)setTimeout(()=>{if(waiting&&!typing()){const s=waiting;waiting=null;onSnap(s)}},0)});
+  function signIn(){
+    if(!U)return;
+    const prov=new U.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});
+    U.signInWithPopup(auth,prov).catch(e=>{
+      if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'))return U.signInWithRedirect(auth,prov);
+      if(e&&(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'))return;
+      alert('Không đăng nhập được: '+((e&&e.code)||e));
+    });
+  }
   if(btn)btn.addEventListener('click',()=>{
     if(!U)return;
     if(st==='ok'||st==='saving'){
@@ -90,12 +103,7 @@ window.DongBo={start(o){
     }
     if(st==='slow'||st==='err'){sub();return}
     if(st==='loading')return;
-    const prov=new U.GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});
-    U.signInWithPopup(auth,prov).catch(e=>{
-      if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'))return U.signInWithRedirect(auth,prov);
-      if(e&&(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'))return;
-      alert('Không đăng nhập được: '+((e&&e.code)||e));
-    });
+    signIn();
   });
 
   (async()=>{
@@ -110,12 +118,27 @@ window.DongBo={start(o){
     try{fs=F.initializeFirestore(app,{experimentalForceLongPolling:true})}catch(e){fs=F.getFirestore(app)}
     U.onAuthStateChanged(auth,u=>{
       uid=u?u.uid:null;email=u?(u.email||''):'';ref=null;lastJSON=null;waiting=null;
+      if(o.onAuth)try{o.onAuth(u?{email:u.email||'',name:u.displayName||'',uid:u.uid}:null)}catch(e){}
       if(!u){if(unsub){try{unsub()}catch(e){}unsub=null}clearTimeout(slowT);show('out');return}
       sub();
     });
   })();
 
-  return {changed(){
+  return {
+  signIn,
+  /* Đăng xuất. Với rieng: quên trạng thái đồng bộ để lần sau đăng nhập lấy lại bản trên mạng, không đè bằng dữ liệu trống. */
+  signOut(){if(o.rieng){M={};saveM()}if(U&&auth)return U.signOut(auth)},
+  /* Xoá tài liệu của người này trên Firebase rồi đăng xuất. Trang tự xoá dữ liệu trên máy. */
+  async wipe(){
+    if(unsub){try{unsub()}catch(e){}unsub=null}
+    clearTimeout(timer);timer=null;
+    const r=ref;ref=null;
+    if(r&&F)await F.deleteDoc(r);
+    M={};try{localStorage.removeItem(MK)}catch(e){}
+    if(U&&auth)await U.signOut(auth);
+  },
+  get state(){return st},
+  changed(){
     if(applying)return;
     gen++;M.dirty=true;saveM();
     if(ref&&st!=='denied'){clearTimeout(timer);timer=setTimeout(push,700)}
