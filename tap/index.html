@@ -164,6 +164,8 @@ label.f{position:relative}
 .tip:hover,.tip:focus-visible{border-color:var(--trk);color:var(--trk)}
 .tip::after{content:attr(data-tip);position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:5;padding:8px 10px;border-radius:8px;background:var(--ink);color:var(--bg);font:500 13px/1.4 "Be Vietnam Pro",sans-serif;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(4px);pointer-events:none}
 .tip:hover::after,.tip:focus::after{opacity:1;visibility:visible;transform:none}
+label.row{position:relative}
+.tip-r::after{right:auto;width:min(320px,80vw)}
 @media(prefers-reduced-motion:no-preference){.tip::after{transition:opacity .12s,transform .12s,visibility .12s}}
 .help{font-size:13px;color:var(--mut);font-weight:400}
 .seg{display:inline-flex;flex-wrap:wrap;gap:6px}

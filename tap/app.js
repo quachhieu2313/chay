@@ -43,7 +43,7 @@ function norm(h){
     muc:{loai:h.muc.loai,km:+h.muc.km||10,dPlus:+h.muc.dPlus||0,ngay:h.muc.coNgay?h.muc.ngay:'',soTuan:+h.muc.soTuan||12,mucTieu:h.muc.mucTieu},
     hienTai:{kmTuan:+h.hienTai.kmTuan||0,dai:+h.hienTai.dai||0,nam:+h.hienTai.nam||0},
     thanhTich:h.tt&&h.tt.tg?{km:+h.tt.km,phut:tgPhut(h.tt.tg)}:null,paceNhe:paceGiay(h.paceNhe),
-    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,chinh:h.chinh||{}};
+    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,ketHop:h.muc.loai==='road'&&!!h.ketHop,chinh:h.chinh||{}};
 }
 const MAU=()=>({ten:'',tuoi:'',hrNghi:'',hrMax:'',muc:{loai:'road',km:10,dPlus:'',coNgay:false,ngay:'',soTuan:12,mucTieu:'hoan-thanh'},
   hienTai:{kmTuan:'',dai:'',nam:1},tt:{km:5,tg:''},paceNhe:'',chanThuong:'khong',ngayRanh:[1,3,5,6],soBuoi:4,ngayDai:6,doc:'it',ta:false,chinh:{}});
@@ -77,6 +77,7 @@ function render(){
 }
 
 /* ---------- Ngày ---------- */
+const tagOf=d=>(d.dh==='trail'&&(d.loai==='dai'||d.loai==='dai2'))?'Trail':TAG[d.loai];
 const TAG={nghi:'Nghỉ',nhe:'Nhẹ',hoiphuc:'Hồi phục',dai:'Dài',dai2:'Vừa',nang:'Nặng',suc:'Sức mạnh',thi:'Thi',kiem:'Kiểm tra'};
 const CLR={nghi:'var(--line)',nhe:'var(--z2)',hoiphuc:'var(--z1)',dai:'var(--z3)',dai2:'var(--z3)',nang:'var(--z4)',suc:'var(--mut)',thi:'var(--z5)',kiem:'var(--z5)'};
 const daChay=d=>!!(S.done[d.date+':run']||[])[0];
@@ -86,7 +87,7 @@ function strip(P,w,sel){
     <span class="t">Tuần ${w+1}/${P.N} · ${dm(t.start)}–${dm(LC.addD(t.start,6))} · ${LC.fmtKm(t.km)} km${t.leo?' · '+t.leo+' m leo':''}</span>
     <button class="nv" data-go="${w<P.N-1?P.tuan[w+1].start:''}" aria-label="Tuần sau"${w===P.N-1?' disabled':''}>›</button>
     ${P.byId[TODAY]&&P.byId[TODAY].w!==w?'<button class="nv td" data-go="'+TODAY+'">Hôm nay</button>':''}</div>
-  <div class="strip">${t.days.map(d=>`<button class="day" data-go="${d.date}" aria-pressed="${d.date===sel}" style="--c:${CLR[d.loai]}" aria-label="${DOWF[d.thu]} ${dm(d.date)}: ${esc(d.ten)}">${d.date===TODAY?'<span class="tdot"></span>':''}${d.km&&daChay(d)?'<span class="ck">✓</span>':''}<b>${DOW[d.thu]}</b><span class="dn">${+d.date.slice(8)}</span><i>${TAG[d.loai]}${d.km?'<br>'+LC.fmtKm(d.km):''}</i></button>`).join('')}</div>`;
+  <div class="strip">${t.days.map(d=>`<button class="day" data-go="${d.date}" aria-pressed="${d.date===sel}" style="--c:${CLR[d.loai]}" aria-label="${DOWF[d.thu]} ${dm(d.date)}: ${esc(d.ten)}">${d.date===TODAY?'<span class="tdot"></span>':''}${d.km&&daChay(d)?'<span class="ck">✓</span>':''}<b>${DOW[d.thu]}</b><span class="dn">${+d.date.slice(8)}</span><i>${tagOf(d)}${d.km?'<br>'+LC.fmtKm(d.km):''}</i></button>`).join('')}</div>`;
 }
 function vNgay(P,id){
   let note='';
@@ -103,6 +104,7 @@ function vNgay(P,id){
   if(d.km)chips.push(LC.fmtKm(d.km)+' km');
   if(d.phut)chips.push('khoảng '+LC.fmtT(d.phut));
   if(d.leo)chips.push(d.leo+' m leo');
+  if(d.km&&d.loai!=='suc')chips.push(d.dh==='trail'?'Trail':'Đường bằng');
   chips.push(LC.TEN_PHA[t.pha]+(t.deload&&t.pha!=='kiem'?' · giảm tải':''));
   const coBai=d.bt&&(d.bt.kd||d.bt.gc||d.bt.sm||d.bt.core);
   h+=`<div class="dhead"><div><p class="kick">${DOWF[d.thu]}, ${dmy(d.date)}${d.date===TODAY?' · hôm nay':''}</p><h2>${esc(d.ten)}</h2><div class="chips">${chips.map(c=>`<span>${esc(c)}</span>`).join('')}</div></div>
@@ -153,17 +155,26 @@ function prog(){
 /* ---------- Ghi chép và nhận xét ---------- */
 const LF=[['km','Quãng đường (km)',1],['tg','Thời gian (h:mm:ss)',0,'52:30'],['hr','Nhịp tim TB',1],['hrmax','Nhịp tim cao nhất',1],['cad','Guồng chân',1],['rpe','Mức gắng sức (1–10)',1,'1 rất nhẹ, 10 hết sức'],['dau','Đau (0–10)',1,'0 là không đau']];
 function logForm(P,d){
-  const L=S.log[d.date]||{},key=d.date+':run',fields=[...LF];
-  if(P.X.trail)fields.splice(2,0,['leo','Số mét leo',1]);
+  const L=S.log[d.date]||{},key=d.date+':run',fields=[...LF],dh=dhOf(d);
+  if(dh==='trail')fields.splice(2,0,['leo','Số mét leo',1]);
   const f=fields.map(([k,lb,n,ph])=>`<label class="f" for="l-${k}">${lb}<input id="l-${k}" data-l="${d.date}" data-f="${k}" type="${n?'number':'text'}" inputmode="${n?'decimal':'numeric'}"${ph?` placeholder="${ph}"`:''} value="${esc(L[k])}"></label>`).join('');
   return `<div class="log"><div class="row" style="justify-content:space-between"><h3>Sau buổi chạy</h3><button class="dot wide" data-k="${key}" data-i="0" aria-pressed="${isDone(key,0)}">${d.loai==='thi'?'Đã thi xong':'Đã chạy xong'}</button></div>
-    <p class="hint">Lấy số trên đồng hồ hoặc ứng dụng chạy. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p>
+    <div class="row" style="margin:8px 0 4px"><span class="mut" style="font-size:14px">Buổi này chạy trên</span><div class="seg" role="group" aria-label="Địa hình">${[['road','Đường bằng'],['trail','Trail']].map(([v,t])=>`<button type="button" data-dh="${v}" data-d="${d.date}" aria-pressed="${dh===v}">${t}</button>`).join('')}</div></div>
+    <p class="hint">Road và trail được theo dõi riêng: mỗi buổi chỉ so với buổi cùng loại. Lấy số trên đồng hồ hoặc ứng dụng chạy. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p>
     <div class="lg">${f}<label class="f w" for="l-nt">Ghi chú<input id="l-nt" data-l="${d.date}" data-f="nt" type="text" placeholder="Cảm giác, chỗ mỏi, thời tiết, đường chạy" value="${esc(L.nt)}"></label></div>
     <div class="rv" id="rv">${review(P,d)}</div></div>`;
 }
 const num=(L,k)=>{const v=L[k];if(v===''||v==null)return null;const x=+String(v).replace(',','.');return isFinite(x)?x:null};
 function paceOf(L){const k=num(L,'km'),m=tgPhut(L.tg);return k&&m?m*60/k:null}
 function bpk(L){const h=num(L,'hr'),p=paceOf(L);return h&&p?Math.round(h*p/60):null}
+/* Địa hình của buổi: người dùng chọn, nếu chưa chọn thì theo lịch. */
+const dhOf=d=>(S.log[d.date]&&S.log[d.date].dh)||d.dh||'road';
+/* Nhịp tim cho mỗi km: road theo km thật; trail theo km quy đổi (mỗi 100 m leo tính thêm 1 km). */
+function hieuQua(L,dh){
+  const h=num(L,'hr'),k=num(L,'km'),m=tgPhut(L.tg);if(!h||!k||!m)return null;
+  return dh==='trail'?Math.round(h*m/(k+(num(L,'leo')||0)/100)):Math.round(h*m/k);
+}
+const EZ=['nhe','dai','dai2','hoiphuc'];
 function review(P,d){
   const L=S.log[d.date]||{},hr=num(L,'hr'),mx=num(L,'hrmax'),cad=num(L,'cad'),rpe=num(L,'rpe'),pn=num(L,'dau'),km=num(L,'km'),ps=paceOf(L),Z=P.vung.hr;
   if([hr,mx,cad,rpe,pn,km].every(x=>x==null)&&!L.tg)return '<p>Chạy xong, nhập số liệu vào các ô trên. Nhận xét sẽ hiện ở đây.</p>';
@@ -197,11 +208,12 @@ function review(P,d){
     else if(r>1.25)add('warn',`Chạy ${LC.fmtKm(km)} km, nhiều hơn lịch ${LC.fmtKm(d.km)} km. Tăng quá nhanh là nguyên nhân chấn thương hay gặp nhất.`);
   }
   if(ps&&d.loai==='thi')add('ok',`Về đích ${L.tg}, pace ${LC.fmtP(ps)}/km. Vào Hồ sơ điền kết quả này để lịch sau có pace chính xác.`);
-  const b=bpk(L);
-  if(b&&nhe&&!P.X.trail){
-    const prev=[...P.days].reverse().find(x=>x.date<d.date&&['nhe','dai','hoiphuc'].includes(x.loai)&&bpk(S.log[x.date]||{}));
-    let t=`Mỗi km tốn khoảng ${b} nhịp tim (nhịp tim TB × số phút mỗi km). Số này giảm dần là thể lực đang lên.`;
-    if(prev){const pb=bpk(S.log[prev.date]),ch=(b-pb)/pb*100;t+=` Buổi ${dm(prev.date)}: ${pb}.`;
+  const dh=dhOf(d),b=hieuQua(L,dh);
+  if(b&&nhe){
+    const prev=[...P.days].reverse().find(x=>x.date<d.date&&EZ.includes(x.loai)&&dhOf(x)===dh&&hieuQua(S.log[x.date]||{},dh));
+    let t=dh==='trail'?`Trail: mỗi km quy đổi tốn khoảng ${b} nhịp tim (mỗi 100 m leo tính thêm 1 km). Chỉ so với các buổi trail.`:`Đường bằng: mỗi km tốn khoảng ${b} nhịp tim (nhịp tim TB × số phút mỗi km). Số này giảm dần là thể lực đang lên.`;
+    if(dh==='trail'&&num(L,'leo')==null)t+=' Điền số mét leo để số này chính xác.';
+    if(prev){const pb=hieuQua(S.log[prev.date],dh),ch=(b-pb)/pb*100;t+=` Buổi ${dh==='trail'?'trail':'đường bằng'} gần nhất (${dm(prev.date)}): ${pb}.`;
       add(ch<=-2?'ok':'info',t+(ch<=-2?' Lần này ít hơn: tốt.':ch>=3?' Lần này nhiều hơn: có thể do nóng, đường khác hoặc chưa hồi phục.':' Gần như không đổi.'))}
     else add('info',t);
   }
@@ -270,7 +282,20 @@ function vVung(P){
     <h3 style="margin-top:32px">Thể lực hiện tại tương đương</h3><p class="note">Nếu đã tập đủ cho cự ly đó. Cự ly dài cần thêm nhiều tuần chạy dài mới đạt.</p>
     <table class="zt"><tbody>${Z.du.map(([k,m])=>`<tr><td>${k>=42?'Marathon':k>=21?'Bán marathon':k+' km'}</td><td><b>${LC.fmtT(m)}</b></td><td class="mut">${LC.fmtP(m*60/k)}/km</td></tr>`).join('')}</tbody></table>`;
   }else h+=`<p class="msg info" style="margin-top:24px">Chưa có pace. Vào <a href="#/ho-so">Hồ sơ</a> điền thời gian một lần chạy 5 km hết sức (hoặc pace chạy nhẹ) để có pace cho từng bài.</p>`;
+  h+=tienBo(P);
   return h;
+}
+
+/* Tiến bộ: road và trail theo dõi riêng, chỉ tính các buổi chạy nhẹ/dài đã ghi đủ km, thời gian, nhịp tim. */
+function tienBo(P){
+  const R={road:[],trail:[]};
+  for(const[date,L]of Object.entries(S.log).sort()){const d=P.byId[date];if(!d||!EZ.includes(d.loai))continue;const dh=dhOf(d),e=hieuQua(L,dh);if(e)R[dh].push([date,L,e])}
+  const bang=(dh,ten,gt)=>{const r=R[dh].slice(-8);if(!r.length)return `<h3 style="margin-top:24px">${ten}</h3><p class="note">Chưa có buổi ${ten.toLowerCase()} nào ghi đủ quãng đường, thời gian và nhịp tim.</p>`;
+    const f=r[0][2],l=r[r.length-1][2],ch=Math.round((l-f)/f*100);
+    return `<h3 style="margin-top:24px">${ten}</h3><p class="note">${gt}${r.length>1?` Từ ${dm(r[0][0])} đến ${dm(r[r.length-1][0])}: ${ch<0?'giảm '+(-ch)+'%, thể lực đang lên':ch>0?'tăng '+ch+'%, xem lại giấc ngủ, thời tiết, mức mệt':'không đổi'}.`:''}</p>
+    <table class="zt"><thead><tr><th>Ngày</th><th>Quãng đường</th>${dh==='trail'?'<th>Leo</th>':'<th>Pace</th>'}<th>Nhịp tim TB</th><th>Nhịp/km${dh==='trail'?' quy đổi':''}</th></tr></thead><tbody>${r.map(([dt,L,e])=>`<tr><td>${dm(dt)}</td><td>${esc(L.km)} km</td><td>${dh==='trail'?esc(L.leo||'–')+' m':LC.fmtP(paceOf(L))}</td><td>${esc(L.hr)}</td><td><b>${e}</b></td></tr>`).join('')}</tbody></table>`};
+  return `<h2 style="margin-top:40px">Tiến bộ</h2><p class="sub">Road và trail theo dõi riêng, vì cùng nhịp tim nhưng trail chậm hơn nhiều do dốc và địa hình. Chỉ tính các buổi chạy nhẹ và chạy dài; số càng thấp là càng khoẻ.</p>`
+    +bang('road','Đường bằng','Số nhịp tim cho mỗi km.')+bang('trail','Trail','Số nhịp tim cho mỗi km quy đổi, mỗi 100 m leo tính thêm 1 km.');
 }
 
 /* ---------- Hồ sơ ---------- */
@@ -302,12 +327,13 @@ function vHoSo(moi){
   <fieldset><legend>Hiện tại bạn chạy</legend>
     <div class="fr">${inp('hienTai.kmTuan','Km mỗi tuần',{help:'Trung bình 4 tuần gần nhất. Điền 0 nếu chưa chạy.'})}${inp('hienTai.dai','Buổi dài nhất (km)',{help:'Buổi chạy dài nhất trong 4 tuần gần nhất.'})}${sel('hienTai.nam','Đã chạy đều',[[0,'Dưới 1 năm'],[1,'1–3 năm'],[2,'Trên 3 năm']])}</div>
     <p class="help" style="margin:4px 0 0">Kết quả gần đây giúp tính pace. Một lần chạy hết sức trong 3 tháng gần nhất là tốt nhất; không có thì điền pace chạy nhẹ.</p>
-    <div class="fr">${sel('tt.km','Kết quả gần đây: cự ly',[[3,'3 km'],[5,'5 km'],[10,'10 km'],[21.1,'21,1 km'],[42.2,'42,2 km']])}${inp('tt.tg','Thời gian',{t:'text',im:'numeric',ph:'h:mm:ss hoặc mm:ss'})}${inp('paceNhe','Hoặc pace chạy nhẹ',{t:'text',im:'numeric',ph:'7:30',help:'Phút mỗi km khi chạy nhẹ, vẫn nói chuyện được cả câu.'})}</div>
+    <div class="fr">${sel('tt.km','Kết quả road gần đây',[[3,'3 km'],[5,'5 km'],[10,'10 km'],[21.1,'21,1 km'],[42.2,'42,2 km']])}${inp('tt.tg','Thời gian',{t:'text',im:'numeric',ph:'h:mm:ss hoặc mm:ss'})}${inp('paceNhe','Hoặc pace chạy nhẹ',{t:'text',im:'numeric',ph:'7:30',help:'Phút mỗi km khi chạy nhẹ, vẫn nói chuyện được cả câu.'})}</div>
   </fieldset>
   <fieldset><legend>Thời gian của bạn</legend>
     <div><span class="help" style="display:block;margin-bottom:6px;font-weight:600;color:var(--mut);font-size:13.5px">Ngày có thể chạy</span><div class="dows">${DOW.map((t,i)=>`<label><input type="checkbox" data-dow="${i}" ${D.ngayRanh.includes(i)?'checked':''}> ${t}</label>`).join('')}</div></div>
     <div class="fr">${sel('soBuoi','Số buổi chạy mỗi tuần',[[2,'2 buổi'],[3,'3 buổi'],[4,'4 buổi'],[5,'5 buổi'],[6,'6 buổi']])}${sel('ngayDai','Ngày chạy dài',DOWF.map((t,i)=>[i,t]))}${sel('doc','Gần nhà có dốc',[['khong','Không (sẽ dùng cầu thang, máy chạy)'],['it','Có vài dốc'],['nhieu','Có đồi núi']])}</div>
     <label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="ta" ${D.ta?'checked':''}> Có tạ đơn ở nhà</label>
+    ${tr?'':`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="ketHop" ${D.ketHop?'checked':''}> Cuối tuần chạy dài trên trail <button type="button" class="tip tip-r" data-tip="Cho người chạy cả road lẫn trail: buổi chạy dài mỗi tuần chuyển lên đường mòn, tính theo thời gian và nhịp tim, có số mét leo. Các buổi khác vẫn trên đường bằng." aria-label="Giải thích chạy dài trên trail">?</button></label>`}
   </fieldset>
   <div class="prev" id="prev" aria-live="polite"></div>
   </form>`;
@@ -364,6 +390,7 @@ document.addEventListener('click',async ev=>{
   const g=t.closest('[data-go]');if(g){if(g.dataset.go)go(g.dataset.go);return}
   const dot=t.closest('.dot');if(dot){const k=dot.dataset.k,i=+dot.dataset.i,v=!isDone(k,i);const arr=S.done[k]||(S.done[k]=[]);arr[i]=v?1:0;if(!v&&!arr.some(Boolean))delete S.done[k];save();dot.setAttribute('aria-pressed',String(v));prog();
     if(k.endsWith(':run')){ttw();const b=document.querySelector(`.day[data-go="${k.slice(0,10)}"]`);if(b){const c=b.querySelector('.ck');if(v&&!c)b.insertAdjacentHTML('afterbegin','<span class="ck">✓</span>');if(!v&&c)c.remove()}}return}
+  const dhb=t.closest('[data-dh]');if(dhb){const L=S.log[dhb.dataset.d]||(S.log[dhb.dataset.d]={});const P=plan(),d=P.byId[dhb.dataset.d];L.dh=dhb.dataset.dh===d.dh?undefined:dhb.dataset.dh;if(L.dh===undefined)delete L.dh;if(!Object.keys(L).length)delete S.log[dhb.dataset.d];save();const lg=document.querySelector('.log');if(lg)keep(()=>{lg.outerHTML=logForm(P,d)});return}
   const tm=t.closest('.tm');if(tm){startT(tm);return}
   if(t.closest('#rst')){const d=CUR;Object.keys(S.done).forEach(k=>{if(k.startsWith(d+':')&&!k.endsWith(':run'))delete S.done[k]});save();render();return}
   const sg=t.closest('[data-seg]');if(sg){setP(D,sg.dataset.seg,sg.dataset.v);if(sg.dataset.seg==='muc.loai'){D.muc.km=sg.dataset.v==='trail'?'':10;D.muc.dPlus=''}keep(()=>{$('#view').innerHTML=vHoSo(!S.hs);xemTruoc()});return}

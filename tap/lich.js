@@ -255,6 +255,11 @@ function taoLich(p,homNay){
       if(isRace){const last=plan.filter(x=>x.loai==='nhe').pop();plan.forEach(x=>delete x.strides);if(last)last.strides=1}}
 
     /* Trail: phân bổ số mét leo */
+    /* Road + chạy dài trên trail cuối tuần (người chạy cả hai loại) */
+    if(!X.trail&&p.ketHop){
+      const pf={nen:.6,tang:.85,cao:1,giam:.6,kiem:.6}[pha]*(deload?.7:1),ratio=p.doc==='nhieu'?35:p.doc==='it'?20:10;
+      plan.forEach(x=>{if(x.loai==='dai'){x.dh='trail';x.leo=Math.round(x.km*ratio*pf/10)*10}});
+    }
     if(X.trail){
       const ratio=X.D?X.dPlus/X.D:0,pf={nen:.5,tang:.8,cao:1,giam:.5,kiem:.5}[pha]*(deload?.7:1);
       plan.forEach(x=>{
@@ -303,18 +308,20 @@ function ghiChuTuan(t,c){
 }
 
 function moTa(x,c){
-  const {X,pc,hr,diBo,i}=c,ep=pc?pc.nhe:null,eMid=ep?(ep[0]+ep[1])/2:450,tf=X.trail?1.15:1;
+  const {X,pc,hr,diBo,i}=c,ep=pc?pc.nhe:null,eMid=ep?(ep[0]+ep[1])/2:450,tf0=1.15;
   /* Trail: mỗi 100 m leo tính như thêm 1 km đường bằng ("km-effort"). */
-  const tg=(km,pace)=>(km+(x.leo||0)/100)*(pace||eMid)*tf/60;
+  const tg=(km,pace)=>(km+(x.leo||0)/100)*(pace||eMid)*(x.dh==='trail'?tf0:1)/60;
   const nhip=a=>a?`${a[0]}–${a[1]}`:'';
   const chayDi=['1 phút chạy / 1 phút đi bộ','2 phút chạy / 1 phút đi bộ','3 phút chạy / 1 phút đi bộ','4 phút chạy / 1 phút đi bộ','5 phút chạy / 1 phút đi bộ','8 phút chạy / 1 phút đi bộ'][Math.min(i,5)];
   x.km=x.km?r05(x.km):0;
+  if(!x.dh)x.dh=X.trail&&(x.loai==='dai'||x.loai==='dai2'||x.loai==='thi'||(x.loai==='nang'&&x.bai&&x.bai.leo)||x.xuong)?'trail':'road';
+  const trl=x.dh==='trail';
   x.bt={};
   switch(x.loai){
     case 'nhe':case 'hoiphuc':{
       const hp=x.loai==='hoiphuc';
       x.ten=(hp?'Chạy hồi phục ':'Chạy nhẹ ')+fmtKm(x.km)+' km';
-      x.hr=hp?hr.hoiPhuc:hr.nhe;x.pace=ep&&!X.trail?[ep[0]+(hp?20:0),ep[1]+(hp?30:0)]:null;
+      x.hr=hp?hr.hoiPhuc:hr.nhe;x.pace=ep&&!trl?[ep[0]+(hp?20:0),ep[1]+(hp?30:0)]:null;
       x.phut=tg(x.km,hp?eMid+20:eMid);
       x.buoc=[(diBo&&i<6?`Xen kẽ ${chayDi}. `:'')+(hp?'Chậm nhất tuần, cho chân hồi lại sau chạy dài.':'Chạy đều, nói chuyện được cả câu. Km đầu chậm nhất buổi.')];
       if(x.strides)x.buoc.push('Cuối buổi: 4–6 lần tăng tốc 20 giây (strides) lên khoảng 85% sức, đi bộ 1 phút giữa các lần.');
@@ -323,12 +330,12 @@ function moTa(x,c){
     }
     case 'dai':case 'dai2':{
       const d2=x.loai==='dai2';
-      x.ten=(X.trail?(d2?'Trail vừa ':'Chạy dài trail '):(d2?'Chạy vừa ':'Chạy dài '))+fmtKm(x.km)+' km'+(x.leo?` · ${x.leo} m leo`:'');
-      x.hr=hr.dai;x.pace=ep&&!X.trail?[ep[0],ep[1]+15]:null;x.phut=tg(x.km);
-      x.buoc=[X.trail?'Tính theo thời gian, không theo pace. Lên dốc gắt thì đi bộ nhanh, giữ nhịp tim dưới '+hr.tran+'. Xuống dốc thả lỏng, bước ngắn.':'Chạy đều ở vùng 2. Nửa sau tim hay vượt '+hr.tran+' thì chạy chậm lại hoặc đi bộ 1 phút.'];
+      x.ten=(trl?(d2?'Trail vừa ':'Chạy dài trail '):(d2?'Chạy vừa ':'Chạy dài '))+fmtKm(x.km)+' km'+(x.leo?` · ${x.leo} m leo`:'');
+      x.hr=hr.dai;x.pace=ep&&!trl?[ep[0],ep[1]+15]:null;x.phut=tg(x.km);
+      x.buoc=[trl?'Tính theo thời gian, không theo pace. Lên dốc gắt thì đi bộ nhanh, giữ nhịp tim dưới '+hr.tran+'. Xuống dốc thả lỏng, bước ngắn.':'Chạy đều ở vùng 2. Nửa sau tim hay vượt '+hr.tran+' thì chạy chậm lại hoặc đi bộ 1 phút.'];
       if(d2)x.buoc.push('Hôm sau chạy dài: tập chạy khi chân đã mỏi, giống nửa sau của giải.');
       /* Chạy dài có đoạn pace thi (21/42 km, giai đoạn tăng cường trở đi, tuần không giảm tải) */
-      if(!X.trail&&X.D>=21&&(c.pha==='tang'||c.pha==='cao')&&!c.deload&&pc&&c.p.muc.mucTieu==='thanh-tich'&&i%2===1){
+      if(!trl&&X.D>=21&&(c.pha==='tang'||c.pha==='cao')&&!c.deload&&pc&&c.p.muc.mucTieu==='thanh-tich'&&i%2===1){
         const kmP=Math.min(Math.round(x.km*0.35),X.D>=42?12:6),P=X.D>=42?pc.M:pc.HM;
         x.buoc.push(`${kmP} km cuối chạy ở pace mục tiêu ${fmtP(P)}/km.`);
       }
