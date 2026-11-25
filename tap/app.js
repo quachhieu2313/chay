@@ -331,14 +331,14 @@ const ngayCsv=v=>{v=String(v??'').trim();let m=v.match(/(\d{4})-(\d{1,2})-(\d{1,
   m=v.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);if(m){const a=+m[1],b=+m[2];return m[3]+'-'+pad(a>12?b:a)+'-'+pad(a>12?a:b)}
   const d=new Date(v);return isNaN(d)?null:LC.ymd(d)};
 function docCsv(txt){
-  txt=txt.replace(/^\uFEFF/,'');const l1=txt.split(/\r?\n/)[0];
+  txt=txt.replace(/^\uFEFF/,'').normalize('NFC');const l1=txt.split(/\r?\n/)[0];
   const rows=csvRows(txt,l1.split(';').length>l1.split(',').length?';':',');if(rows.length<2)throw new Error('file trống');
   const H=rows[0].map(h=>h.trim().toLowerCase());
   const col=(...re)=>{for(const r of re){const i=H.findIndex(h=>r.test(h));if(i>=0)return i}return -1};
   const C={loai:col(/^activity type$/,/loại hoạt động/,/^loại$/),ngay:col(/^date$/,/^ngày$/,/start time/,/ngày/),ten:col(/^title$/,/tiêu đề/,/^tên/),
     km:col(/^distance$/,/khoảng cách/,/quãng đường/,/distance/),tg:col(/^time$/,/^thời gian$/,/moving time/,/elapsed time/,/thời gian/),
-    hr:col(/^avg hr$/,/avg.*(hr|heart)/,/nhịp tim.*(tb|trung bình)/),hrmax:col(/^max hr$/,/max.*(hr|heart)/,/nhịp tim.*(tối đa|cao nhất)/),
-    cad:col(/avg run cadence/,/avg.*cadence/,/(nhịp|guồng).*(tb|trung bình)/),leo:col(/total ascent/,/elev.*gain/,/tổng.*(lên|leo)/)};
+    hr:col(/^avg hr$/,/avg.*(hr|heart)/,/^hr trung bình$/,/(hr|nhịp tim).*(tb|trung bình)/),hrmax:col(/^max hr$/,/max.*(hr|heart)/,/^hr tối đa$/,/(hr|nhịp tim).*(tối đa|cao nhất)/),
+    cad:col(/avg run cadence/,/avg.*cadence/,/^nhịp độ chạy trung bình$/,/(guồng|nhịp bước|nhịp độ chạy).*(tb|trung bình)/),leo:col(/total ascent/,/elev.*gain/,/tổng.*(lên|leo)/)};
   if(C.ngay<0||C.km<0||C.tg<0)throw new Error('không thấy cột Date, Distance, Time. Hãy xuất CSV từ danh sách Activities trên connect.garmin.com');
   const ds=[];let bo=0;
   for(const r of rows.slice(1)){
@@ -347,7 +347,7 @@ function docCsv(txt){
     const date=ngayCsv(r[C.ngay]),km=soCsv(r[C.km]),giay=giayCsv(r[C.tg]);
     if(!date||!km||!giay||km<0.5||km>400){bo++;continue}
     const g=(k,n)=>C[k]>=0?soCsv(r[C[k]],n):null;
-    ds.push({date,km,giay,hr:g('hr'),hrmax:g('hrmax'),cad:g('cad'),leo:g('leo',1),trail:/trail|địa hình/i.test(loai),ten:C.ten>=0?(r[C.ten]||'').trim():''});
+    ds.push({date,km,giay,hr:g('hr'),hrmax:g('hrmax'),cad:g('cad'),leo:g('leo',1),trail:/trail|địa hình|đường mòn/i.test(loai),ten:C.ten>=0?(r[C.ten]||'').trim():''});
   }
   return {ds,bo};
 }
@@ -363,7 +363,7 @@ function ghiNhieu(list,nguon){
     const hr=tb('hr'),cad=tb('cad'),hrmax=Math.max(0,...xs.map(x=>x.hrmax||0)),leo=xs.some(x=>x.leo!=null)?Math.round(xs.reduce((a,x)=>a+(x.leo||0),0)):null;
     const L=L0||(S.log[date]={});L0?capNhat++:moi++;
     /* Nhiều buổi một ngày (giải + khởi động): km là tổng, còn "buổi chính" (VDOT cao nhất, từ 3 km) giữ riêng để tính thành tích */
-    const ch=xs.length>1?xs.filter(x=>x.km>=3).sort((a,b)=>LC.vdot(b.km,b.giay/60)-LC.vdot(a.km,a.giay/60))[0]:null;
+    const ch=xs.length>1?xs.filter(x=>x.km>=3&&!x.trail).sort((a,b)=>LC.vdot(b.km,b.giay/60)-LC.vdot(a.km,a.giay/60))[0]:null;
     if(ch)L.chinh={km:String(Math.round(ch.km*100)/100),tg:fmtGiay(ch.giay),hr:ch.hr?String(Math.round(ch.hr)):'',ten:ch.ten||''};else delete L.chinh;
     Object.assign(L,{km:String(Math.round(km*100)/100),tg:fmtGiay(gi),hr:hr?String(hr):'',hrmax:hrmax?String(hrmax):'',src:xs.length>1?xs.length+' buổi, '+nguon:(xs[0].ten||nguon),nhap:1});
     if(cad)L.cad=String(cad);if(leo!=null)L.leo=String(leo);
@@ -387,7 +387,7 @@ async function nhapNhieu(files){
   const r=ghiNhieu(list,files.length===1?files[0].name:'Garmin'),ng=list.map(x=>x.date).sort();
   save();
   let t=`Đã đọc ${list.length} buổi chạy, từ ${dmy(ng[0])} đến ${dmy(ng[ng.length-1])}: thêm ${r.moi} ngày, cập nhật ${r.capNhat} ngày`+(r.giu?`, giữ nguyên ${r.giu} ngày bạn đã ghi tay`:'')+'.'
-    +(bo?` Bỏ qua ${bo} dòng không phải chạy bộ.`:'')+(loi.length?` Không đọc được ${loi.length} file (${loi.slice(0,2).join('; ')}).`:'');
+    +(bo?` Bỏ qua ${bo} dòng không phải chạy bộ hoặc ngắn dưới 0,5 km.`:'')+(loi.length?` Không đọc được ${loi.length} file (${loi.slice(0,2).join('; ')}).`:'');
   if(JSON.stringify(S).length>450000)t+=' Dữ liệu đã gần giới hạn lưu trong tài khoản; nếu báo lỗi đồng bộ, hãy tải bản JSON về máy cho chắc.';
   try{localStorage.setItem('lcn-nhap',t)}catch(e){}
   if(location.hash!=='#/lo-trinh')location.hash='#/lo-trinh';else keep(render);
