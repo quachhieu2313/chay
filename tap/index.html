@@ -156,7 +156,15 @@ table.zt td b{font:700 20px "Barlow Condensed",sans-serif}
 .form{display:grid;gap:26px;max-width:860px}
 fieldset{border:0;padding:0;margin:0;display:grid;gap:12px}
 legend{font:700 26px "Barlow Condensed",sans-serif;margin-bottom:8px;padding:0}
-.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;align-items:end}
+label.f{position:relative}
+.lb{display:flex;align-items:center;gap:6px;min-height:22px}
+/* Dấu ? nhỏ: rê chuột, bấm hoặc Tab vào thì hiện giải thích ngay trên ô */
+.tip{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--mut);background:var(--bg);color:var(--mut);font:700 11px/1 "Be Vietnam Pro",sans-serif;padding:0;cursor:help;display:inline-grid;place-items:center}
+.tip:hover,.tip:focus-visible{border-color:var(--trk);color:var(--trk)}
+.tip::after{content:attr(data-tip);position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:5;padding:8px 10px;border-radius:8px;background:var(--ink);color:var(--bg);font:500 13px/1.4 "Be Vietnam Pro",sans-serif;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;visibility:hidden;transform:translateY(4px);pointer-events:none}
+.tip:hover::after,.tip:focus::after{opacity:1;visibility:visible;transform:none}
+@media(prefers-reduced-motion:no-preference){.tip::after{transition:opacity .12s,transform .12s,visibility .12s}}
 .help{font-size:13px;color:var(--mut);font-weight:400}
 .seg{display:inline-flex;flex-wrap:wrap;gap:6px}
 .seg button{min-height:44px;padding:0 16px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px "Be Vietnam Pro",sans-serif;cursor:pointer}

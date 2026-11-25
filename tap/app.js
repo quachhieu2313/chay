@@ -279,9 +279,9 @@ const getP=(o,p)=>p.split('.').reduce((a,k)=>a&&a[k],o);
 const setP=(o,p,v)=>{const ks=p.split('.'),l=ks.pop();ks.reduce((a,k)=>a[k]=a[k]||{},o)[l]=v};
 function vHoSo(moi){
   if(!D)D=JSON.parse(JSON.stringify(S.hs||MAU()));
-  const inp=(f,lb,o={})=>`<label class="f" for="f-${f}">${lb}${o.help?` <span class="help">${o.help}</span>`:''}<input id="f-${f}" data-f="${f}" type="${o.t||'number'}" ${o.t==='date'?`min="${LC.addD(TODAY,7)}"`:'inputmode="'+(o.im||'decimal')+'"'}${o.ph?` placeholder="${o.ph}"`:''} value="${esc(getP(D,f))}"></label>`;
+  const inp=(f,lb,o={})=>`<label class="f" for="f-${f}"><span class="lb">${lb}${o.help?`<button type="button" class="tip" data-tip="${esc(o.help)}" aria-label="${esc(lb+': '+o.help)}">?</button>`:''}</span><input id="f-${f}" data-f="${f}" type="${o.t||'number'}" ${o.t==='date'?`min="${LC.addD(TODAY,7)}"`:'inputmode="'+(o.im||'decimal')+'"'}${o.ph?` placeholder="${o.ph}"`:''} value="${esc(getP(D,f))}"></label>`;
   const seg=(f,opts)=>`<div class="seg" role="group">${opts.map(([v,t])=>`<button type="button" data-seg="${f}" data-v="${v}" aria-pressed="${String(getP(D,f))===String(v)}">${t}</button>`).join('')}</div>`;
-  const sel=(f,lb,opts)=>`<label class="f" for="f-${f}">${lb}<select id="f-${f}" data-f="${f}">${opts.map(([v,t])=>`<option value="${v}"${String(getP(D,f))===String(v)?' selected':''}>${t}</option>`).join('')}</select></label>`;
+  const sel=(f,lb,opts)=>`<label class="f" for="f-${f}"><span class="lb">${lb}</span><select id="f-${f}" data-f="${f}">${opts.map(([v,t])=>`<option value="${v}"${String(getP(D,f))===String(v)?' selected':''}>${t}</option>`).join('')}</select></label>`;
   const m=D.muc,tr=m.loai==='trail';
   let h=moi?`<h1>Lịch chạy theo thể trạng của bạn</h1><p class="sub">Điền vài thông số, trang tạo lịch theo tuần cho road hoặc trail: chạy gì mỗi ngày, ở nhịp tim và pace nào, kèm khởi động, bài sức mạnh, giãn cơ. Chạy xong ghi lại số liệu để nhận nhận xét và chỉnh tuần sau.</p>
     <div class="hero"><div><h3>Theo thể trạng</h3><p>Vùng nhịp tim tính từ nhịp nghỉ và nhịp tối đa của bạn, pace tính từ một kết quả gần đây.</p></div><div><h3>Tăng dần an toàn</h3><p>Khối lượng tăng tối đa khoảng 10% mỗi tuần, có tuần giảm tải, phần lớn là chạy nhẹ.</p></div><div><h3>Road và trail</h3><p>Trail tập theo thời gian và số mét leo, có bài leo dốc, xuống dốc, chạy dài hai ngày liền.</p></div></div>
@@ -290,19 +290,19 @@ function vHoSo(moi){
   h+=`<form class="form" id="hsf" onsubmit="return false">
   <fieldset><legend>Mục tiêu</legend>
     ${seg('muc.loai',[['road','Road (đường nhựa)'],['trail','Trail (đường mòn, núi)']])}
-    <div class="fr">${tr?inp('muc.km','Cự ly (km)',{ph:'25'})+inp('muc.dPlus','Tổng độ cao leo (m)',{ph:'1200',help:'D+ của giải'}):sel('muc.km','Cự ly',[[5,'5 km'],[10,'10 km'],[21.1,'Bán marathon 21,1 km'],[42.2,'Marathon 42,2 km']])}
+    <div class="fr">${tr?inp('muc.km','Cự ly (km)',{ph:'25'})+inp('muc.dPlus','Tổng độ cao leo (m)',{ph:'1200',help:'Tổng số mét leo (D+) của giải, ghi trên trang giới thiệu giải.'}):sel('muc.km','Cự ly',[[5,'5 km'],[10,'10 km'],[21.1,'Bán marathon 21,1 km'],[42.2,'Marathon 42,2 km']])}
       ${sel('muc.mucTieu','Mục tiêu',[['hoan-thanh','Hoàn thành khoẻ, không chấn thương'],['thanh-tich','Cải thiện thành tích']])}</div>
     <div class="row"><label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="muc.coNgay" ${m.coNgay?'checked':''}> Đã có ngày thi</label></div>
     <div class="fr">${m.coNgay?inp('muc.ngay','Ngày thi',{t:'date'}):sel('muc.soTuan','Tập trong bao lâu',[[8,'8 tuần'],[10,'10 tuần'],[12,'12 tuần'],[16,'16 tuần'],[20,'20 tuần'],[24,'24 tuần']])}</div>
   </fieldset>
   <fieldset><legend>Cơ thể</legend>
-    <div class="fr">${inp('tuoi','Tuổi',{im:'numeric'})}${inp('hrNghi','Nhịp tim nghỉ',{im:'numeric',help:'lúc mới thức dậy, hoặc số "nhịp tim nghỉ" trên đồng hồ'})}${inp('hrMax','Nhịp tim tối đa',{im:'numeric',help:'nếu biết; bỏ trống thì ước tính theo tuổi'})}</div>
+    <div class="fr">${inp('tuoi','Tuổi',{im:'numeric'})}${inp('hrNghi','Nhịp tim nghỉ',{im:'numeric',help:'Đo lúc mới thức dậy, chưa ra khỏi giường. Hoặc lấy số "nhịp tim nghỉ" trên đồng hồ.'})}${inp('hrMax','Nhịp tim tối đa',{im:'numeric',help:'Số cao nhất bạn từng thấy khi chạy hết sức. Bỏ trống thì trang ước tính theo tuổi.'})}</div>
     ${sel('chanThuong','Chấn thương',[['khong','Không'],['moi-khoi','Vừa khỏi chấn thương, đang chạy lại'],['dang-dau','Đang đau khi chạy']])}
   </fieldset>
   <fieldset><legend>Hiện tại bạn chạy</legend>
-    <div class="fr">${inp('hienTai.kmTuan','Km mỗi tuần',{help:'trung bình 4 tuần gần nhất, 0 nếu chưa chạy'})}${inp('hienTai.dai','Buổi dài nhất (km)',{help:'trong 4 tuần gần nhất'})}${sel('hienTai.nam','Đã chạy đều',[[0,'Dưới 1 năm'],[1,'1–3 năm'],[2,'Trên 3 năm']])}</div>
+    <div class="fr">${inp('hienTai.kmTuan','Km mỗi tuần',{help:'Trung bình 4 tuần gần nhất. Điền 0 nếu chưa chạy.'})}${inp('hienTai.dai','Buổi dài nhất (km)',{help:'Buổi chạy dài nhất trong 4 tuần gần nhất.'})}${sel('hienTai.nam','Đã chạy đều',[[0,'Dưới 1 năm'],[1,'1–3 năm'],[2,'Trên 3 năm']])}</div>
     <p class="help" style="margin:4px 0 0">Kết quả gần đây giúp tính pace. Một lần chạy hết sức trong 3 tháng gần nhất là tốt nhất; không có thì điền pace chạy nhẹ.</p>
-    <div class="fr">${sel('tt.km','Kết quả gần đây: cự ly',[[3,'3 km'],[5,'5 km'],[10,'10 km'],[21.1,'21,1 km'],[42.2,'42,2 km']])}${inp('tt.tg','Thời gian',{t:'text',im:'numeric',ph:'h:mm:ss hoặc mm:ss'})}${inp('paceNhe','Hoặc pace chạy nhẹ',{t:'text',im:'numeric',ph:'7:30',help:'phút/km, lúc nói chuyện được'})}</div>
+    <div class="fr">${sel('tt.km','Kết quả gần đây: cự ly',[[3,'3 km'],[5,'5 km'],[10,'10 km'],[21.1,'21,1 km'],[42.2,'42,2 km']])}${inp('tt.tg','Thời gian',{t:'text',im:'numeric',ph:'h:mm:ss hoặc mm:ss'})}${inp('paceNhe','Hoặc pace chạy nhẹ',{t:'text',im:'numeric',ph:'7:30',help:'Phút mỗi km khi chạy nhẹ, vẫn nói chuyện được cả câu.'})}</div>
   </fieldset>
   <fieldset><legend>Thời gian của bạn</legend>
     <div><span class="help" style="display:block;margin-bottom:6px;font-weight:600;color:var(--mut);font-size:13.5px">Ngày có thể chạy</span><div class="dows">${DOW.map((t,i)=>`<label><input type="checkbox" data-dow="${i}" ${D.ngayRanh.includes(i)?'checked':''}> ${t}</label>`).join('')}</div></div>
