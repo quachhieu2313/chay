@@ -43,7 +43,11 @@ function uocVdot(p){
 function vung(p){
   const tuoi=+p.tuoi||35,max=+p.hrMax||Math.round(208-0.7*tuoi),nghi=+p.hrNghi||60,R=max-nghi;
   const at=f=>Math.round(nghi+R*f);
-  const hr={max,nghi,uocMax:!p.hrMax,
+  const LT=+p.hrNguong||0,lf=f=>Math.min(max,Math.round(LT*f));
+  const hr=LT>=100&&LT<max?{max,nghi,uocMax:!p.hrMax,lthr:LT,
+    z:[['Z1','Hồi phục',lf(.72),lf(.85)],['Z2','Chạy nhẹ',lf(.85),lf(.89)],['Z3','Trung bình',lf(.9),lf(.94)],['Z4','Ngưỡng',lf(.95),lf(.99)],['Z5','Tối đa',LT,max]],
+    nhe:[lf(.8),lf(.89)],hoiPhuc:[lf(.72),lf(.84)],dai:[lf(.8),lf(.9)],tempo:[lf(.95),LT],bien:[LT,lf(1.06)],doc:[lf(.95),lf(1.04)],leo:[lf(.88),lf(.97)],tran:lf(.89)}
+  :{max,nghi,uocMax:!p.hrMax,
     z:[['Z1','Hồi phục',at(.5),at(.6)],['Z2','Chạy nhẹ',at(.6),at(.7)],['Z3','Trung bình',at(.7),at(.8)],['Z4','Ngưỡng',at(.8),at(.9)],['Z5','Tối đa',at(.9),max]],
     nhe:[at(.6),at(.7)],hoiPhuc:[at(.5),at(.65)],dai:[at(.6),at(.72)],tempo:[at(.8),at(.87)],bien:[at(.87),at(.95)],doc:[at(.8),at(.92)],leo:[at(.72),at(.85)],tran:at(.72)};
   const u=uocVdot(p);let pace=null,du=null;
@@ -141,6 +145,19 @@ function taoLich(p,homNay){
   if(X.trail&&p.doc==='khong')canhBao.push(['info','Không có dốc gần nhà: các bài leo dùng máy chạy bộ có độ dốc hoặc cầu thang bộ.']);
   if(!X.trail&&X.D>=42&&kmNow<25)canhBao.push(['warn','Marathon cần nền khoảng 25–30 km mỗi tuần trước khi bắt đầu giáo án. Nếu còn ít thời gian, cân nhắc chạy 21 km trước.']);
   if(X.trail&&X.D>=50&&kmNow<30)canhBao.push(['warn','Trail từ 50 km cần nền khoảng 30 km mỗi tuần và đã chạy dài được 20 km trở lên.']);
+  let mt=null;
+  if(!X.trail&&thanhTich&&+p.muc.tgMucTieu>0){
+    const T=+p.muc.tgMucTieu,Vg=vdot(X.D,T);
+    mt={T,pace:T*60/X.D,Vg:Math.round(Vg*10)/10,paceThi:T*60/X.D};
+    if(pc){
+      const moiTuan=nam===0?0.4:nam===1?0.3:0.2,kha=Math.min(8,N*moiTuan*(quayLai?0.6:1)),can=Vg-pc.V;
+      Object.assign(mt,{can:Math.round(can*10)/10,kha:Math.round(kha*10)/10});
+      const tDat=thoiGianDua(pc.V+kha,X.D);
+      if(can<=0)canhBao.push(['ok',`Mục tiêu ${fmtT(T)} nằm trong sức hiện tại (dự đoán ${fmtT(thoiGianDua(pc.V,X.D))} nếu đủ sức bền cho cự ly). Có thể đặt cao hơn.`]);
+      else if(can<=kha)canhBao.push(['info',`Mục tiêu ${fmtT(T)} khả thi nếu tập đều: cần tăng khoảng ${mt.can} điểm VDOT trong ${N} tuần (ước tính thường đạt được khoảng ${mt.kha}).`]);
+      else{mt.paceThi=tDat*60/X.D;mt.kho=1;canhBao.push(['warn',`Mục tiêu ${fmtT(T)} khó trong ${N} tuần: cần tăng ${mt.can} điểm VDOT, thường chỉ đạt khoảng ${mt.kha}. Mục tiêu thực tế hơn: khoảng ${fmtT(tDat)}. Các đoạn chạy pace thi trong lịch dùng mức này.`])}
+    }else canhBao.push(['info','Điền một kết quả road gần đây ở hồ sơ để kiểm tra thời gian mục tiêu có thực tế không.']);
+  }
   if(!pc)canhBao.push(['info','Chưa có kết quả gần đây nên lịch chỉ dùng nhịp tim. Điền thời gian một lần chạy 5 km hết sức (hoặc pace chạy nhẹ) ở hồ sơ để có pace cho từng bài.']);
 
   /* Số buổi, ngày */
@@ -175,6 +192,7 @@ function taoLich(p,homNay){
     if(!ngayDua&&i===N-1&&!sau){pha='kiem';km=nen*0.8;deload=true}
     /* Hệ số người dùng tự chỉnh cho tuần này (ví dụ ốm, bận). */
     const start=addD(bd,i*7),adj=(p.chinh&&p.chinh[start])||1;km*=adj;
+    if(adj<1&&!sau&&!deload)nen=Math.min(nen,km);
 
     /* Số buổi nặng */
     let q=0;
@@ -185,6 +203,7 @@ function taoLich(p,homNay){
     if(quayLai&&i<4)q=0;
     if(diBo)q=Math.min(q,i<6?0:1);
     if(ct==='dang-dau')q=0;
+    if(adj<1)q=adj<=0.7?0:Math.min(q,1);
     if(chay.length<3)q=Math.min(q,1);
     const nang=chonNang(chay,L,q);
 
@@ -285,7 +304,7 @@ function taoLich(p,homNay){
 
     /* Mô tả từng ngày */
     const giaiDoanSM=(quayLai&&i<4)||i<3?'kt':p.ta?'ta':'kt';
-    plan.forEach(x=>moTa(x,{X,Z,pc,hr,pha,deload,diBo,i,giaiDoanSM,isRace,p,N}));
+    plan.forEach(x=>moTa(x,{X,Z,pc,hr,pha,deload,diBo,i,giaiDoanSM,isRace,p,N,mt}));
     tuanObj.days=plan;
     tuanObj.km=plan.reduce((a,x)=>a+(x.km||0),0);
     tuanObj.leo=plan.reduce((a,x)=>a+(x.leo||0),0);
@@ -293,7 +312,7 @@ function taoLich(p,homNay){
     tuanObj.ghiChu=ghiChuTuan(tuanObj,{X,isRace,N,pha,deload,diBo});
     tuan.push(tuanObj);
   }
-  return {batDau:bd,ketThuc:addD(bd,N*7-1),ngayDua,N,tuan,vung:Z,canhBao,X,dinh:Math.round(dinh),ngayChay:chay,ngayDai:L};
+  return {mt,batDau:bd,ketThuc:addD(bd,N*7-1),ngayDua,N,tuan,vung:Z,canhBao,X,dinh:Math.round(dinh),ngayChay:chay,ngayDai:L};
 }
 
 const TEN_PHA={nen:'Nền sức bền',tang:'Tăng cường',cao:'Cao điểm',giam:'Giảm tải trước giải',kiem:'Kiểm tra'};
@@ -337,7 +356,7 @@ function moTa(x,c){
       if(d2)x.buoc.push('Hôm sau chạy dài: tập chạy khi chân đã mỏi, giống nửa sau của giải.');
       /* Chạy dài có đoạn pace thi (21/42 km, giai đoạn tăng cường trở đi, tuần không giảm tải) */
       if(!trl&&X.D>=21&&(c.pha==='tang'||c.pha==='cao')&&!c.deload&&pc&&c.p.muc.mucTieu==='thanh-tich'&&i%2===1){
-        const kmP=Math.min(Math.round(x.km*0.35),X.D>=42?12:6),P=X.D>=42?pc.M:pc.HM;
+        const kmP=Math.min(Math.round(x.km*0.35),X.D>=42?12:6),P=c.mt?c.mt.paceThi:(X.D>=42?pc.M:pc.HM);
         x.buoc.push(`${kmP} km cuối chạy ở pace mục tiêu ${fmtP(P)}/km.`);
       }
       if(x.phut>75)x.buoc.push('Mang nước. Từ phút 60 trở đi ăn 30–60 g tinh bột mỗi giờ (gel, chuối, bánh), để tập cho bụng quen như ngày thi.');
@@ -360,7 +379,7 @@ function moTa(x,c){
     case 'thi':{
       x.ten=(X.trail?'Ngày thi trail ':'Ngày thi ')+fmtKm(X.D)+' km'+(X.dPlus?` · ${X.dPlus} m leo`:'');
       x.phut=null;
-      const du=c.Z.du&&!X.trail?c.Z.du.find(d=>Math.abs(d[0]-X.D)<0.6):null;
+      const du0=c.Z.du&&!X.trail?c.Z.du.find(d=>Math.abs(d[0]-X.D)<0.6):null,du=c.mt&&!c.mt.kho?[X.D,c.mt.T]:du0;
       x.buoc=X.trail?['Đi bộ các dốc gắt ngay từ đầu, giữ sức cho nửa sau.','Ăn 40–60 g tinh bột mỗi giờ, uống theo cảm giác khát và có điện giải.','Xuống dốc thả lỏng, mắt nhìn 3–4 m phía trước.']
         :[du?`Thể lực hiện tại dự đoán khoảng ${fmtT(du[1])} (${fmtP(du[1]*60/X.D)}/km). Km đầu chậm hơn pace này 5–10 giây.`:'Km đầu chậm hơn dự định, tăng dần.',X.D>=21?'Ăn gel hoặc tinh bột mỗi 30–40 phút từ phút 40, uống ở các trạm.':'Khởi động 10–15 phút trước giờ xuất phát.','Nửa sau còn sức thì mới tăng tốc.'];
       x.bt={};break;
@@ -380,5 +399,42 @@ function moTa(x,c){
   if(x.phut)x.phut=Math.round(x.phut/5)*5;
 }
 
-G.LichChay={taoLich,vung,uocVdot,thongSo,TEN_PHA,fmtP,fmtT,fmtKm,addD,ymd,parse,thu,soNgay,vdot,thoiGianDua};
+/* Kế hoạch ngày thi: thời gian dự kiến, chia pace từng đoạn, ăn uống theo giờ. */
+function keHoachThi(P){
+  const X=P.X,pc=P.vung.pace,mt=P.mt;let T=null,khoang=null;const doan=[];
+  if(!X.trail){
+    const paceThi=mt?mt.paceThi:(pc?thoiGianDua(pc.V,X.D)*60/X.D:null);
+    if(paceThi){
+      T=paceThi*X.D/60;
+      const ps=d=>fmtP(paceThi+d);
+      const D=X.D;
+      if(D<=5)doan.push(['Km 1',ps(3)+'/km','Chậm hơn pace thi một chút, đừng lao theo đám đông'],['Km 2–4',ps(0)+'/km','Đều'],['Km cuối',ps(-5)+' hoặc nhanh hơn','Còn sức thì tăng dần']);
+      else if(D<=10)doan.push(['Km 1–2',ps(5)+'/km','Khởi đầu chậm'],['Km 3–8',ps(0)+'/km','Đều, giữ nhịp thở'],['Km 9–10',ps(-5)+' hoặc nhanh hơn','Tăng dần nếu còn sức']);
+      else if(D<=21.1)doan.push(['Km 1–3',ps(8)+'/km','Chậm hơn 5–10 giây'],['Km 4–15',ps(0)+'/km','Đều'],['Km 16–21',ps(-3)+'/km','Giữ hoặc tăng nhẹ']);
+      else doan.push(['Km 1–5',ps(8)+'/km','Chậm hơn 5–10 giây, cảm giác rất dễ'],['Km 6–30',ps(0)+'/km','Đều, ăn uống đúng giờ'],['Km 31–42',ps(0)+'/km','Giữ pace; đây là đoạn khó nhất']);
+    }
+  }else{
+    const ek=X.D+X.dPlus/100;
+    const base=pc?thoiGianDua(pc.V,ek)*60/ek:(pc===null?null:null);
+    const e=base||(P.vung.pace?P.vung.pace.nhe[0]:null);
+    if(e){khoang=[ek*e*1.1/60,ek*e*1.35/60];T=(khoang[0]+khoang[1])/2}
+    doan.push(['Lên dốc','Đi bộ nhanh khi dốc gắt','Giữ nhịp tim dưới '+P.vung.hr.tran+' trong 1–2 giờ đầu'],['Đường bằng, xuống dốc','Chạy thả lỏng','Bước ngắn, mắt nhìn 3–4 m phía trước'],['Nửa sau','Đều sức','Còn sức thì mới tăng']);
+  }
+  /* ăn uống theo thời gian dự kiến */
+  const t=T||(X.trail?X.D*12:X.D*7);
+  const an=[];let gel=[];
+  if(t<75)an.push('Không cần gel. Uống vài ngụm nước ở trạm nếu trời nóng.');
+  else{
+    const g=t>150?'60–90':'30–60';
+    an.push(`Tinh bột: ${g} g mỗi giờ (1 gói gel khoảng 20–25 g). Bắt đầu từ phút 40, đừng đợi đói.`);
+    an.push(`Nước: 400–800 ml mỗi giờ tuỳ trời; trời nóng ẩm thì về mức cao.`);
+    if(t>=90)an.push('Điện giải (muối): 300–600 mg natri mỗi giờ, nhất là khi ra nhiều mồ hôi.');
+    const buoc=t>150?25:35;for(let m=40;m<t-15;m+=buoc)gel.push(m);
+  }
+  an.push('Tối hôm trước và sáng ngày thi ăn món quen, nhiều tinh bột, ít xơ và dầu mỡ. Ăn sáng trước giờ xuất phát 2–3 tiếng.');
+  if(X.trail)an.push('Mang đủ đồ bắt buộc theo quy định giải (đèn, áo gió, còi, bình nước). Tập chạy với balo và đồ ăn này trong các buổi chạy dài.');
+  return {T,khoang,doan,an,gel};
+}
+
+G.LichChay={keHoachThi,taoLich,vung,uocVdot,thongSo,TEN_PHA,fmtP,fmtT,fmtKm,addD,ymd,parse,thu,soNgay,vdot,thoiGianDua};
 })(typeof window!=='undefined'?window:globalThis);

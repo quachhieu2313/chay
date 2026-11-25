@@ -177,20 +177,11 @@ details.blk>summary:focus-visible{outline:3px solid var(--trk);outline-offset:4p
   <section class="band"><div class="wrap" id="panel"></div></section>
 
   <section class="band"><div class="wrap">
-    <h2>Trạng thái và mục tiêu</h2>
-    <p class="note" style="margin-top:8px">Đánh giá từ buổi 6 km sáng 25/11 trên Garmin, trời khoảng 26°C và ẩm.</p>
-    <div class="stt">
-      <div><b>8:28/km</b><span>Pace cả buổi, tim trung bình 148. Riêng lúc chạy khoảng 8:15/km (ước tính, bỏ các đoạn đi bộ).</span></div>
-      <div><b>5 phút</b><span>Đi bộ xen kẽ trong 51 phút để giữ tim dưới 155. Cao nhất 158.</span></div>
-      <div><b>167</b><span>Guồng chân lúc chạy (km 3, 4, 6). Số 162 Garmin báo là tính cả lúc đi bộ.</span></div>
-      <div><b>7:10/km</b><span>Km đầu nhanh nhất buổi, guồng 157, bước dài 0,88 m: lao đi quá sớm. Cần sửa nhất.</span></div>
-      <div><b>147 → 150</b><span>Tim km 2 so với km 6, dù km 6 nhanh hơn. Tim không trôi lên, nền sức bền ổn.</span></div>
-      <div><b>0/10</b><span>Không đau. Đây là điều kiện để tăng dần khối lượng.</span></div>
-    </div>
+    <h2>Lưu ý</h2>
     <div class="notes">
-      <div><h3>Mục tiêu đến 17/1/2027</h3><p>Ở tim 145–150 chạy liên tục không phải đi bộ, pace khoảng 7:45–8:00/km. Chạy dài 14 km. 4 buổi mỗi tuần, 30–35 km.</p></div>
       <div><h3>Khi nào lên tuần mới</h3><p>Tuần trước không đau, tim trung bình các buổi chạy nhẹ không quá 152, kiểm tra buổi sáng đạt ít nhất 4 ngày. Chưa đạt thì tuần này chạy lại số km của tuần trước.</p></div>
-      <div><h3>Cài trên đồng hồ</h3><p>Trong cài đặt bài Chạy: cảnh báo nhịp tim cao ở 155 và metronome 166. Vùng nhịp tim trên đồng hồ đang tính khác trang này (Easy là 148–161), cứ theo trần 155 ở đây.</p></div>
+      <div><h3>Cài trên đồng hồ</h3><p>Trong cài đặt bài Chạy: cảnh báo nhịp tim cao ở 155 và metronome 166.</p></div>
+      <div><h3>Ứng dụng mới</h3><p>Lịch 8 tuần này soạn tay. Lịch tự tạo theo hồ sơ, tải file từ đồng hồ, nhật ký và theo dõi tiến bộ ở <a href="tap/">Lịch chạy cá nhân</a>; dữ liệu ở trang này chuyển sang được (Hồ sơ → Dữ liệu).</p></div>
     </div>
   </div></section>
 
@@ -198,7 +189,7 @@ details.blk>summary:focus-visible{outline:3px solid var(--trk);outline-offset:4p
     <div class="zgrid">
       <div>
         <h2>Vùng nhịp tim của bạn</h2>
-        <p>Tính theo công thức Karvonen, từ nhịp tim nghỉ 61 và nhịp tim tối đa 191 trên Garmin. Chạy nhẹ là Z2, từ 139 đến 152. Buổi 14,5 km ngày 22/11 có trung bình 170, nằm giữa Z4.</p>
+        <p>Tính theo công thức Karvonen từ nhịp tim nghỉ và nhịp tim tối đa. Chạy nhẹ là Z2, từ 139 đến 152. Vạch trên thanh là nhịp tim trung bình của buổi chạy gần nhất bạn đã ghi.</p>
       </div>
       <div id="zones"></div>
     </div>
@@ -304,16 +295,16 @@ const addD=(s,n)=>{const d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);retu
 const dm=s=>(+s.slice(8,10))+'/'+(+s.slice(5,7));
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-/* Lịch 8 tuần soạn theo buổi 6 km ngày 25/11 (Garmin): tim TB 148, khoảng 8:15/km lúc chạy, đi bộ 5 phút, không đau.
+/* Lịch 8 tuần chạy lại sau chấn thương.
    r: số km theo thứ trong tuần (0 = thứ 2 … 6 = chủ nhật). st: ngày có strides. test: ngày chạy kiểm tra 5 km. de: tuần giảm tải.
    Ngày không có km: thứ 2 phục hồi và core, thứ 3 và thứ 5 sức mạnh chân, thứ 7 nghỉ. */
 const START='2026-11-23';
 const PLAN=[
-  {r:{2:6,4:6,6:10},f:'Tuần đầu sau buổi 14,5 km ngày 22/11: giữ tim dưới 155, chưa tăng khối lượng.',
-   s:{2:'Buổi chạy đầu tiên sau 22/11. Chạy đều, không tăng tốc ở cuối.',4:'Giống thứ 4 nhưng km đầu chậm hơn: hôm thứ 4 km 1 nhanh nhất buổi (7:10/km, guồng 157, bước dài). Bật metronome 166 trên đồng hồ.'}},
+  {r:{2:6,4:6,6:10},f:'Tuần đầu chạy lại: giữ tim dưới 155, chưa tăng khối lượng.',
+   s:{2:'Buổi chạy đầu tiên của lịch. Chạy đều, không tăng tốc ở cuối.',4:'Km đầu chậm nhất buổi, bước ngắn. Bật metronome 166 trên đồng hồ.'}},
   {r:{2:6,4:7,6:11},f:'24 km. Chỉ tăng khi tuần trước không đau và tim trung bình các buổi chạy nhẹ không quá 152.'},
   {r:{2:7,4:7,6:12},st:[4],f:'26 km. Thêm 4 lần chạy nhanh 20 giây (strides) cuối buổi thứ 6 để tập lại guồng chân.'},
-  {r:{2:6,4:5,6:9},test:4,de:1,f:'Tuần giảm tải, 20 km, để cơ thể hấp thụ 3 tuần trước. Thứ 6 chạy kiểm tra 5 km để so với ngày 25/11.'},
+  {r:{2:6,4:5,6:9},test:4,de:1,f:'Tuần giảm tải, 20 km, để cơ thể hấp thụ 3 tuần trước. Thứ 6 chạy kiểm tra 5 km để so với lúc bắt đầu.'},
   {r:{2:7,4:8,6:13},st:[4],f:'28 km. Đã 4 tuần không đau thì buổi tập chân ở nhà chuyển sang bài có tạ.'},
   {r:{0:4,2:7,4:7,6:13},st:[4],f:'31 km. Thêm buổi chạy thứ 4 rất nhẹ vào thứ 2, chạy xong tập core.'},
   {r:{0:5,2:7,4:8,6:14},st:[4],f:'34 km, tuần nặng nhất của giai đoạn này.'},
@@ -328,7 +319,7 @@ const SUB={
   rec:'Chậm nhất tuần, tim dưới 145, đi bộ xen kẽ thoải mái. Chạy xong tập core ở dưới.',
   easy:'Chạy đều ở Z2. Km đầu chậm nhất buổi, bước ngắn, không tăng tốc ở cuối.',
   st:'Chạy đều ở Z2, km đầu chậm nhất buổi. Cuối buổi chạy 4 lần nhanh 20 giây (strides).',
-  test:'Khởi động 10 phút, rồi chạy 5 km trên cung đường quen, giữ tim 145–150 suốt bài. Pace trung bình nhanh hơn ngày 25/11 là thể lực đã lên.',
+  test:'Khởi động 10 phút, rồi chạy 5 km trên cung đường quen, giữ tim 145–150 suốt bài. Pace trung bình nhanh hơn lần kiểm tra trước ở cùng nhịp tim là thể lực đã lên.',
   long:'Buổi dài nhất tuần nhưng vẫn ở vùng nhẹ. Chạy trước 6h để tránh nóng. Nửa sau nếu tim hay chạm 155 thì chạy 4 phút, đi bộ 1 phút đến hết.'
 };
 const WEEKS=PLAN.map((p,w)=>{
@@ -360,11 +351,9 @@ const OLD={t2:'2026-11-23',t3:'2026-11-24',t4:'2026-11-25',t5:'2026-11-26',t6:'2
 function migrate(s){
   s.mode=s.mode||{};s.done=s.done||{};s.chk=s.chk||{};s.log=s.log||{};
   for(const o of [s.done,s.chk,s.log,s.mode])for(const k of Object.keys(o)){const p=k.split(':');if(OLD[p[0]]){p[0]=OLD[p[0]];const nk=p.join(':');if(!(nk in o))o[nk]=o[k];delete o[k];}}
-  /* Điền sẵn số liệu Garmin của buổi 25/11 một lần (ô nào đã có số thì giữ). */
-  if(!s.pf25){const l=s.log['2026-11-25']||(s.log['2026-11-25']={}),pf={hr:'148',hrmax:'158',pace:'8:28',cad:'167',walk:'5',pain:'0'};for(const k in pf)if(l[k]===''||l[k]==null)l[k]=pf[k];s.pf25=1;}
   return s;
 }
-const def=()=>({done:{},chk:{'2026-11-23':{hr:64,hrv:31}},log:{},mode:{}});
+const def=()=>({done:{},chk:{},log:{},mode:{}});
 let S;
 try{S=JSON.parse(localStorage.getItem(K))||def()}catch(e){S=def()}
 migrate(S);
@@ -466,16 +455,16 @@ function review(d){
       else add('info',t+' Gần như không đổi.');}
     else add('info',t);
   }
-  if(d.test&&ps)add('info',`Kiểm tra 5 km: pace ${fmtP(ps)}/km. Ngày 25/11 khoảng 8:15/km lúc chạy ở tim 148.`);
+  if(d.test&&ps)add('info',`Kiểm tra 5 km: pace ${fmtP(ps)}/km.`);
   const lv=o.some(x=>x[0]==='bad')?['bad','nghỉ và theo dõi']:o.some(x=>x[0]==='warn')?['warn','được, nhưng buổi tới cần chỉnh']:['ok','tốt, đi tiếp theo lịch'];
   return `<p class="vh ${lv[0]}">Nhận xét: ${lv[1]}</p>`+o.map(([c,t])=>`<p class="${c}">${t}</p>`).join('');
 }
-const LF=[['hr','Nhịp tim TB',1],['hrmax','Nhịp tim cao nhất',1],['pace','Pace TB (phút/km)',0,'8:28'],['cad','Guồng chân lúc chạy',1],['walk','Số phút đi bộ',1],['pain','Đau (0–10)',1,'0 là không đau']];
+const LF=[['hr','Nhịp tim TB',1],['hrmax','Nhịp tim cao nhất',1],['pace','Pace TB (phút/km)',0,'8:30'],['cad','Guồng chân lúc chạy',1],['walk','Số phút đi bộ',1],['pain','Đau (0–10)',1,'0 là không đau']];
 function runCard(d){
   const lg=S.log[d.id]||{},key=d.id+':run',r=[];
   r.push(['Nhịp tim',d.rec?'Dưới 145, chậm nhất tuần':d.test?'145–150 suốt 5 km, không quá 155':'139–152, không quá 155']);
   r.push(['Guồng chân','166–172 bước/phút. Km đầu bước ngắn, không lao đi']);
-  r.push(d.test?['Pace','Ghi lại để so: 25/11 khoảng 8:15/km lúc chạy ở tim 148']:['Pace','Để nhịp tim quyết định. Hiện 8:15–8:45/km là đúng']);
+  r.push(d.test?['Pace','Ghi lại để so với buổi kiểm tra lần trước ở cùng nhịp tim']:['Pace','Để nhịp tim quyết định. Hiện 8:15–8:45/km là đúng']);
   r.push(['Vượt 155','Đi bộ đến khi tim về khoảng 145 rồi chạy tiếp']);
   if(d.test)r.push(['Khởi động','10 phút đi bộ nhanh rồi chạy thật chậm, xong mới bắt đầu tính 5 km']);
   if(d.st)r.push(['Cuối buổi','4 × 20 giây chạy nhanh thoải mái (strides), đi bộ 1 phút giữa các lần']);
@@ -493,8 +482,8 @@ function counts(d){
 }
 function prog(){const d=byId(cur),el=document.getElementById('pg');if(el&&(d.ex||d.wu)){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
 function zones(){
-  const mk=[[170,'22/11: TB 170']],last=[...DAYS].reverse().find(x=>x.kind==='run'&&x.id<=TODAY&&logNum(S.log[x.id]||{},'hr'));
-  if(last){const h=logNum(S.log[last.id],'hr');if(Math.abs(pc(h)-pc(170))<16)mk.length=0;mk.push([h,dm(last.id)+': TB '+h]);}
+  const mk=[],last=[...DAYS].reverse().find(x=>x.kind==='run'&&x.id<=TODAY&&logNum(S.log[x.id]||{},'hr'));
+  if(last){const h=logNum(S.log[last.id],'hr');mk.push([h,dm(last.id)+': TB '+h]);}
   document.getElementById('zones').innerHTML=zbar(mk,-1);
 }
 
