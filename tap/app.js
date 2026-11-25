@@ -21,8 +21,9 @@ let user=null,syncSt='';
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(SYNC)SYNC.changed()};
 const SYNC=window.DongBo?DongBo.start({key:'tap',col:'runners',rieng:true,trong,get:()=>S,local:['anim'],
   apply:d=>{const a=S.anim;S={...trong(),...d};if(a!==undefined)S.anim=a;try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}PLAN=null;render()},
-  onAuth:u=>{user=u;acct();if(location.hash==='#/du-lieu')render()},
-  onState:s=>{syncSt=s;acct()}}):null;
+  onAuth:u=>{user=u;acct();dnUpd();if(location.hash==='#/du-lieu')render()},
+  onState:s=>{syncSt=s;acct();dnUpd()}}):null;
+function dnUpd(){const e=document.getElementById('dnhint');if(e)e.innerHTML=dnHint()}
 
 /* ---------- Lịch (tạo lại khi hồ sơ đổi) ---------- */
 let PLAN=null,PLANKEY='',CUR=TODAY;
@@ -284,7 +285,7 @@ function vHoSo(moi){
   const m=D.muc,tr=m.loai==='trail';
   let h=moi?`<h1>Lịch chạy theo thể trạng của bạn</h1><p class="sub">Điền vài thông số, trang tạo lịch theo tuần cho road hoặc trail: chạy gì mỗi ngày, ở nhịp tim và pace nào, kèm khởi động, bài sức mạnh, giãn cơ. Chạy xong ghi lại số liệu để nhận nhận xét và chỉnh tuần sau.</p>
     <div class="hero"><div><h3>Theo thể trạng</h3><p>Vùng nhịp tim tính từ nhịp nghỉ và nhịp tối đa của bạn, pace tính từ một kết quả gần đây.</p></div><div><h3>Tăng dần an toàn</h3><p>Khối lượng tăng tối đa khoảng 10% mỗi tuần, có tuần giảm tải, phần lớn là chạy nhẹ.</p></div><div><h3>Road và trail</h3><p>Trail tập theo thời gian và số mét leo, có bài leo dốc, xuống dốc, chạy dài hai ngày liền.</p></div></div>
-    <p class="row" style="margin:10px 0 26px"><button class="btn" type="button" data-a="vidu">Điền thử hồ sơ mẫu</button>${!user&&SYNC?'<button class="btn" type="button" data-a="in">Đã có lịch? Đăng nhập Google</button>':''}</p>`
+    <p class="row" style="margin:10px 0 26px"><button class="btn" type="button" data-a="vidu">Điền thử hồ sơ mẫu</button><span id="dnhint" class="row">${dnHint()}</span></p>`
     :`<h2>Hồ sơ</h2><p class="sub">Cập nhật số liệu sau mỗi lần chạy kiểm tra hoặc thi để lịch tính lại pace và khối lượng. Ghi chép các buổi đã chạy vẫn giữ nguyên.</p><div style="height:20px"></div>`;
   h+=`<form class="form" id="hsf" onsubmit="return false">
   <fieldset><legend>Mục tiêu</legend>
@@ -312,6 +313,14 @@ function vHoSo(moi){
   </form>`;
   if(!moi)h+=`<p class="row" style="margin-top:28px"><a class="btn" href="#/du-lieu">Dữ liệu và quyền riêng tư</a></p>`;
   return h;
+}
+/* Gợi ý đăng nhập trên trang hồ sơ mới; Firebase báo đã đăng nhập sau khi trang vẽ xong nên phải cập nhật lại chỗ này. */
+function dnHint(){
+  if(!SYNC||!window.FIREBASE_CONFIG)return '';
+  if(!user)return '<button class="btn" type="button" data-a="in">Đã có lịch? Đăng nhập Google</button>';
+  if(syncSt==='loading'||syncSt==='saving')return `<span class="mut">Đang tải dữ liệu của ${esc(user.email)}…</span>`;
+  if(syncSt==='denied')return `<span class="msg warn" style="margin:0">Đã đăng nhập ${esc(user.email)} nhưng máy chủ chưa cho phép lưu. Hồ sơ vẫn lưu trên máy này.</span>`;
+  return `<span class="mut">Đã đăng nhập ${esc(user.email)}. Tài khoản này chưa có lịch: điền hồ sơ bên dưới, lịch sẽ lưu vào tài khoản.</span>`;
 }
 function xemTruoc(){
   const el=$('#prev');if(!el||!D)return;
