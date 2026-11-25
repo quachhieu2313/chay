@@ -100,6 +100,14 @@ svg .chs{stroke:var(--mut);stroke-width:4;fill:none;stroke-linecap:round;stroke-
 .seg button:focus-visible{outline:3px solid var(--trk);outline-offset:2px}
 .note{margin:0 0 16px;max-width:70ch;color:var(--mut);font-size:15px}
 .subh{font-size:28px;margin:28px 0 14px}
+details.blk>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:28px 0 14px}
+details.blk>summary::-webkit-details-marker{display:none}
+details.blk>summary .subh{margin:0}
+details.blk>summary .subh::before{content:'▾ ';color:var(--mut)}
+details.blk:not([open])>summary .subh::before{content:'▸ '}
+details.blk>summary .hc{color:var(--mut);font-size:15px}
+details.blk:not([open])>summary .hc::after{content:' · bấm để mở'}
+details.blk>summary:focus-visible{outline:3px solid var(--trk);outline-offset:4px;border-radius:6px}
 .run{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px 40px;border:1.5px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,28px)}
 .km{font-size:clamp(76px,13vw,112px);font-weight:700;line-height:.9;color:var(--trk)}
 .km small{font-size:.38em;margin-left:6px;color:var(--ink)}
@@ -219,6 +227,12 @@ const arr=(x1,y1,x2,y2)=>{const a=Math.atan2(y2-y1,x2-x1),h=7,w=4.5,bx=x2-h*Math
 const DESK=(a,b)=>`<rect class="dk" x="${a}" y="84" width="${b-a}" height="6" rx="1.5"/><line class="dl" x1="${a+5}" y1="90" x2="${a+5}" y2="132"/><line class="dl" x1="${b-5}" y1="90" x2="${b-5}" y2="132"/>`;
 const STAND={to:[92,131],an:[106,130],kn:[106,101],hp:[106,72],sh:[106,34],hd:[104,22],el:[92,56],ha:[78,82]};
 const LEG1=[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha']];
+/* Các hình khởi động và giãn cơ dưới đây giống trang Bài tập bổ trợ; sửa một nơi thì sửa cả nơi kia. */
+const WALL=x=>`<line class="wl" x1="${x}" y1="4" x2="${x}" y2="132"/>`;
+const BOX=(x,y,w)=>`<rect class="st" x="${x}" y="${y}" width="${w}" height="${132-y}" rx="2"/>`;
+const SKIP={to:[96,131],an:[110,130],kn:[110,101],hp:[110,72],sh:[110,34],hd:[108,22],el:[104,58],ha:[100,82],el2:[116,58],ha2:[120,82],kn2:[110,101],an2:[110,130],to2:[96,131]};
+const SKIPS=[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha'],['sh','el2',1],['el2','ha2',1],['hp','kn2',1],['kn2','an2',1],['an2','to2',1]];
+const FR=(l,r)=>[['ne','hp'],['sl','sr'],['hl','hr'],['sl','el'],['el','ha'],['sr','el2'],['el2','ha2'],['hl','kn',l],['kn','an',l],['an','to',l],['hr','kn2',r],['kn2','an2',r],['an2','to2',r]];
 const FOURS=[['sh','hp'],['sh','el'],['el','ha'],['hp','kn'],['kn','an'],['sh','el2',1],['el2','ha2',1],['hp','kn2',1],['kn2','an2',1]];
 const F={
   plank:{dy:10,mat:1,j:{hd:[54,86],sh:[72,90],el:[72,118],ha:[46,118],hp:[140,104],kn:[172,111],an:[200,118]},s:[['sh','hp',1],['sh','el'],['el','ha'],['hp','kn'],['kn','an']],pre:'<line class="gd" x1="40" y1="69" x2="212" y2="107"/>'},
@@ -237,7 +251,14 @@ const F={
   sit:{j:{to:[82,131],an:[96,130],kn:[94,96],hp:[124,96],sh:[120,58],hd:[116,46],el:[100,64],ha:[78,66]},b:{kn:[96,101],hp:[98,72],sh:[96,34],hd:[94,22],el:[78,40],ha:[58,42]},s:[['an','to'],['an','kn'],['hp','sh'],['sh','el'],['el','ha'],['kn','hp',1]],pre:'<path class="chs" d="M112 102H146V66M114 102V132M144 102V132"/>'},
   dpush:{j:{to:[142,131],an:[150,128],kn:[127,107],hp:[104,86],sh:[74,58],hd:[64,48],el:[72,71],ha:[66,84]},b:{kn:[124,112],hp:[97,96],sh:[62,74],hd:[50,67],el:[80,72]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el',1],['el','ha',1]],pre:DESK(16,70)},
   quad:{j:{...STAND,kn2:[108,102],an2:[126,79],el2:[116,54],ha2:[125,77]},s:[...LEG1,['sh','el2'],['el2','ha2'],['hp','kn2',1],['kn2','an2',1]],pre:DESK(16,80)},
-  hipf:{j:{to:[66,131],an:[82,130],kn:[86,96],hp:[112,80],sh:[114,42],hd:[113,30],el:[102,60],ha:[110,78],kn2:[134,104],an2:[156,124],to2:[148,131]},s:[...LEG1,['an2','to2'],['hp','kn2',1],['kn2','an2',1]],post:arr(140,70,124,70)}
+  hipf:{j:{to:[66,131],an:[82,130],kn:[86,96],hp:[112,80],sh:[114,42],hd:[113,30],el:[102,60],ha:[110,78],kn2:[134,104],an2:[156,124],to2:[148,131]},s:[...LEG1,['an2','to2'],['hp','kn2',1],['kn2','an2',1]],post:arr(140,70,124,70)},
+  swing:{dur:1.8,pre:'<line class="wl" x1="140" y1="52" x2="140" y2="132"/>',j:{to:[106,131],an:[120,130],kn:[120,101],hp:[120,72],sh:[120,34],hd:[118,22],el:[128,56],ha:[140,70],el2:[114,58],ha2:[110,84],kn2:[134,99],an2:[146,126]},b:{kn2:[96,94],an2:[78,118]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha'],['sh','el2'],['el2','ha2'],['hp','kn2',1],['kn2','an2',1]]},
+  lswing:{dur:1.6,pre:'<line class="wl" x1="74" y1="30" x2="74" y2="132"/>',j:{hd:[120,26],ne:[120,38],sl:[108,42],sr:[132,42],hp:[120,76],hl:[112,78],hr:[128,78],el:[92,58],ha:[78,62],el2:[138,60],ha2:[140,80],kn:[110,104],an:[110,130],to:[104,131],kn2:[148,100],an2:[164,124],to2:[171,124]},b:{kn2:[114,101],an2:[98,124],to2:[91,124]},s:FR(0,1)},
+  hipc:{dur:2.4,j:{hd:[120,26],ne:[120,38],sl:[108,42],sr:[132,42],hp:[120,76],hl:[112,78],hr:[128,78],el:[98,60],ha:[110,76],el2:[142,60],ha2:[130,76],kn:[112,104],an:[112,130],to:[106,131],kn2:[132,72],an2:[132,98],to2:[134,104]},b:{kn2:[156,80],an2:[158,106],to2:[164,108]},s:FR(0,1)},
+  march:{dur:2.4,j:SKIP,b:{kn2:[82,78],an2:[84,107],to2:[72,108],el2:[100,56],ha2:[80,48],el:[124,54],ha:[130,76]},s:SKIPS},
+  hams:{pre:BOX(40,108,40),j:{to:[106,131],an:[120,130],kn:[118,104],hp:[112,76],sh:[110,38],hd:[108,26],el:[104,62],ha:[96,82],kn2:[88,90],an2:[64,104],to2:[58,94]},b:{sh:[84,52],hd:[74,44],el:[82,76],ha:[84,98]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh',1],['sh','el'],['el','ha'],['hp','kn2',1],['kn2','an2',1],['an2','to2',1]]},
+  calfst:{pre:WALL(24),j:{to:[58,131],an:[70,130],kn:[76,106],hp:[100,84],sh:[72,56],hd:[62,46],el:[48,62],ha:[32,52],kn2:[122,105],an2:[144,126],to2:[134,131]},b:{kn:[74,108],hp:[96,88],sh:[68,60],hd:[58,50],el:[46,64],ha:[31,54]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh'],['sh','el'],['el','ha'],['hp','kn2',1],['kn2','an2',1],['an2','to2',1]]},
+  fig4:{dy:10,mat:1,j:{hd:[40,112],sh:[56,114],hp:[118,116],kn:[140,96],an:[164,116],to:[170,108],kn2:[152,110],an2:[140,96],el:[80,110],ha:[104,112]},b:{kn:[130,86],an:[156,80],to:[162,72],kn2:[144,100],an2:[130,86],el:[86,98],ha:[124,88]},s:[['sh','hp'],['hp','kn'],['kn','an'],['an','to'],['sh','el'],['el','ha'],['hp','kn2',1],['kn2','an2',1]]}
 };
 
 const E={
@@ -262,6 +283,18 @@ const E={
   quad:{name:'Giãn đùi trước',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Vịn bàn, kéo gót chân về phía mông','Hai gối sát nhau, không ưỡn lưng','Giúp chỗ ê ngay trên gối']},
   hipf:{name:'Giãn cơ gập hông',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Một chân trước một chân sau như bước dài','Siết mông, đẩy hông ra trước, thân giữ thẳng','Thấy căng ở phía trước hông của chân sau là đúng']}
 };
+Object.assign(E,{
+  wwalk:{mini:1,name:'Đi bộ nhanh rồi chạy thật chậm',dose:'5 phút',note:'Làm ấm người, rồi làm 4 bài dưới. Mỗi bài nhẹ nhàng, biên độ tăng dần.'},
+  swing:{name:'Đá lăng chân trước sau',dose:'10 lần mỗi chân',sets:2,side:1,cues:['Đứng nghiêng cạnh tường hoặc cột, một tay vịn','Thả lỏng cho chân đung đưa, biên độ tăng dần','Chân ra sau thì không ưỡn lưng']},
+  lswing:{name:'Đá lăng chân sang ngang',dose:'10 lần mỗi chân',sets:2,side:1,cues:['Một tay vịn tường hoặc cột','Chân đung đưa ngang qua trước người rồi ra ngoài','Thân giữ yên, không lắc theo chân']},
+  hipc:{name:'Mở cổng hông',dose:'8 lần mỗi chân',sets:2,side:1,cues:['Nâng gối lên trước ngang hông, hai tay chống hông','Xoay gối ra ngoài rồi hạ xuống, như mở cánh cổng','Lượt sau làm ngược lại, từ ngoài vào trong']},
+  march:{name:'Đi nâng gối',dose:'2 × 20 m',sets:2,cues:['Đi chậm, mỗi bước nâng gối ngang hông','Nhón nhẹ trên chân trụ','Tay đánh theo nhịp như khi chạy']},
+  calfst:{name:'Giãn bắp chân vào tường',dose:'30 giây mỗi bên × 2 kiểu',sets:4,side:1,t:30,cues:['Chân sau thẳng, gót ép xuống sàn','Lần hai cho gối sau hơi chùng để giãn phần dưới bắp chân','Mũi chân sau hướng thẳng vào tường']},
+  hams:{name:'Giãn đùi sau',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Gót chân đặt lên bậc thấp, gối thẳng nhẹ','Gập người ở hông, lưng thẳng','Căng sau đùi là đủ, không ép tới đau']},
+  fig4:{name:'Giãn mông số 4',dose:'30 giây mỗi bên',sets:2,side:1,t:30,cues:['Nằm ngửa, đặt cổ chân lên gối chân kia','Ôm sau đùi chân dưới, kéo về phía ngực','Không có thảm thì làm khi ngồi ghế: gác cổ chân lên gối, đổ người về trước']}
+});
+/* Ngày chạy: khởi động trước (WU), giãn cơ sau (CD). */
+const WU=['swing','lswing','hipc','march'],CD=['calfst','quad','hams','hipf','fig4'];
 const OFF_EX=['dcalf','kick','abd','sit','obal','dpush'],OFF_ST=['quad','hipf'];
 
 const LEG=['bridge','squat','calf','clam','bal'],CORE=['plank','side','bug','bird','push'],CORE2=['plank','side','bug','bird'];
@@ -306,7 +339,7 @@ const WEEKS=PLAN.map((p,w)=>{
       const long=i===6,rec=i===0,test=p.test===i,st=(p.st||[]).includes(i);
       Object.assign(o,{kind:'run',km,long,rec,test,st,tag:km+' km',
         title:test?'Kiểm tra 5 km':rec?'Chạy hồi phục '+km+' km':long?'Chạy dài '+km+' km':'Chạy nhẹ '+km+' km',
-        sub:s[i]||SUB[test?'test':rec?'rec':long?'long':st?'st':'easy'],ex:rec?CORE2:undefined});
+        sub:s[i]||SUB[test?'test':rec?'rec':long?'long':st?'st':'easy'],ex:rec?CORE2:undefined,wm:['wwalk'],wu:WU,cd:CD});
     }
     else if(i===0)Object.assign(o,{kind:'gym',tag:'Core',title:'Phục hồi và core',sub:s[i]||SUB.core,mini:['walk','stretch'],ex:CORE});
     else if(i===1||i===3)Object.assign(o,{kind:'gym',office:1,tag:'Chân',title:'Sức mạnh chân',sub:(s[i]||SUB[i===1?'leg1':'leg2'])+(p.de?' Tuần giảm tải: mỗi bài bớt một hiệp.':''),mini:['stretch'],ex:LEG});
@@ -341,13 +374,16 @@ const RM=()=>S.anim===false;
 const animLabel=()=>RM()?'Bật hình chuyển động':'Tắt hình chuyển động';
 {const b=document.getElementById('anim');if(b)b.textContent=animLabel();}
 const mode=id=>S.mode[id]||'office';
-const lists=d=>(d.office&&mode(d.id)==='office')?{mini:[],ex:OFF_EX,st:OFF_ST}:{mini:d.mini||[],ex:d.ex||[],st:[]};
+const lists=d=>(d.office&&mode(d.id)==='office')?{mini:[],ex:OFF_EX,st:OFF_ST}:{mini:[...(d.mini||[]),...(d.wm||[])],ex:[...(d.wu||[]),...(d.ex||[]),...(d.cd||[])],st:[]};
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(SYNC)SYNC.changed()};
 /* Đồng bộ giữa các máy khi đăng nhập Google (dong-bo.js). Nút "Tắt hình chuyển động" chỉ áp dụng cho từng máy. */
 const SYNC=window.DongBo?DongBo.start({key:'lich-tap',btn:document.getElementById('sync'),get:()=>S,local:['anim'],
   apply:d=>{const a=S.anim;S=migrate({...def(),...d});if(a!==undefined)S.anim=a;save();render();}}):null;
 
 const TODAY=ymd(new Date());
+/* Phần khởi động ngày chạy mở sẵn; thu gọn thì giữ thu gọn đến khi tải lại trang. */
+let wuOpen=true;
+document.addEventListener('toggle',e=>{if(e.target.id==='wu')wuOpen=e.target.open},true);
 function hashDay(){const h=decodeURIComponent(location.hash.slice(1)),id=OLD[h]||h;return byId(id)?id:null}
 let cur=hashDay()||(byId(TODAY)?TODAY:(TODAY<FIRST?FIRST:LAST));
 
@@ -455,7 +491,7 @@ function counts(d){
   for(const k of [...L.mini,...L.ex,...L.st]){const e=E[k],c=e.mini?1:e.sets,a=S.done[d.id+':'+k]||[];t+=c;for(let i=0;i<c;i++)if(a[i])n++;}
   return [n,t];
 }
-function prog(){const d=byId(cur),el=document.getElementById('pg');if(el&&d.ex){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
+function prog(){const d=byId(cur),el=document.getElementById('pg');if(el&&(d.ex||d.wu)){const[n,t]=counts(d);el.textContent=`${n}/${t} xong`;}}
 function zones(){
   const mk=[[170,'22/11: TB 170']],last=[...DAYS].reverse().find(x=>x.kind==='run'&&x.id<=TODAY&&logNum(S.log[x.id]||{},'hr'));
   if(last){const h=logNum(S.log[last.id],'hr');if(Math.abs(pc(h)-pc(170))<16)mk.length=0;mk.push([h,dm(last.id)+': TB '+h]);}
@@ -478,9 +514,14 @@ function render(){
       +`<div class="grid">${L.ex.map(k=>exCard(d.id,k)).join('')}</div>`
       +(L.st.length?`<h3 class="subh">Giãn cơ cuối buổi</h3><div class="grid">${L.st.map(k=>exCard(d.id,k)).join('')}</div><p class="note" style="margin-top:16px">Ngoài giờ trưa, cứ 45–60 phút bạn đứng dậy đi lại khoảng 2 phút.</p>`:'');
   }
-  else if(d.kind==='run')body=check(d.id)+runCard(d)+(d.ex?`<h3 class="subh">Core sau buổi chạy</h3><div class="grid">${d.ex.map(k=>exCard(d.id,k)).join('')}</div>`:'');
+  else if(d.kind==='run'){
+    const wu=`<details class="blk" id="wu"${wuOpen?' open':''}><summary><h3 class="subh">Trước khi chạy: khởi động</h3><span class="hc">8–10 phút</span></summary><div class="minis">${d.wm.map(k=>miniCard(d.id,k)).join('')}</div><div class="grid">${d.wu.map(k=>exCard(d.id,k)).join('')}</div><p class="note" style="margin-top:16px">Muốn kỹ hơn thì làm buổi <a href="bai-tap-bo-tro.html#kd">Khởi động trước chạy</a> trên trang Bài tập bổ trợ.</p></details>`;
+    const core=d.ex?`<h3 class="subh">Sau khi chạy: core</h3><div class="grid">${d.ex.map(k=>exCard(d.id,k)).join('')}</div>`:'';
+    const cd=`<h3 class="subh">Sau khi chạy: giãn cơ</h3><p class="note">Làm ngay khi về, lúc cơ còn ấm, khoảng 8 phút. Giữ mỗi tư thế 30 giây, thở đều, không ép tới đau. Thêm bài: buổi <a href="bai-tap-bo-tro.html#gc">Giãn cơ sau chạy</a> và <a href="bai-tap-bo-tro.html#toi">Giãn cơ buổi tối</a>.</p><div class="grid">${d.cd.map(k=>exCard(d.id,k)).join('')}</div>`;
+    body=check(d.id)+wu+`<h3 class="subh">Chạy</h3>`+runCard(d)+core+cd;
+  }
   else body=`<div class="rest"><p>Không có bài tập. Đây là ngày để cơ thể hấp thụ cả tuần tập.</p></div>`;
-  const right=d.ex?`<div class="pr"><span class="prog" id="pg"></span><button class="btn" id="rst">Bỏ đánh dấu</button></div>`:'';
+  const right=(d.ex||d.wu)?`<div class="pr"><span class="prog" id="pg"></span><button class="btn" id="rst">Bỏ đánh dấu</button></div>`:'';
   document.getElementById('panel').innerHTML=`<div class="ph"><div><p class="kick">${d.full}${d.id===TODAY?', hôm nay':''}</p><h2>${d.title}</h2><p class="sub">${d.sub}</p></div>${right}</div>${body}`;
   prog();zones();
 }
