@@ -27,7 +27,7 @@ function dnUpd(){const e=document.getElementById('dnhint');if(e)e.innerHTML=dnHi
 
 /* ---------- Lịch (tạo lại khi hồ sơ đổi) ---------- */
 let PLAN=null,PLANKEY='',CUR=TODAY;
-const taoTu=(hs,chinh)=>LC.taoLich({...norm(hs),chinh},S.hs.ngayTao||TODAY);
+const taoTu=(hs,chinh)=>LC.taoLich({...norm(hs),chinh},hs.ngayTao||S.hs.ngayTao||TODAY);
 /* Sửa hồ sơ giữa chừng: các tuần trước lần sửa giữ theo hồ sơ cũ (S.hs.cu), không bị tính lại. */
 function ghep(P,chinh){
   const cu=(S.hs.cu||[]).slice().sort((a,b)=>a.den<b.den?-1:1);
@@ -45,7 +45,10 @@ function plan(){
   let P=chiMuc(ghep(taoTu(S.hs,man),man));
   const auto=tuDieuChinh(P);
   if(Object.keys(auto).length){const ch={...man};for(const[st,a]of Object.entries(auto))if(!(st in man))ch[st]=a.f;P=chiMuc(ghep(taoTu(S.hs,ch),ch))}
-  P.auto=auto;PLAN=P;PLANKEY=k;return P;
+  P.auto=auto;
+  /* Các khối tập đã xong (tập nhiều năm): giữ để tra loại buổi của ngày cũ */
+  P.khoiCu=(S.hs.khoi||[]).map(x=>{const Q=chiMuc(taoTu(x.hs,x.hs.chinh||{}));Q.ten=x.ten;Q.loai=x.loai;return Q});
+  PLAN=P;PLANKEY=k;return P;
 }
 /* Tự điều chỉnh: dấu hiệu xấu trong một tuần (đau, tim cao, quá sức, bỏ nhiều buổi, sáng chưa hồi phục) → tuần sau giảm.
    Người dùng bấm "Giữ nguyên" thì thôi (S.hs.chinh[tuần] = 1). */
@@ -76,11 +79,11 @@ function norm(h){
     muc:{loai:h.muc.loai,km:+h.muc.km||10,dPlus:+h.muc.dPlus||0,ngay:h.muc.coNgay?h.muc.ngay:'',soTuan:+h.muc.soTuan||12,mucTieu:h.muc.mucTieu,tgMucTieu:h.muc.mucTieu==='thanh-tich'?tgPhut(h.muc.tgMucTieu):0},
     hienTai:{kmTuan:+h.hienTai.kmTuan||0,dai:+h.hienTai.dai||0,nam:+h.hienTai.nam||0},
     thanhTich:h.tt&&h.tt.tg?{km:+h.tt.km,phut:tgPhut(h.tt.tg)}:null,paceNhe:paceGiay(h.paceNhe),
-    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,ketHop:h.muc.loai==='road'&&!!h.ketHop,chinh:h.chinh||{}};
+    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,ketHop:h.muc.loai==='road'&&!!h.ketHop,dinhMoi:+h.dinhMoi||0,chinh:h.chinh||{}};
 }
 const MAU=()=>({ten:'',tuoi:'',hrNghi:'',hrMax:'',muc:{loai:'road',km:10,dPlus:'',coNgay:false,ngay:'',soTuan:12,mucTieu:'hoan-thanh'},
-  hienTai:{kmTuan:'',dai:'',nam:1},tt:{km:5,tg:''},paceNhe:'',chanThuong:'khong',ngayRanh:[1,3,5,6],soBuoi:4,ngayDai:6,doc:'it',ta:false,chinh:{}});
-const VIDU=()=>({...MAU(),tuoi:34,hrNghi:58,hrMax:'',muc:{loai:'road',km:21.1,dPlus:'',coNgay:false,ngay:'',soTuan:14,mucTieu:'hoan-thanh'},hienTai:{kmTuan:20,dai:10,nam:1},tt:{km:5,tg:'29:30'}});
+  hienTai:{kmTuan:'',dai:'',nam:1},tt:{km:5,tg:''},paceNhe:'',chanThuong:'khong',ngayRanh:[1,3,5,6],soBuoi:4,ngayDai:6,doc:'it',ta:false,chinh:{},lienTuc:true,daiHan:{km:10,tg:''}});
+const VIDU=()=>({...MAU(),daiHan:{km:21.1,tg:'1:59:00'},tuoi:34,hrNghi:58,hrMax:'',muc:{loai:'road',km:21.1,dPlus:'',coNgay:false,ngay:'',soTuan:14,mucTieu:'hoan-thanh'},hienTai:{kmTuan:20,dai:10,nam:1},tt:{km:5,tg:'29:30'}});
 
 /* ---------- Tài khoản ---------- */
 function acct(){
@@ -92,17 +95,19 @@ function acct(){
 }
 
 /* ---------- Khung ---------- */
-const TABS=[['#/','Hôm nay'],['#/lich','Cả lịch'],['#/nhat-ky','Nhật ký'],['#/vung','Vùng tập'],['#/ho-so','Hồ sơ']];
-function route(){const h=location.hash||'#/';const m=h.match(/^#\/(ngay|ghi)\/(\d{4}-\d{2}-\d{2})$/);return m?{v:m[1],d:m[2]}:{v:{'#/':'ngay','#/lich':'lich','#/nhat-ky':'nhat-ky','#/vung':'vung','#/ho-so':'ho-so','#/du-lieu':'du-lieu','#/huong-dan':'huong-dan'}[h]||'ngay'}}
+const TABS=[['#/','Hôm nay'],['#/lich','Cả lịch'],['#/nhat-ky','Nhật ký'],['#/lo-trinh','Lộ trình'],['#/vung','Vùng tập'],['#/ho-so','Hồ sơ']];
+function route(){const h=location.hash||'#/';const m=h.match(/^#\/(ngay|ghi)\/(\d{4}-\d{2}-\d{2})$/);return m?{v:m[1],d:m[2]}:{v:{'#/':'ngay','#/lich':'lich','#/nhat-ky':'nhat-ky','#/lo-trinh':'lo-trinh','#/vung':'vung','#/ho-so':'ho-so','#/du-lieu':'du-lieu','#/huong-dan':'huong-dan'}[h]||'ngay'}}
 function render(){
+  if(S.hs)tuNoi();
   const r=route(),P=plan();
-  const cur=r.v==='ngay'?'#/':'#/'+({lich:'lich',vung:'vung','ho-so':'ho-so','du-lieu':'ho-so',ghi:'nhat-ky','nhat-ky':'nhat-ky','huong-dan':'huong-dan'}[r.v]);
+  const cur=r.v==='ngay'?'#/':'#/'+({lich:'lich',vung:'vung','ho-so':'ho-so','du-lieu':'ho-so',ghi:'nhat-ky','nhat-ky':'nhat-ky','lo-trinh':'lo-trinh','huong-dan':'huong-dan'}[r.v]);
   $('#tabs').innerHTML=TABS.map(([h,t])=>`<a href="${h}"${h===cur?' aria-current="page"':''}>${t}</a>`).join('');
   let h;
   if(r.v==='du-lieu')h=vDuLieu();
   else if(r.v==='huong-dan')h=vHuongDan();
   else if(!P||r.v==='ho-so')h=vHoSo(!P);
   else if(r.v==='nhat-ky')h=vNhatKy(P);
+  else if(r.v==='lo-trinh')h=vLoTrinh(P);
   else if(r.v==='ghi')h=vGhi(P,r.d);
   else if(r.v==='lich')h=vLich(P);
   else if(r.v==='vung')h=vVung(P);
@@ -135,6 +140,8 @@ function vNgay(P,id){
   CUR=id;const d=P.byId[id];if(!d)return `<p class="msg warn">Ngày này không nằm trong lịch.</p>`+vNgay(P);
   const t=P.tuan[d.w],X=P.X;
   const warn=P.canhBao.filter(c=>c[0]!=='info').map(c=>`<p class="msg ${c[0]}">${esc(c[1])}</p>`).join('');
+  if(S.hs.thongBao)note=`<p class="msg ok">${esc(S.hs.thongBao)} <button class="btn sm" type="button" data-a="tbXong">Đã hiểu</button></p>`+note;
+  if(d.date===TODAY||!route().d){const tl=theLuc(P);if(tl.acwr>1.5)note+=`<p class="msg warn">7 ngày qua bạn chạy ${LC.fmtKm(tl.km1)} km, gấp ${String(Math.round(tl.acwr*10)/10).replace('.',',')} lần trung bình 4 tuần. Tăng tải nhanh như vậy dễ chấn thương: hôm nay chạy nhẹ hoặc nghỉ.</p>`}
   let h=note+(d.w===0&&id<=P.tuan[0].days[6].date?warn:'')+strip(P,d.w,id);
   const chips=[];
   if(d.km)chips.push(LC.fmtKm(d.km)+' km');
@@ -262,7 +269,7 @@ function logForm(P,d){
     <div class="row up"><label class="btn" for="ff">Tải file từ đồng hồ<input id="ff" type="file" accept=".fit,.tcx,.gpx,.zip" data-ff="${d.date}" hidden></label><button type="button" class="tip tip-r" data-tip="Trên connect.garmin.com (bản web): mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc GPX. Chọn file đó ở đây, hoặc kéo thả vào khung này. File chỉ được đọc trên máy bạn, không gửi đi đâu và không lưu đường chạy." aria-label="Cách lấy file từ Garmin">?</button><span class="mut" id="ffmsg" style="font-size:14px">${L.src?'Đã đọc từ file '+esc(L.src):'Tự điền các ô dưới từ file .fit, .tcx, .gpx hoặc .zip'}</span></div>
     ${fileTomTat(L)}
     <p class="hint">Road và trail được theo dõi riêng: mỗi buổi chỉ so với buổi cùng loại. Không có file thì lấy số trên đồng hồ hoặc ứng dụng chạy. Guồng chân: lấy của các km chạy liên tục, vì số trung bình cả buổi bị các đoạn đi bộ kéo xuống.</p>
-    <div class="lg">${f}${giayChon(L)}<label class="f w" for="l-nt">Ghi chú<input id="l-nt" data-l="${d.date}" data-f="nt" type="text" placeholder="Cảm giác, chỗ mỏi, thời tiết, đường chạy" value="${esc(L.nt)}"></label></div>
+    <div class="lg">${f}${giayChon(L)}${dh==='road'?`<label class="f w row" style="flex-direction:row;gap:8px;color:var(--ink)"><input type="checkbox" data-l="${d.date}" data-f="hetSuc" ${hetSuc(d,L)?'checked':''}> Buổi này chạy hết sức (thi, chạy kiểm tra): dùng để cập nhật thể lực</label>`:''}<label class="f w" for="l-nt">Ghi chú<input id="l-nt" data-l="${d.date}" data-f="nt" type="text" placeholder="Cảm giác, chỗ mỏi, thời tiết, đường chạy" value="${esc(L.nt)}"></label></div>
     <div class="rv" id="rv">${review(P,d)}</div></div>`;
 }
 /* Thông tin chỉ có khi tải file: phút đi bộ, tim trôi, từng km */
@@ -315,7 +322,7 @@ function hieuQua(L,dh){
   const p=paceOf(L);return p?Math.round(h*p/60):null;
 }
 /* Ngày ngoài lịch (ghi thêm, hoặc dữ liệu cũ): coi như buổi chạy nhẹ */
-function dayOf(P,date){const d=P.byId[date];if(d&&d.km&&d.loai!=='suc')return d;
+function dayOf(P,date){let d=P.byId[date];if(!d&&P.khoiCu)for(const Q of P.khoiCu)if(Q.byId[date]){d=Q.byId[date];break}if(d&&d.km&&d.loai!=='suc')return d;
   return {date,thu:LC.thu(date),loai:'nhe',dh:'road',km:0,hr:P.vung.hr.nhe,ten:d?'Chạy thêm ngoài lịch':'Buổi chạy ngoài lịch',bt:{},buoc:[],ngoai:!d,them:!!d,w:d?d.w:-1}}
 const EZ=['nhe','dai','dai2','hoiphuc'];
 function review(P,d){
@@ -489,6 +496,8 @@ function vHoSo(moi){
       ${!tr&&m.mucTieu==='thanh-tich'?inp('muc.tgMucTieu','Thời gian mục tiêu',{t:'text',im:'numeric',ph:'1:59:00',help:'Ví dụ 1:59:00 cho 21 km, 49:30 cho 10 km. Trang so với thể lực hiện tại để báo mục tiêu có thực tế không.'}):''}</div>
     <div class="row"><label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="muc.coNgay" ${m.coNgay?'checked':''}> Đã có ngày thi</label></div>
     <div class="fr">${m.coNgay?inp('muc.ngay','Ngày thi',{t:'date'}):sel('muc.soTuan','Tập trong bao lâu',[[8,'8 tuần'],[10,'10 tuần'],[12,'12 tuần'],[16,'16 tuần'],[20,'20 tuần'],[24,'24 tuần']])}</div>
+    ${tr?'':`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="lienTuc" ${D.lienTuc!==false?'checked':''}> Tập liên tục nhiều năm <button type="button" class="tip tip-r" data-tip="Hết lịch (hoặc sau ngày thi) thì trang tự tạo khối tập tiếp theo, dựa trên số liệu trong nhật ký: km mỗi tuần, buổi dài nhất, kết quả chạy hết sức gần nhất. Các khối nối nhau theo chu kỳ nền, tốc độ, sức bền; mỗi vòng khối lượng đỉnh cao hơn vòng trước một chút." aria-label="Giải thích tập liên tục">?</button></label>
+    ${D.lienTuc!==false?`<div class="fr">${sel('daiHan.km','Mục tiêu dài hạn',[[5,'5 km'],[10,'10 km'],[21.1,'Bán marathon 21,1 km'],[42.2,'Marathon 42,2 km']])}${inp('daiHan.tg','Thời gian muốn đạt',{t:'text',im:'numeric',ph:'49:59',help:'Mục tiêu trong vài năm tới, ví dụ 10 km dưới 50 phút. Trang Lộ trình dự báo bao giờ có thể đạt. Bỏ trống nếu chỉ muốn tiến bộ dần.'})}</div>`:''}`}
   </fieldset>
   <fieldset><legend>Cơ thể</legend>
     <div class="fr">${inp('tuoi','Tuổi',{im:'numeric'})}${inp('hrNghi','Nhịp tim nghỉ',{im:'numeric',help:'Đo lúc mới thức dậy, chưa ra khỏi giường. Hoặc lấy số "nhịp tim nghỉ" trên đồng hồ.'})}${inp('hrMax','Nhịp tim tối đa',{im:'numeric',help:'Số cao nhất bạn từng thấy khi chạy hết sức. Bỏ trống thì trang ước tính theo tuổi.'})}${inp('hrNguong','Nhịp tim ngưỡng',{im:'numeric',help:'Nếu biết (LTHR): nhịp tim trung bình 20 phút cuối của một lần chạy hết sức 30 phút, hoặc số "ngưỡng lactate" trên đồng hồ Garmin. Có số này thì vùng tim chính xác hơn. Không biết thì bỏ trống.'})}</div>
@@ -528,6 +537,7 @@ function xemTruoc(){
   if(D.tt.tg&&!tgPhut(D.tt.tg))loi.push('Thời gian kết quả chưa đúng dạng, ví dụ 28:45 hoặc 1:02:30.');
   if(D.paceNhe&&!paceGiay(D.paceNhe))loi.push('Pace chạy nhẹ chưa đúng dạng, ví dụ 7:30.');
   if(D.muc.loai==='road'&&D.muc.mucTieu==='thanh-tich'&&D.muc.tgMucTieu&&!tgPhut(D.muc.tgMucTieu))loi.push('Thời gian mục tiêu chưa đúng dạng, ví dụ 1:59:00.');
+  if(D.daiHan&&D.daiHan.tg&&!tgPhut(D.daiHan.tg))loi.push('Thời gian mục tiêu dài hạn chưa đúng dạng, ví dụ 49:59.');
   if(D.hrNguong&&(+D.hrNguong<100||+D.hrNguong>210))loi.push('Nhịp tim ngưỡng thường trong khoảng 140–190.');
   const moi=!S.hs;
   let h='';
@@ -541,6 +551,114 @@ function xemTruoc(){
   h+=`<div class="row" style="margin-top:10px">${moi?`<button class="btn pri" type="button" data-a="tao"${loi.length?' disabled':''}>Tạo lịch</button>`
     :`<button class="btn pri" type="button" data-a="luu"${loi.length?' disabled':''}>Lưu, giữ ngày bắt đầu</button><button class="btn" type="button" data-a="moi"${loi.length?' disabled':''}>Bắt đầu lịch mới từ thứ 2 tới</button>`}</div>`;
   el.innerHTML=h;
+}
+
+/* ---------- Tập nhiều năm ---------- */
+/* Buổi chạy hết sức: người dùng đánh dấu, hoặc ngày thi / ngày chạy kiểm tra road. */
+function hetSuc(d,L){
+  if(L.hetSuc!=null&&L.hetSuc!=='')return !!+L.hetSuc;
+  if(!((d.loai==='thi'||d.loai==='kiem')&&dhOf(d)==='road'))return false;
+  /* ngày thi/kiểm tra: chỉ tính là hết sức khi quãng đường khớp cự ly của buổi đó */
+  const k=num(L,'km'),D=d.loai==='thi'?(PLAN&&PLAN.X?PLAN.X.D:d.km):5;return !!k&&Math.abs(k-D)/D<=0.1;
+}
+const kmNgay=(a,b)=>Object.entries(S.log).filter(([dt])=>dt>a&&dt<=b).reduce((x,[,L])=>x+(num(L,'km')||0),0);
+/* Thể lực hiện tại tính từ nhật ký */
+function theLuc(P){
+  const km4=kmNgay(LC.addD(TODAY,-28),TODAY)/4,km1=kmNgay(LC.addD(TODAY,-7),TODAY);
+  const ghi4=Object.keys(S.log).filter(dt=>dt>LC.addD(TODAY,-28)&&dt<=TODAY&&num(S.log[dt],'km')).length;
+  const dai8=Math.max(0,...Object.entries(S.log).filter(([dt])=>dt>LC.addD(TODAY,-56)&&dt<=TODAY).map(([,L])=>num(L,'km')||0));
+  /* VDOT: kết quả hết sức gần nhất trong 150 ngày */
+  /* VDOT: kết quả hết sức tốt nhất trong 90 ngày; không có thì gần nhất trong 150 ngày */
+  let V=null;const ds=[];
+  for(const[dt,L]of Object.entries(S.log)){
+    if(dt<LC.addD(TODAY,-150)||dt>TODAY)continue;const d=dayOf(P,dt),k=num(L,'km'),m=tgPhut(L.tg);
+    if(k>=3&&m&&hetSuc(d,L)){const v=LC.vdot(k,m);if(v>15&&v<85)ds.push({V:Math.round(v*10)/10,ngay:dt,km:k,tg:L.tg})}
+  }
+  const g90=ds.filter(x=>x.ngay>LC.addD(TODAY,-90));
+  if(g90.length)V=g90.reduce((a,b)=>b.V>a.V?b:a);else if(ds.length)V=ds.reduce((a,b)=>b.ngay>a.ngay?b:a);
+  const pc=P.vung.pace;
+  return {km4:Math.round(km4*10)/10,km1:Math.round(km1*10)/10,ghi4,dai8,V,Vho:pc?pc.V:null,acwr:km4>=8?km1/km4:null};
+}
+/* Kỷ lục cá nhân từ các buổi hết sức */
+function kyLuc(P){
+  const KL={5:null,10:null,21.1:null,42.2:null};
+  for(const[dt,L]of Object.entries(S.log)){const d=dayOf(P,dt),k=num(L,'km'),m=tgPhut(L.tg);if(!k||!m||!hetSuc(d,L))continue;
+    for(const D of Object.keys(KL)){if(Math.abs(k-D)/D<=0.03){const t=m*(+D)/k;if(!KL[D]||t<KL[D].t)KL[D]={t,ngay:dt}}}}
+  return KL;
+}
+/* Chu kỳ khối: nền → tốc độ → sức bền (→ marathon khi đủ nền) */
+const KHOI={nen:{ten:'Nền sức bền',km:10,N:10,mt:'hoan-thanh'},toc:{ten:'Tốc độ',km:10,N:8,mt:'thanh-tich'},ben:{ten:'Sức bền dài',km:21.1,N:12,mt:'thanh-tich'},mara:{ten:'Marathon',km:42.2,N:16,mt:'hoan-thanh'}};
+function chuKy(hs){const g=+((hs.daiHan||{}).km)||10;return g>=42?['nen','toc','ben','mara']:g>=21?['nen','toc','ben']:['nen','toc','nen','ben']}
+function khoiTiep(P,lyDo){
+  const old=S.hs,t=theLuc(P),ck=chuKy(old);
+  let i=old.khoiLoai?(old.khoiSo||0)+1:0;let loai=ck[i%ck.length];
+  if(old.muc.coNgay)loai='nen';                                   /* sau giải: về nền */
+  if(loai==='mara'&&t.km4<35){loai='ben'}                          /* chưa đủ nền cho marathon */
+  const K=KHOI[loai];
+  const dinhCu=Math.max(...P.tuan.map(w=>w.km));
+  const kmThat=t.ghi4>=4?t.km4:Math.max(...P.tuan.slice(-4).map(w=>w.km))*0.85;   /* ít ghi chép: coi như đã theo lịch */
+  const dauGan=Object.entries(S.log).some(([dt,L])=>dt>LC.addD(TODAY,-14)&&(num(L,'dau')||0)>=4);
+  const nam0=old.namGoc??(+old.hienTai.nam||0),namTap=(LC.soNgay((old.khoi&&old.khoi[0]?old.khoi[0].tu:old.ngayTao)||TODAY,TODAY))/365;
+  const {cu:_c,khoi:_k,thongBao:_t,...snap}=old;
+  const hs={...old,muc:{...old.muc,loai:'road',km:loai==='toc'&&+((old.daiHan||{}).km)<=5?5:K.km,dPlus:'',coNgay:false,ngay:'',soTuan:K.N,mucTieu:K.mt,tgMucTieu:''},
+    hienTai:{kmTuan:Math.round(kmThat*0.85),dai:Math.round(Math.max(t.dai8,+old.hienTai.dai||0)),nam:Math.min(2,nam0+(namTap>=1?1:0)+(namTap>=3?1:0))},
+    tt:t.V?{km:t.V.km,tg:t.V.tg}:old.tt,chanThuong:dauGan?'moi-khoi':'khong',dinhMoi:Math.round(dinhCu*1.08),namGoc:nam0,
+    ngayTao:TODAY,chinh:{},cu:[],khoi:[...(old.khoi||[]),{tu:old.ngayTao,den:P.ketThuc,ten:old.khoiTen||'Khối '+((old.khoi||[]).length+1),loai:old.khoiLoai||'',hs:snap}].slice(-12),
+    khoiLoai:loai,khoiSo:i,khoiTen:K.ten+' '+(Math.floor(i/ck.length)+1),lienTuc:true,
+    thongBao:`${lyDo} Khối mới: ${K.ten} (${K.N} tuần, hướng tới cự ly ${LC.fmtKm(K.km)} km). Tính từ số liệu gần đây: khoảng ${LC.fmtKm(Math.round(kmThat))} km mỗi tuần, buổi dài nhất ${LC.fmtKm(Math.round(Math.max(t.dai8,+old.hienTai.dai||0)))} km${t.V?`, thể lực theo buổi chạy hết sức ngày ${dm(t.V.ngay)} (VDOT ${String(t.V.V).replace('.',',')})`:''}.`};
+  S.hs=hs;PLAN=null;save();
+}
+/* Hết lịch thì tự nối khối mới (chỉ khi bật tập liên tục, road) */
+function tuNoi(){
+  const P=plan();if(!P||S.hs.lienTuc===false||P.X.trail||TODAY<=P.ketThuc)return false;
+  khoiTiep(P,`${S.hs.khoiTen?'Khối "'+S.hs.khoiTen+'"':'Lịch trước'} đã xong ngày ${dmy(P.ketThuc)}.`);return true;
+}
+/* Dự báo nhiều năm: VDOT tăng nhanh những năm đầu, chậm dần; tập ít thì tăng chậm hơn */
+function duBao(P,t){
+  const V0=(t.V&&t.V.V)||t.Vho;if(!V0)return null;
+  /* Giả định: năm tập thứ y tăng khoảng 7×0,7^y điểm VDOT ở 40 km/tuần; khối lượng tăng khoảng 25%/năm đến 70 km; ít km hơn thì tăng chậm hơn. */
+  const nam=+S.hs.hienTai.nam||0,y0=[0.5,1.5,3.5][nam]||1.5,km0=t.km4||+S.hs.hienTai.kmTuan||15;
+  const out=[];let V=V0;
+  for(let q=0;q<=12;q++){
+    if(q){const y=y0+(q-1)/4,vol=Math.min(70,km0*Math.pow(1.25,(q-1)/4)),f=Math.min(1.1,Math.max(0.5,vol/40)),g=Math.max(0.3,7*Math.pow(0.7,y))*f;V+=g/4}
+    out.push({q,ngay:LC.addD(TODAY,Math.round(q*91.25)),V:Math.round(V*10)/10,t:[5,10,21.0975,42.195].map(k=>LC.thoiGianDua(V,k))});
+  }
+  return out;
+}
+function vLoTrinh(P){
+  const t=theLuc(P),KL=kyLuc(P),db=duBao(P,t),dh=S.hs.daiHan||{};
+  const card=(lb,v,sub)=>`<div><span>${lb}</span><b>${v}</b>${sub?`<span style="margin-top:2px">${sub}</span>`:''}</div>`;
+  const ac=t.acwr;
+  let h=`<h2>Lộ trình</h2><p class="sub">Thể lực tính từ nhật ký của bạn, khối tập đang chạy, dự báo vài năm tới và kỷ lục cá nhân. Ghi chép đều và đánh dấu các buổi chạy hết sức thì phần này càng chính xác.</p>
+  <h3 style="margin-top:24px">Thể lực hiện tại</h3><div class="tgt" style="margin-top:10px">
+    ${card('Km mỗi tuần (4 tuần qua)',LC.fmtKm(t.km4),t.ghi4?t.ghi4+' buổi đã ghi':'chưa có ghi chép')}
+    ${card('Buổi dài nhất (8 tuần)',t.dai8?LC.fmtKm(t.dai8)+' km':'–')}
+    ${card('VDOT',String(t.V?t.V.V:(t.Vho||'–')).replace('.',','),t.V?`từ buổi hết sức ${dm(t.V.ngay)}`:t.Vho?'từ hồ sơ':'điền kết quả ở hồ sơ')}
+    ${card('Tải tuần này / trung bình',ac?String(Math.round(ac*100)/100).replace('.',','):'–',ac?(ac>1.5?'tăng quá nhanh':ac>1.3?'hơi nhanh':ac<0.7?'đang nghỉ nhiều':'ổn'):'')}
+  </div>${ac>1.5?`<p class="msg warn">7 ngày qua chạy ${LC.fmtKm(t.km1)} km, gấp ${String(Math.round(ac*10)/10).replace('.',',')} lần trung bình 4 tuần. Tải tăng quá 1,5 lần là lúc dễ chấn thương nhất; tuần tới nên chạy ít lại.</p>`:''}`;
+  if(t.V&&t.Vho&&Math.abs(t.V.V-t.Vho)>=0.5)h+=`<p class="msg info">Kết quả ngày ${dm(t.V.ngay)} cho VDOT ${t.V.V}, khác hồ sơ (${t.Vho}). Khối tiếp theo sẽ tự dùng số mới; muốn dùng ngay thì cập nhật kết quả ở <a href="#/ho-so">Hồ sơ</a>.</p>`;
+  /* Khối tập */
+  const ds=[...(S.hs.khoi||[]).map(k=>[k.ten,k.tu,k.den,'xong']),[S.hs.khoiTen||'Khối hiện tại',P.batDau,P.ketThuc,'nay']];
+  if(S.hs.lienTuc!==false&&!P.X.trail){const ck=chuKy(S.hs);let i=S.hs.khoiLoai?(S.hs.khoiSo||0)+1:0,bd=LC.addD(P.ketThuc,1);for(let n=0;n<3;n++){const K=KHOI[ck[(i+n)%ck.length]];const kt=LC.addD(bd,K.N*7-1);ds.push([K.ten+' (dự kiến)',bd,kt,'sau']);bd=LC.addD(kt,1)}}
+  h+=`<h3 style="margin-top:28px">Các khối tập</h3><p class="note">${S.hs.lienTuc!==false&&!P.X.trail?'Hết khối, trang tự tạo khối tiếp theo từ số liệu nhật ký. Mỗi vòng, khối lượng đỉnh cao hơn vòng trước khoảng 8% nếu bạn chạy được.':'Đang tắt tập liên tục: hết lịch thì vào Hồ sơ tạo lịch mới.'}</p>
+  <div class="wks">${ds.map(([ten,a,b,k])=>`<div class="wk${k==='nay'?' cur':''}" style="--c:${k==='xong'?'var(--line)':k==='nay'?'var(--trk)':'var(--z2)'};grid-template-columns:1fr auto"><span><b>${esc(ten)}</b><br><span class="d">${dmy(a)} – ${dmy(b)}</span></span><span class="d">${k==='xong'?'Đã xong':k==='nay'?'Đang tập':'Sắp tới'}</span></div>`).join('')}</div>
+  ${S.hs.lienTuc!==false&&!P.X.trail?`<p class="row" style="margin-top:12px"><button class="btn" type="button" data-a="khoiMoi">Kết thúc khối này, bắt đầu khối tiếp theo</button></p>`:''}`;
+  /* Dự báo */
+  if(db){
+    const g=+dh.km,gT=tgPhut(dh.tg),gi=[5,10,21.1,42.2].indexOf(g);
+    let eta='';if(gT&&gi>=0){const hit=db.find(x=>x.t[gi]<=gT);eta=hit?(hit.q===0?`Mục tiêu ${LC.fmtKm(g)} km dưới ${esc(dh.tg)}: thể lực hiện tại đã đủ, cần sức bền cho cự ly và một ngày chạy tốt.`:`Mục tiêu ${LC.fmtKm(g)} km dưới ${esc(dh.tg)}: nếu tập đều, dự kiến đạt khoảng <b>tháng ${+hit.ngay.slice(5,7)}/${hit.ngay.slice(0,4)}</b>.`):`Mục tiêu ${LC.fmtKm(g)} km dưới ${esc(dh.tg)}: chưa đạt trong 3 năm theo dự báo; vẫn có thể nếu tăng khối lượng nhiều hơn mức giả định.`}
+    h+=`<h3 style="margin-top:28px">Dự báo 3 năm</h3><p class="note">Ước tính nếu tập đều và khối lượng tăng dần khoảng 25% mỗi năm (đến khoảng 70 km mỗi tuần): thể lực tăng nhanh những năm đầu rồi chậm dần; chạy ít km thì tăng chậm hơn. Chỉ để định hướng, không phải cam kết. Mỗi lần chạy hết sức và ghi lại, dự báo được tính lại từ số mới.</p>${eta?`<p class="msg info">${eta}</p>`:''}
+    <div style="overflow-x:auto"><table class="zt" style="max-width:none"><thead><tr><th>Thời điểm</th><th>VDOT</th><th>5 km</th><th>10 km</th><th>21,1 km</th><th>42,2 km</th></tr></thead><tbody>${db.filter(x=>x.q%2===0).map(x=>`<tr><td>${x.q?'Tháng '+(+x.ngay.slice(5,7))+'/'+x.ngay.slice(0,4):'Hiện tại'}</td><td><b>${String(x.V).replace('.',',')}</b></td>${x.t.map((m,i)=>`<td${gi===i&&gT&&m<=gT?' style="color:var(--ok);font-weight:700"':''}>${fmtGiay(m*60)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }else h+=`<p class="msg info" style="margin-top:24px">Chưa có kết quả chạy hết sức nên chưa dự báo được. Điền ở Hồ sơ, hoặc đánh dấu "chạy hết sức" khi ghi một buổi thi hay chạy kiểm tra.</p>`;
+  /* Kỷ lục */
+  h+=`<h3 style="margin-top:28px">Kỷ lục cá nhân</h3><p class="note">Từ các buổi road đánh dấu chạy hết sức, quãng đường lệch không quá 3%.</p><table class="zt"><tbody>${Object.entries(KL).map(([D,x])=>`<tr><td>${D==='42.2'?'Marathon':D==='21.1'?'Bán marathon':D+' km'}</td><td><b>${x?fmtGiay(x.t*60):'–'}</b></td><td class="mut">${x?dmy(x.ngay)+' · '+LC.fmtP(x.t*60/+D)+'/km':''}</td></tr>`).join('')}</tbody></table>`;
+  /* Km theo tháng, 24 tháng */
+  const th=[];for(let i=23;i>=0;i--){const d=new Date(+TODAY.slice(0,4),+TODAY.slice(5,7)-1-i,1);th.push(LC.ymd(d).slice(0,7))}
+  const kmT=th.map(m=>{let r=0,tr=0;for(const[dt,L]of Object.entries(S.log))if(dt.slice(0,7)===m){const k=num(L,'km')||0;if(dhOf(dayOf(P,dt))==='trail')tr+=k;else r+=k}return[r,tr]});
+  const mx=Math.max(10,...kmT.map(x=>x[0]+x[1])),W=900,H=200,bw=(W-40)/24,y=v=>14+(H-40)*(1-v/mx);
+  h+=`<h3 style="margin-top:28px">Km mỗi tháng</h3><svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Km mỗi tháng trong 24 tháng">${[0,.5,1].map(f=>{const v=Math.round(mx*f);return `<line x1="34" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="30" y="${y(v)+4}" text-anchor="end">${v}</text>`}).join('')}${kmT.map(([r,tr],i)=>{const x=40+i*bw+bw*.15,w=bw*.7;return `<rect x="${x}" y="${y(r)}" width="${w}" height="${y(0)-y(r)}" fill="var(--z2)"><title>${th[i]}: đường bằng ${LC.fmtKm(r)} km</title></rect><rect x="${x}" y="${y(r+tr)}" width="${w}" height="${y(r)-y(r+tr)}" fill="var(--z3)"><title>${th[i]}: trail ${LC.fmtKm(tr)} km</title></rect>${i%3===0?`<text x="${x+w/2}" y="${H-8}" text-anchor="middle">${+th[i].slice(5)}/${th[i].slice(2,4)}</text>`:''}`}).join('')}</svg>
+  <div class="legend"><span><i style="background:var(--z2)"></i>Đường bằng</span><span><i style="background:var(--z3)"></i>Trail</span></div>`;
+  return h;
 }
 
 /* ---------- Nhật ký ---------- */
@@ -572,6 +690,7 @@ function vHuongDan(){
   return `<h2>Hướng dẫn</h2><p class="sub">Cách trang tạo lịch, ý nghĩa các con số, và cách dùng hằng ngày.</p><div style="height:12px"></div>`
   +q('Bắt đầu thế nào','<ol class="steps"><li>Vào <a href="#/ho-so">Hồ sơ</a>, điền mục tiêu, nhịp tim, số km hiện tại, một kết quả road gần đây và ngày rảnh. Bấm Tạo lịch.</li><li>Đăng nhập Google nếu muốn mở ở nhiều máy. Không đăng nhập thì dữ liệu chỉ ở trình duyệt này.</li><li>Mỗi sáng mở trang Hôm nay: điền phần Buổi sáng, xem bài của ngày, làm khởi động.</li><li>Chạy xong: tải file từ đồng hồ hoặc gõ số, đọc nhận xét, làm giãn cơ.</li><li>Sau mỗi lần chạy kiểm tra hoặc thi: cập nhật kết quả ở Hồ sơ để pace được tính lại.</li></ol>')
   +q('Lịch được tạo ra sao','<ul class="steps"><li>Chia giai đoạn: nền sức bền, tăng cường, cao điểm, giảm tải trước giải.</li><li>Khối lượng tăng tối đa khoảng 10% mỗi tuần; cứ 4 tuần có 1 tuần giảm khoảng 20%.</li><li>Khoảng 80% thời gian là chạy nhẹ; tối đa 2 bài nặng mỗi tuần, không xếp liền nhau, không sát ngày chạy dài.</li><li>Chạy dài không quá khoảng 1/3 tổng tuần, mỗi lần dài thêm tối đa 2 km.</li><li>Vừa khỏi chấn thương hoặc mới chạy: 4 tuần đầu chỉ chạy nhẹ, tăng chậm hơn.</li><li>Lịch tự giảm tuần sau khi tuần này có đau, tim cao, quá sức, bỏ nhiều buổi hoặc nhiều buổi sáng chưa hồi phục. Bạn có thể bấm giữ nguyên.</li></ul>')
+  +q('Tập nhiều năm','<ul class="steps"><li>Bật <b>Tập liên tục nhiều năm</b> ở Hồ sơ (mặc định đã bật cho road) và đặt mục tiêu dài hạn, ví dụ 10 km dưới 50 phút.</li><li>Hết một khối tập (hoặc sau ngày thi), trang tự tạo khối tiếp theo từ nhật ký: km mỗi tuần 4 tuần qua, buổi dài nhất 8 tuần qua, kết quả chạy hết sức tốt nhất 90 ngày qua. Khối mới bắt đầu nhẹ hơn khoảng 15% để hồi phục.</li><li>Các khối nối theo chu kỳ: <b>Nền sức bền</b> (tăng khối lượng, chạy nhẹ) → <b>Tốc độ</b> (biến tốc, 5–10 km) → <b>Sức bền dài</b> (tempo, chạy dài, 21 km); mục tiêu marathon thì thêm khối Marathon khi đã chạy đều trên 35 km mỗi tuần.</li><li>Mỗi vòng, khối lượng đỉnh cao hơn khối trước khoảng 8% nếu bạn đã chạy được. Mỗi khối kết thúc bằng tuần chạy kiểm tra 5 km: ghi lại và tick "chạy hết sức" để thể lực được cập nhật.</li><li>Trang Lộ trình cho thấy thể lực hiện tại, các khối, dự báo 3 năm, kỷ lục và km mỗi tháng. Nếu 7 ngày qua chạy gấp hơn 1,5 lần trung bình 4 tuần, trang cảnh báo vì đó là lúc dễ chấn thương nhất.</li></ul>')
   +q('Các loại buổi chạy','<ul class="steps"><li><b>Chạy nhẹ:</b> vùng 2, nói chuyện được cả câu. Là phần lớn khối lượng, xây nền sức bền.</li><li><b>Chạy hồi phục:</b> chậm nhất tuần, sau ngày chạy dài.</li><li><b>Chạy dài:</b> buổi dài nhất tuần, vẫn ở vùng nhẹ.</li><li><b>Strides:</b> 4–6 lần tăng tốc 20 giây cuối buổi nhẹ, giữ dáng chạy và guồng chân.</li><li><b>Tempo (ngưỡng):</b> nhanh nhưng kiểm soát được, cảm giác 7–8/10, nâng tốc độ chịu được lâu.</li><li><b>Interval:</b> lần chạy 3–5 phút khó, nghỉ bằng thời gian chạy, nâng VO2max.</li><li><b>Chạy lên dốc ngắn:</b> sức mạnh chân mà ít va đập.</li><li><b>Leo dốc (trail):</b> chạy hoặc đi bộ nhanh lên dốc ở vùng 3–4; tập cả hai vì trong giải sẽ dùng cả hai.</li><li><b>Chạy dài hai ngày liền (trail):</b> tập chạy khi chân đã mỏi, như nửa sau giải dài.</li></ul>')
   +q('Ý nghĩa các con số','<ul class="steps"><li><b>Vùng nhịp tim:</b> tính từ nhịp nghỉ và nhịp tối đa (Karvonen), hoặc từ nhịp tim ngưỡng nếu bạn điền.</li><li><b>VDOT:</b> chỉ số thể lực tính từ một kết quả chạy hết sức (Jack Daniels). Từ đó ra pace cho từng loại bài và thời gian dự đoán.</li><li><b>Nhịp tim mỗi km:</b> nhịp tim trung bình × số phút mỗi km. Cùng loại đường mà số này giảm dần là thể lực đang lên. Trail tính trên km quy đổi: mỗi 100 m leo tính thêm 1 km.</li><li><b>Tim trôi:</b> nửa sau buổi chạy tim cao hơn nửa đầu bao nhiêu % ở cùng tốc độ. Dưới 5% là nền sức bền tốt; trên 8% là quá sức, nóng hoặc thiếu nước.</li><li><b>Điểm sương:</b> đo độ oi. Nhiệt độ và điểm sương càng cao, pace càng phải chậm lại.</li></ul>')
   +q('Lấy file từ Garmin','<ol class="steps"><li>Mở connect.garmin.com trên máy tính hoặc trình duyệt điện thoại (ứng dụng Garmin Connect không xuất được file).</li><li>Mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc Export to GPX.</li><li>Trong trang này, mở ngày đó, bấm Tải file từ đồng hồ hoặc kéo thả file vào khung Sau buổi chạy.</li></ol><p class="note">File chỉ được đọc trên máy bạn; trang không lưu đường chạy.</p>')
@@ -629,12 +748,14 @@ document.addEventListener('click',async ev=>{
     case 'tao':S.hs={...D,ngayTao:TODAY};D=null;save();location.hash='#/';render();window.scrollTo(0,0);break;
     case 'luu':{const old=S.hs,P0=plan(),cut=LC.addD(TODAY,-LC.thu(TODAY));let cu=(old.cu||[]).slice();
       if(P0&&cut>P0.batDau&&cut<=P0.ketThuc){const{cu:_,...o}=old;cu.push({den:cut,hs:o});cu=cu.slice(-8)}
-      S.hs={...D,ngayTao:old.ngayTao||TODAY,cu};D=null;PLAN=null;save();location.hash='#/lich';break}
-    case 'moi':if(confirm('Tạo lịch mới bắt đầu từ thứ 2 tới? Ghi chép cũ vẫn giữ trong Nhật ký.')){S.hs={...D,ngayTao:TODAY,chinh:{},cu:[]};D=null;PLAN=null;save();location.hash='#/lich'}break;
+      S.hs={...D,ngayTao:old.ngayTao||TODAY,cu,khoi:old.khoi,khoiLoai:old.khoiLoai,khoiSo:old.khoiSo,khoiTen:old.khoiTen,namGoc:old.namGoc,dinhMoi:old.dinhMoi};D=null;PLAN=null;save();location.hash='#/lich';break}
+    case 'moi':if(confirm('Tạo lịch mới bắt đầu từ thứ 2 tới? Ghi chép cũ vẫn giữ trong Nhật ký.')){const old=S.hs,{cu:_c,khoi:_k,thongBao:_t,...snap}=old;S.hs={...D,ngayTao:TODAY,chinh:{},cu:[],dinhMoi:0,khoiLoai:'',khoiSo:0,khoiTen:'',khoi:[...(old.khoi||[]),{tu:old.ngayTao,den:plan().ketThuc,ten:old.khoiTen||'Khối trước',loai:old.khoiLoai||'',hs:snap}].slice(-12)};D=null;PLAN=null;save();location.hash='#/lich'}break;
     case 'ics':xuatIcs(plan());break;
     case 'ghi':{const v=($('#ghiNgay')||{}).value;if(v)go(v);break}
     case 'giayThem':{const ten=($('#gTen').value||'').trim();if(!ten){$('#gTen').focus();break}const g={id:'g'+Date.now().toString(36),ten,kmDau:+($('#gKm').value||0)||0,mac:!S.giay.some(x=>!x.nghi)};S.giay.push(g);save();keep(render);break}
     case 'chuyen':chuyenCu();break;
+    case 'tbXong':delete S.hs.thongBao;save();keep(render);break;
+    case 'khoiMoi':if(confirm('Kết thúc khối đang tập và tạo khối tiếp theo từ số liệu nhật ký? Các tuần còn lại của khối này sẽ bỏ.')){khoiTiep(plan(),'Bạn đã bắt đầu khối mới sớm.');location.hash='#/lich'}break;
     case 'xuat':taiFile(JSON.stringify({ung_dung:'lich-chay-ca-nhan',xuat_luc:new Date().toISOString(),...S,anim:undefined},null,1),'lich-chay-'+TODAY+'.json','application/json');break;
     case 'xoa':if(confirm(user?'Xoá vĩnh viễn hồ sơ, lịch và mọi ghi chép trong tài khoản và trên máy này? Không hoàn tác được.':'Xoá hồ sơ và ghi chép trên máy này?')){
       try{if(user)await SYNC.wipe()}catch(e){alert('Không xoá được trên máy chủ: '+(e.code||e.message)+'. Thử lại khi có mạng.');break}
@@ -647,7 +768,7 @@ document.addEventListener('change',ev=>{
   const t=ev.target;
   if(t.dataset.ff&&t.files[0]){napFile(t.files[0],t.dataset.ff);t.value='';return}
   if(t.id==='nhap'&&t.files[0]){t.files[0].text().then(x=>{try{const d=JSON.parse(x);if(!d||typeof d!=='object'||!('hs' in d))throw 0;if(!confirm('Thay dữ liệu hiện tại bằng dữ liệu trong file?'))return;S={...trong(),hs:d.hs,log:d.log||{},done:d.done||{},sang:d.sang||{},giay:d.giay||[],anim:S.anim};save();PLAN=null;D=null;location.hash='#/';render()}catch(e){alert('File không đúng định dạng.')}});return}
-  if(t.dataset.l&&t.tagName==='SELECT'){luuLog(t);return}
+  if(t.dataset.l&&(t.tagName==='SELECT'||t.type==='checkbox')){luuLog(t);return}
   if(t.dataset.sang&&t.tagName==='SELECT'){t.dispatchEvent(new Event('input',{bubbles:true}));return}
   if(t.dataset.dow!=null){const i=+t.dataset.dow;D.ngayRanh=t.checked?[...new Set([...D.ngayRanh,i])].sort():D.ngayRanh.filter(x=>x!==i);xemTruoc();return}
   if(t.dataset.f&&D&&t.closest('#hsf')){
@@ -657,7 +778,7 @@ document.addEventListener('change',ev=>{
 });
 let tPrev=null,tTt=null;
 function luuLog(t){
-  const L=S.log[t.dataset.l]||(S.log[t.dataset.l]={});L[t.dataset.f]=t.value;
+  const L=S.log[t.dataset.l]||(S.log[t.dataset.l]={});L[t.dataset.f]=t.type==='checkbox'?(t.checked?1:0):t.value;
   if(t.dataset.f!=='giay'&&!L.giay&&giayMac()&&(L.km||L.tg))L.giay=giayMac().id;
   if(!Object.entries(L).some(([k,v])=>k!=='giay'&&v!==''&&v!=null))delete S.log[t.dataset.l];
   save();const rv=$('#rv'),P=plan(),d=P&&dayOf(P,t.dataset.l);if(rv&&d)rv.innerHTML=review(P,d);clearTimeout(tTt);tTt=setTimeout(ttw,400);
@@ -667,7 +788,7 @@ document.addEventListener('dragleave',ev=>{const lg=ev.target.closest&&ev.target
 document.addEventListener('drop',ev=>{const lg=ev.target.closest&&ev.target.closest('.log[data-log]');if(!lg)return;ev.preventDefault();lg.classList.remove('drop');const f=ev.dataTransfer.files[0],inp=lg.querySelector('[data-ff]');if(f&&inp)napFile(f,inp.dataset.ff)});
 document.addEventListener('input',ev=>{
   const t=ev.target;
-  if(t.dataset.l&&t.tagName!=='SELECT'){luuLog(t);return}
+  if(t.dataset.l&&t.tagName!=='SELECT'&&t.type!=='checkbox'){luuLog(t);return}
   if(t.dataset.sang){const x=S.sang[t.dataset.sang]||(S.sang[t.dataset.sang]={});x[t.dataset.f]=t.value;if(!Object.values(x).some(v=>v!==''&&v!=null))delete S.sang[t.dataset.sang];save();const P=plan(),d=P.byId[t.dataset.sang]||dayOf(P,t.dataset.sang),k=$('#sangkq'),n=$('#sangnhan');if(k)k.innerHTML=sangText(P,d);if(n)n.textContent=SANG_NHAN[sangKQ(d.date)[0]];clearTimeout(tTt);tTt=setTimeout(ttw,400);return}
   if(t.dataset.troi){const w=troiLay();w[t.dataset.troi]=t.value;try{localStorage.setItem('lcn-troi',JSON.stringify(w))}catch(e){}const P=plan(),k=$('#nongkq');if(k)k.innerHTML=nongText(dayOf(P,CUR));return}
   if(t.dataset.f&&D&&t.closest('#hsf')&&t.tagName==='INPUT'&&t.type!=='checkbox'){setP(D,t.dataset.f,t.value);clearTimeout(tPrev);tPrev=setTimeout(xemTruoc,250)}

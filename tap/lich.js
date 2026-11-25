@@ -173,6 +173,8 @@ function taoLich(p,homNay){
   let dinh=X.dinh[0]+(X.dinh[1]-X.dinh[0])*clamp(vt,0,1);
   if(quayLai)dinh*=0.85;
   dinh=Math.max(dinh,Math.min(kmNow,X.dinh[1]));
+  /* Tập nhiều năm: đỉnh của khối mới dựa trên đỉnh thực tế khối trước (+khoảng 8%), cho phép vượt khung cự ly một chút. */
+  if(+p.dinhMoi>0)dinh=clamp(+p.dinhMoi,Math.min(kmNow,dinh),X.dinh[1]*1.35);
   const tocDo=diBo?1.06:quayLai?1.07:moi?1.08:1.10;
   let W0=quayLai?Math.max(8,kmNow*0.7):Math.max(diBo?6:8,kmNow);
   W0=Math.min(W0,dinh);
