@@ -268,7 +268,9 @@ function taoLich(p,homNay){
     const nhe=plan.filter(x=>x.loai==='nhe'||x.loai==='hoiphuc');
     const w=nhe.reduce((a,x)=>a+(x.loai==='hoiphuc'?0.7:1),0);
     const tran=X.trail?Math.max(8,dai*0.6):Math.max(8,dai*0.75);
-    nhe.forEach(x=>{x.km=clamp(w?du*(x.loai==='hoiphuc'?0.7:1)/w:0,diBo?2:3,tran)});
+    /* Buổi ngắn nhất: mặc định 3 km, người dùng chọn được 4–5 km */
+    const kmMin=diBo?2:clamp(+p.kmMin||3,2,8);
+    nhe.forEach(x=>{x.km=clamp(w?du*(x.loai==='hoiphuc'?0.7:1)/w:0,kmMin,Math.max(tran,kmMin))});
     if(isRace)nhe.forEach(x=>x.km=clamp(Math.min(x.km,X.D<=10?5:7),3,7));
     plan.forEach(x=>{if(x.loai==='dai'||x.loai==='kiem')x.km=x.loai==='kiem'?(X.trail?6:5):dai;if(x.loai==='thi')x.km=X.D});
 

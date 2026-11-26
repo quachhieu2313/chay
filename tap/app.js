@@ -79,10 +79,10 @@ function norm(h){
     muc:{loai:h.muc.loai,km:+h.muc.km||10,dPlus:+h.muc.dPlus||0,ngay:h.muc.coNgay?h.muc.ngay:'',soTuan:+h.muc.soTuan||12,mucTieu:h.muc.mucTieu,tgMucTieu:h.muc.mucTieu==='thanh-tich'?tgPhut(h.muc.tgMucTieu):0},
     hienTai:{kmTuan:+h.hienTai.kmTuan||0,dai:+h.hienTai.dai||0,nam:+h.hienTai.nam||0},
     thanhTich:h.tt&&h.tt.tg?{km:+h.tt.km,phut:tgPhut(h.tt.tg)}:null,paceNhe:paceGiay(h.paceNhe),
-    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,ketHop:h.muc.loai==='road'&&!!h.ketHop,dinhMoi:+h.dinhMoi||0,chinh:h.chinh||{}};
+    chanThuong:h.chanThuong,ngayRanh:h.ngayRanh,soBuoi:+h.soBuoi,ngayDai:+h.ngayDai,doc:h.doc,ta:!!h.ta,ketHop:h.muc.loai==='road'&&!!h.ketHop,kmMin:+h.kmMin||3,dinhMoi:+h.dinhMoi||0,chinh:h.chinh||{}};
 }
 const MAU=()=>({ten:'',tuoi:'',hrNghi:'',hrMax:'',muc:{loai:'road',km:10,dPlus:'',coNgay:false,ngay:'',soTuan:12,mucTieu:'hoan-thanh'},
-  hienTai:{kmTuan:'',dai:'',nam:1},tt:{km:5,tg:''},paceNhe:'',chanThuong:'khong',ngayRanh:[1,3,5,6],soBuoi:4,ngayDai:6,doc:'it',ta:false,chinh:{},lienTuc:true,daiHan:{km:10,tg:''}});
+  hienTai:{kmTuan:'',dai:'',nam:1},tt:{km:5,tg:''},paceNhe:'',chanThuong:'khong',ngayRanh:[1,3,5,6],soBuoi:4,kmMin:3,ngayDai:6,doc:'it',ta:false,chinh:{},lienTuc:true,daiHan:{km:10,tg:''}});
 const VIDU=()=>({...MAU(),daiHan:{km:21.1,tg:'1:59:00'},tuoi:34,hrNghi:58,hrMax:'',muc:{loai:'road',km:21.1,dPlus:'',coNgay:false,ngay:'',soTuan:14,mucTieu:'hoan-thanh'},hienTai:{kmTuan:20,dai:10,nam:1},tt:{km:5,tg:'29:30'}});
 
 /* ---------- Tài khoản ---------- */
@@ -610,7 +610,7 @@ function vHoSo(moi){
   </fieldset>
   <fieldset><legend>Thời gian của bạn</legend>
     <div><span class="help" style="display:block;margin-bottom:6px;font-weight:600;color:var(--mut);font-size:13.5px">Ngày có thể chạy</span><div class="dows">${DOW.map((t,i)=>`<label><input type="checkbox" data-dow="${i}" ${D.ngayRanh.includes(i)?'checked':''}> ${t}</label>`).join('')}</div></div>
-    <div class="fr">${sel('soBuoi','Số buổi chạy mỗi tuần',[[2,'2 buổi'],[3,'3 buổi'],[4,'4 buổi'],[5,'5 buổi'],[6,'6 buổi']])}${sel('ngayDai','Ngày chạy dài',DOWF.map((t,i)=>[i,t]))}${sel('doc','Gần nhà có dốc',[['khong','Không (sẽ dùng cầu thang, máy chạy)'],['it','Có vài dốc'],['nhieu','Có đồi núi']])}</div>
+    <div class="fr">${sel('soBuoi','Số buổi chạy mỗi tuần',[[2,'2 buổi'],[3,'3 buổi'],[4,'4 buổi'],[5,'5 buổi'],[6,'6 buổi']])}${sel('kmMin','Buổi chạy ngắn nhất',[[3,'3 km'],[4,'4 km'],[5,'5 km']])}${sel('ngayDai','Ngày chạy dài',DOWF.map((t,i)=>[i,t]))}${sel('doc','Gần nhà có dốc',[['khong','Không (sẽ dùng cầu thang, máy chạy)'],['it','Có vài dốc'],['nhieu','Có đồi núi']])}</div>
     <label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="ta" ${D.ta?'checked':''}> Có tạ đơn ở nhà</label>
     ${tr?'':`<label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-f="ketHop" ${D.ketHop?'checked':''}> Cuối tuần chạy dài trên trail <button type="button" class="tip tip-r" data-tip="Cho người chạy cả road lẫn trail: buổi chạy dài mỗi tuần chuyển lên đường mòn, tính theo thời gian và nhịp tim, có số mét leo. Các buổi khác vẫn trên đường bằng." aria-label="Giải thích chạy dài trên trail">?</button></label>`}
   </fieldset>
