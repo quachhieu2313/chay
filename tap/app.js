@@ -247,7 +247,7 @@ function exCard(id,k){
   const e=BT.E[k],key=id+':'+k;
   const dots=Array.from({length:e.sets},(_,i)=>`<button class="dot" data-k="${key}" data-i="${i}" aria-pressed="${isDone(key,i)}" aria-label="Hiệp ${i+1}">${e.side?(i%2?'P':'T')+(Math.floor(i/2)+1):i+1}</button>`).join('');
   const tm=e.t?`<button class="btn tm" data-k="${key}" data-t="${e.t}">Bấm giờ ${e.t}s</button>`:'';
-  return `<article class="card"><div class="fg">${BT.fig(e.fig||k,e.name,S.anim===false)}</div><div class="cb"><h3>${e.name}</h3><div class="dose">${e.dose}</div><ul class="cues">${e.cues.map(c=>`<li>${c}</li>`).join('')}</ul>${e.side?'<p class="hint">T là bên trái, P là bên phải</p>':''}<div class="sets">${dots}${tm}</div></div></article>`;
+  return `<article class="card"><div class="fg">${BT.fig(e.fig||k,e.name,S.anim===false)}</div><div class="cb"><h3>${e.name}</h3><div class="dose">${e.dose}</div><ul class="cues">${e.cues.map(c=>`<li>${c}</li>`).join('')}</ul>${e.yt?`<a class="vid" href="${e.yt}" target="_blank" rel="noopener">▶ Xem video mẫu</a>`:''}${e.side?'<p class="hint">T là bên trái, P là bên phải</p>':''}<div class="sets">${dots}${tm}</div></div></article>`;
 }
 const isDone=(k,i)=>!!(S.done[k]||[])[i];
 function dayKeys(d){

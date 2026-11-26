@@ -146,6 +146,23 @@ Object.assign(F,{
   sbreath3:{nuoc:56,dur:2.4,j:{...W0,hd:[62,66],el2:[90,90],ha2:[116,80]},b:{hd:[70,50],el2:[100,46],ha2:[112,58]},s:[...SWIM,['sh','el2'],['el2','ha2']],post:'<circle class="tg" cx="48" cy="76" r="3"/><circle class="tg" cx="40" cy="70" r="2.2"/><circle class="tg" cx="44" cy="84" r="1.8"/>'},
   saqua:{nuoc:44,dur:1.6,j:{hd:[122,28],sh:[120,44],el:[136,62],ha:[150,48],el2:[108,66],ha2:[100,88],hp:[116,104],kn:[144,96],an:[140,124],kn2:[110,132],an2:[86,124]},b:{el:[108,66],ha:[100,88],el2:[136,62],ha2:[150,48],kn:[110,132],an:[86,124],kn2:[144,96],an2:[140,124]},s:[['sh','hp'],['sh','el'],['el','ha'],['sh','el2'],['el2','ha2'],['hp','kn',1],['kn','an',1],['hp','kn2',1],['kn2','an2',1]],post:'<rect class="st" x="104" y="92" width="26" height="9" rx="3"/>'}
 });
+/* Chuỗi nhiều tư thế cho các bài có chu kỳ (vòng tay bơi, vẽ vòng chân, xoay hông...) */
+const AF={el:[52,66],ha:[26,66]},AC={el:[62,86],ha:[86,100]},AH={el:[100,80],ha:[124,76]},AR={el:[96,44],ha:[100,58]};
+const a2=o=>({el2:o.el,ha2:o.ha});
+Object.assign(F,{
+  sfree:{nuoc:56,dur:4.8,j:{...W0,...AF,...a2(AH)},k:[{...AC,...a2(AR)},{...AH,...a2(AF)},{...AR,...a2(AC)}],s:[['sh','el',1],['el','ha',1],['sh','hp'],['hp','kn'],['kn','an'],['sh','el2',1],['el2','ha2',1]]},
+  sbreath3:{nuoc:56,dur:4.8,j:{...W0,hd:[62,66],...AF,...a2(AH)},k:[{hd:[70,50],...AC,...a2(AR)},{hd:[62,66],...AH,...a2(AF)},{...AR,...a2(AC)}],s:[...SWIM,['sh','el2'],['el2','ha2']],post:F.sbreath3.post},
+  scatch:{...F.scatch,b:undefined,dur:4.8,j:{...W0,el2:[52,67],ha2:[27,68]},k:[a2(AC),a2(AH),a2(AR)]},
+  sfinger:{...F.sfinger,b:undefined,dur:4.4,j:{...W0,...a2(AH)},k:[a2(AR),{el2:[66,42],ha2:[44,55]},{el2:[52,67],ha2:[27,68]}]},
+  hcar:{...F.hcar,b:undefined,dur:4.2,k:[{kn2:[156,64],an2:[184,62]},{kn2:[180,74],an2:[204,92]}]},
+  pcircle:{...F.pcircle,b:undefined,dur:4,j:{...F.pcircle.j,kn2:[128,82],an2:[139,50]},k:[{kn2:[118,78],an2:[117,42]},{kn2:[106,82],an2:[95,50]},{kn2:[118,86],an2:[117,58]}]},
+  ptoe:{...F.ptoe,b:undefined,dur:5,k:[{kn2:[145,90],an2:[169,111]},{kn2:[124,82],an2:[156,82]},{kn:[145,90],an:[169,111]}],s:[['sh','hp',1],['sh','el'],['el','ha'],['hp','kn',1],['kn','an',1],['hp','kn2',1],['kn2','an2',1]]},
+  h9090:{...F.h9090,b:undefined,rmi:0,dur:5,k:[{kn:[96,84],an:[92,118],kn2:[144,84],an2:[148,118]},MIR(H9)]},
+  cossack:{...F.cossack,b:undefined,rmi:0,dur:5.4,k:[{hd:[120,22],ne:[120,38],sl:[106,40],sr:[134,40],el:[102,62],ha:[120,70],el2:[138,62],ha2:[120,70],hp:[120,92],hl:[112,92],hr:[128,92],kn:[94,111],an:[72,130],to:[60,131],kn2:[146,111],an2:[168,130],to2:[180,131]},MIR(CK)]},
+  /* thêm cho nữ */
+  heelslide:{dy:10,mat:1,dur:3.2,j:{hd:[40,112],sh:[58,114],el:[84,118],ha:[108,118],hp:[124,114],kn:[146,90],an:[164,118],kn2:[146,90],an2:[164,118]},b:{kn2:[154,112],an2:[186,118]},s:[['sh','hp',1],['sh','el'],['el','ha'],['hp','kn'],['kn','an'],['hp','kn2',1],['kn2','an2',1]]},
+  donkey:{dy:10,mat:1,dur:2.6,j:{...QUAD,kn2:[150,118],an2:[182,118]},b:{kn2:[182,80],an2:[182,50]},s:[['sh','hp'],['sh','el'],['el','ha'],['hp','kn'],['kn','an'],['hp','kn2',1],['kn2','an2',1]]}
+});
 /* văn phòng */
 const DP={to:[206,131],an:[196,130],kn:[174,111],hp:[152,93],sh:[104,52],hd:[90,40],el:[88,68],ha:[70,84]};
 Object.assign(F,{
@@ -279,8 +296,17 @@ const E={
   sabd:{cat:'van',lv:1,eq:'Bàn / tường',name:'Đứng đưa chân sang ngang',dose:'2 × 12 mỗi bên',sets:4,side:1,why:'Mông nhỡ khoẻ, giữ hông và gối thẳng hàng khi chạy. Nhẹ, không đè lên bụng.',cues:['Đứng thẳng, một tay vịn bàn','Đưa một chân sang ngang thật chậm, mũi chân hướng ra trước','Thân không nghiêng theo chân','Hạ chậm, chân không chạm sàn giữa các lần']},
   sitstand:{fig:'squat',cat:'van',lv:1,eq:'Ghế',name:'Đứng lên ngồi xuống ghế',dose:'2 × 10',sets:2,why:'Đùi và mông là nhóm cơ lớn nhất, dùng nhiều đường trong máu mà không cần đổ mồ hôi.',cues:['Ngồi mép ghế, hai chân rộng bằng vai','Đứng lên bằng lực chân, không chống tay','Ngồi xuống chậm 3 giây, vừa chạm ghế thì đứng lên lại','Thở đều, không nín thở']},
   dpush:{cat:'van',lv:1,eq:'Bàn chắc chắn',name:'Chống đẩy vào bàn',dose:'2 × 10',sets:2,why:'Ngực, vai, tay sau. Thân thẳng và nghiêng nên không ép lên bụng no.',cues:['Hai tay chống mép bàn rộng hơn vai, lùi chân ra sau','Thân thẳng từ đầu đến gót','Hạ ngực về mép bàn, khuỷu tay chếch khoảng 45°','Thở ra khi đẩy lên']},
-  wangel:{cat:'van',lv:1,eq:'Tường',name:'Tựa tường đưa tay lên',dose:'2 × 8',sets:2,why:'Mở ngực, kéo vai về sau, bù cho cả buổi sáng cúi vào màn hình.',cues:['Lưng, mông và đầu tựa tường, gót cách tường một gang tay','Tay hình chữ W, khuỷu và mu bàn tay chạm tường','Trượt tay lên thành chữ Y rồi kéo về chữ W','Lưng dưới không vồng ra khỏi tường']}
+  wangel:{cat:'van',lv:1,eq:'Tường',name:'Tựa tường đưa tay lên',dose:'2 × 8',sets:2,why:'Mở ngực, kéo vai về sau, bù cho cả buổi sáng cúi vào màn hình.',cues:['Lưng, mông và đầu tựa tường, gót cách tường một gang tay','Tay hình chữ W, khuỷu và mu bàn tay chạm tường','Trượt tay lên thành chữ Y rồi kéo về chữ W','Lưng dưới không vồng ra khỏi tường']},
+
+  /* thêm cho nữ: sàn chậu, bụng sâu, mông */
+  kegel:{mini:1,cat:'pil',name:'Thở và co sàn chậu',dose:'10 lần, mỗi lần giữ 3–5 giây',note:'Nằm ngửa gối co (hoặc ngồi thẳng). Thở ra: co nhẹ vùng sàn chậu như đang nhịn tiểu, kéo lên và vào trong, bụng dưới hóp theo; mông và đùi trong thả lỏng. Hít vào: thả hết. Không nín thở. Nữ nên tập hằng ngày, nhất là sau sinh; đau hoặc són tiểu nhiều thì nên khám vật lý trị liệu sàn chậu.'},
+  heelslide:{cat:'pil',lv:1,eq:'Thảm',name:'Trượt gót',dose:'2 × 8 mỗi bên',sets:4,side:1,why:'Bụng sâu giữ xương chậu yên khi chân di chuyển. An toàn cho người mới tập lại hoặc sau sinh.',cues:['Nằm ngửa, gối co, bàn chân trên sàn, đi tất cho dễ trượt','Thở ra, co nhẹ sàn chậu và bụng dưới, trượt một gót ra xa đến khi chân gần thẳng','Hít vào kéo gót về','Lưng dưới và hông không lắc, rồi đổi chân']},
+  donkey:{cat:'bw',lv:1,eq:'Thảm',name:'Đá chân ra sau bò bốn chân',dose:'2 × 12 mỗi bên',sets:4,side:1,why:'Mông lớn khoẻ và săn, đỡ cho lưng dưới và gối.',cues:['Bò bốn chân, tay dưới vai, gối dưới hông','Giữ gối gập 90°, đẩy lòng bàn chân lên trần bằng lực mông','Dừng khi đùi ngang lưng, lưng không võng','Hạ chậm, rồi đổi chân']}
 };
+
+/* Tìm video mẫu trên YouTube (tên tiếng Anh cho ra kết quả tốt hơn) */
+const YT={swing:'leg swings front to back',lswing:'lateral leg swings',hipc:'hip open the gate exercise',march:'walking high knees drill',wlunge:'walking lunge form',inch:'inchworm exercise',aski:'A-skip running drill',butt:'butt kicks running drill',sll:'straight leg bounds running drill',bskip:'B-skip running drill',carioca:'carioca drill',pogo:'pogo jumps runners',bridge:'glute bridge form',squat:'bodyweight squat form',lunge:'reverse lunge form',step:'step up exercise form',slbridge:'single leg glute bridge',wsit:'wall sit form',slrdl:'single leg romanian deadlift bodyweight',calf1:'single leg calf raise on step',band:'banded lateral walk',clam:'clamshell exercise',bal:'single leg balance exercise',llunge:'lateral lunge form',soleus:'bent knee calf raise soleus',hike:'hip hike exercise on step',stepdown:'eccentric step down exercise',push:'knee push up form',goblet:'goblet squat form',rdl:'dumbbell romanian deadlift form',bss:'bulgarian split squat form',lungew:'dumbbell reverse lunge',stepw:'dumbbell step up',slrdlw:'single leg romanian deadlift dumbbell',thrust:'hip thrust form',calfw:'dumbbell calf raise',carry:'farmer carry',row:'one arm dumbbell row form',llungew:'goblet lateral lunge',plank:'plank correct form',side:'side plank form',bug:'dead bug exercise',bird:'bird dog exercise',hollow:'hollow body hold beginner',tap:'plank shoulder taps',sup:'superman exercise',bmarch:'glute bridge march',mclimb:'slow mountain climbers',bear:'bear plank hold',sideleg:'side plank leg raise',quad:'standing quad stretch',hipf:'hip flexor stretch',hams:'standing hamstring stretch',calfst:'wall calf stretch',hug:'knee to chest stretch',fig4:'figure 4 stretch lying',itb:'standing IT band stretch',butter:'butterfly stretch',lhams:'lying hamstring stretch with strap',catcow:'cat cow stretch',child:'child pose',hcar:'quadruped hip CARs',h9090:'90 90 hip switch',adrock:'adductor rock back',wgs:'world greatest stretch',frog:'frog stretch',pigeon:'pigeon pose beginner',dsquat:'deep squat hold',cossack:'cossack squat beginner',p100:'pilates hundred beginner',ptoe:'pilates toe taps',pbridge:'pilates pelvic curl',pcircle:'pilates single leg circle',pside:'pilates side kick series',pswan:'pilates swan prep',pspine:'pilates spine stretch forward',prollup:'pilates roll up beginner',pball:'pilates rolling like a ball',psls:'pilates single leg stretch',pdls:'pilates double leg stretch',psaw:'pilates saw',pswim:'pilates swimming',pleg:'pilates leg pull front',pmermaid:'pilates mermaid stretch',heelslide:'heel slides core exercise',donkey:'donkey kicks glute exercise',sglide:'streamline push and glide swimming',skick:'freestyle kick with kickboard',sside:'side kick drill freestyle',scatch:'catch up drill freestyle',sfinger:'fingertip drag drill freestyle',sbreath3:'bilateral breathing freestyle',sfree:'freestyle swimming technique beginner',spull:'pull buoy freestyle',saqua:'deep water running technique',calfo:'standing calf raise',sabd:'standing hip abduction',sitstand:'sit to stand exercise',dpush:'desk push up',wangel:'wall angels exercise'};
+for(const k in E)if(!E[k].mini)E[k].yt='https://www.youtube.com/results?search_query='+encodeURIComponent(YT[k]||E[k].name);
 const LV={1:'Dễ',2:'Vừa',3:'Nâng cao'};
 
 const SES=[
@@ -293,27 +319,38 @@ const SES=[
   {id:'ky',name:'Kỹ thuật chạy',time:'15 phút',when:'1 lần mỗi tuần, sau khởi động và trước buổi chạy nhẹ. Làm từ tuần 3, khi đã chạy lại không đau.',ex:['march','aski','butt','sll','carioca','bskip']},
   {id:'toi',name:'Giãn cơ buổi tối',time:'12–15 phút',when:'Buổi tối ngày nghỉ hoặc ngày tập chân, nhẹ nhàng trước khi ngủ.',ex:['catcow','child','lhams','fig4','butter','hug']},
   {id:'mohong',name:'Mở khớp háng',time:'12–15 phút',when:'3–4 lần mỗi tuần: buổi tối, ngày nghỉ, hoặc sau buổi chạy nhẹ khi người còn ấm. Làm chậm, thở đều. Căng là được, đau nhói thì dừng. Đặc biệt có ích khi hông ngoài hay căng.',ex:['hcar','h9090','adrock','wgs','frog','pigeon','dsquat']},
-  {id:'pil1',name:'Pilates cơ bản',time:'25–30 phút',when:'Những tuần đầu, 2–3 buổi mỗi tuần, cách nhau ít nhất 1 ngày. Làm chậm, thở ra khi gắng sức, bụng dưới hóp nhẹ suốt bài. Làm đúng 6 lần tốt hơn làm sai 15 lần.',mini:['pbreath'],ex:['p100','ptoe','pbridge','pcircle','pside','pswan','pspine','child']},
+  {id:'pil1',name:'Pilates cơ bản',time:'25–30 phút',when:'Những tuần đầu, 2–3 buổi mỗi tuần, cách nhau ít nhất 1 ngày. Làm chậm, thở ra khi gắng sức, bụng dưới hóp nhẹ suốt bài. Làm đúng 6 lần tốt hơn làm sai 15 lần.',mini:['pbreath','kegel'],ex:['p100','ptoe','pbridge','pcircle','pside','pswan','pspine','child']},
   {id:'pil2',name:'Pilates trung cấp',time:'35–40 phút',when:'Khi bài cơ bản đã làm đúng mà không mỏi cổ hay đau lưng. Giữ đúng thứ tự: làm nóng bụng, cuộn cột sống, bài chân, bài lưng, rồi giãn.',mini:['pbreath'],ex:['p100','prollup','pcircle','pball','psls','pdls','pspine','pside','pswim','psaw','pbridge','pmermaid']},
   {id:'pil3',name:'Pilates nâng cao',time:'40–45 phút',when:'Sau khoảng 8 tuần tập đều, thay 1 buổi trung cấp mỗi tuần. Thêm plank nâng chân và plank nghiêng. Mỏi mà động tác xấu đi thì quay về bản trung cấp.',mini:['pbreath'],ex:['p100','prollup','pball','psls','pdls','psaw','pswim','pleg','side','pside','pbridge','pmermaid']},
   {id:'boi1',name:'Bơi kỹ thuật',time:'30–40 phút',when:'Khởi động 100–200 m bơi chậm, kiểu nào cũng được. Làm lần lượt các bài bên dưới, nghỉ 20–30 giây giữa các đoạn. Thả lỏng 100 m. Tổng khoảng 700–900 m.',mini:['sbub'],ex:['sglide','skick','sside','scatch','sfinger']},
   {id:'boi2',name:'Bơi sức bền nhẹ',time:'35–45 phút',when:'Khởi động 200 m chậm, 2 bài kỹ thuật, rồi phần chính bơi sải liên tục ở mức 4–5/10. Thả lỏng 100 m. Tổng khoảng 1.000–1.200 m. Chân còn mỏi sau chạy dài thì dùng phao kẹp ở phần chính.',ex:['skick','scatch','sbreath3','sfree']},
   {id:'boi3',name:'Chạy dưới nước',time:'25–35 phút',when:'Thay buổi chạy khi chân đau hoặc đang hồi phục chấn thương: giữ sức bền mà không có lực tiếp đất.',ex:['saqua']},
-  {id:'trua',name:'Sau bữa trưa ở văn phòng',time:'12–15 phút',when:'Bắt đầu 15–30 phút sau khi ăn. Toàn bài đứng, nhẹ, không đổ mồ hôi. Bụng đang no thì không gập bụng, plank, cúi gập người hay nhảy: dễ trào ngược và đau sườn. Tập xong đợi khoảng 10 phút rồi ngủ 15–25 phút, ngả ghế hoặc nằm nghiêng trái; tránh gục mặt xuống bàn ngay sau ăn.',mini:['mwalk'],ex:['calfo','sabd','sitstand','dpush','wangel']}
+  {id:'trua',name:'Sau bữa trưa ở văn phòng',time:'12–15 phút',when:'Bắt đầu 15–30 phút sau khi ăn. Toàn bài đứng, nhẹ, không đổ mồ hôi. Bụng đang no thì không gập bụng, plank, cúi gập người hay nhảy: dễ trào ngược và đau sườn. Tập xong đợi khoảng 10 phút rồi ngủ 15–25 phút, ngả ghế hoặc nằm nghiêng trái; tránh gục mặt xuống bàn ngay sau ăn.',mini:['mwalk'],ex:['calfo','sabd','sitstand','dpush','wangel']},
+  {id:'nu',name:'Bổ trợ cho nữ',time:'15–20 phút',when:'Sàn chậu, bụng sâu và mông: ba nhóm cơ nữ hay yếu, nhất là sau sinh hoặc ngồi nhiều. Làm 2–3 lần mỗi tuần, có thể ghép sau buổi Pilates hoặc buổi bơi. Sau sinh: đợi bác sĩ cho phép tập lại (thường sau 6 tuần), bắt đầu từ bài này trước khi tập Pilates trung cấp.',mini:['kegel'],ex:['heelslide','ptoe','bridge','clam','donkey','sabd','wangel']}
 ];
-const KT='0;.4;.55;.95;1',KS='.42 0 .58 1;0 0 1 1;.42 0 .58 1;0 0 1 1';
-const am=(at,a,b,d)=>a===b?'':`<animate attributeName="${at}" values="${a};${b};${b};${a};${a}" keyTimes="${KT}" calcMode="spline" keySplines="${KS}" dur="${d}s" repeatCount="indefinite"/>`;
+/* Chuyển động: f.b là tư thế cuối (2 tư thế), hoặc f.k là chuỗi tư thế nối tiếp (mỗi bước chỉ ghi khớp đổi, cộng dồn từ tư thế trước).
+   Mỗi tư thế dừng một nhịp rồi chuyển sang tư thế sau, hết chuỗi quay về tư thế đầu. rmi: tư thế hiện khi tắt chuyển động. */
+const MOVE='.42 0 .58 1',HOLD='0 0 1 1';
+function lich(n){
+  if(n===2)return{t:[0,.4,.55,.95,1],i:[0,1,1,0,0],sp:[MOVE,HOLD,MOVE,HOLD]};
+  const t=[],i=[],sp=[],h=.3/n;
+  for(let x=0;x<n;x++){t.push(x/n,x/n+h);i.push(x,x);sp.push(HOLD,MOVE)}
+  t.push(1);i.push(0);return{t:t.map(v=>+v.toFixed(4)),i,sp};
+}
 const CL={0:'b',1:'a',3:'bd'};
 function fig(k,name,rm){
-  const RM=()=>!!rm;
-  const f=F[k],A=f.j,B={...A,...(f.b||{})},mv=!!f.b&&!RM(),d=f.dur||3.2;
-  const ln=(c,a1,a2,b1,b2)=>{const p=RM()?[b1,b2]:[a1,a2],kids=mv?am('x1',a1[0],b1[0],d)+am('y1',a1[1],b1[1],d)+am('x2',a2[0],b2[0],d)+am('y2',a2[1],b2[1],d):'';const tag=`<line class="${c}" x1="${p[0][0]}" y1="${p[0][1]}" x2="${p[1][0]}" y2="${p[1][1]}"`;return kids?`${tag}>${kids}</line>`:`${tag}/>`};
+  const f=F[k],A=f.j,P=[A];
+  if(f.k){let c=A;for(const x of f.k){c={...c,...x};P.push(c)}}else if(f.b)P.push({...A,...f.b});
+  const mv=P.length>1&&!rm,d=f.dur||(P.length>2?1.4*P.length:3.2),L=lich(P.length);
+  const st=rm?P[f.rmi!=null?f.rmi:P.length-1]:A;
+  const am=(at,vals)=>{const v=L.i.map(x=>vals[x]);return v.every(z=>z===v[0])?'':`<animate attributeName="${at}" values="${v.join(';')}" keyTimes="${L.t.join(';')}" calcMode="spline" keySplines="${L.sp.join(';')}" dur="${d}s" repeatCount="indefinite"/>`};
+  const ln=(c,fa,fb)=>{const a=fa(st),b=fb(st),kids=mv?am('x1',P.map(q=>fa(q)[0]))+am('y1',P.map(q=>fa(q)[1]))+am('x2',P.map(q=>fb(q)[0]))+am('y2',P.map(q=>fb(q)[1])):'';const tag=`<line class="${c}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"`;return kids?`${tag}>${kids}</line>`:`${tag}/>`};
   const segs=[...f.s].sort((p,q)=>(p[2]||0)-(q[2]||0));
-  const l=segs.map(([p,q,x])=>ln(CL[x||0],A[p],A[q],B[p],B[q])).join('');
-  const w=(f.wt||[]).map(x=>{const[j,dy]=Array.isArray(x)?x:[x,5],o=(p,dx)=>[p[0]+dx,p[1]+dy];return ln('wt',o(A[j],-6),o(A[j],6),o(B[j],-6),o(B[j],6))}).join('');
-  const h=RM()?B.hd:A.hd,hk=mv?am('cx',A.hd[0],B.hd[0],d)+am('cy',A.hd[1],B.hd[1],d):'';
+  const l=segs.map(([p,q,x])=>ln(CL[x||0],o=>o[p],o=>o[q])).join('');
+  const w=(f.wt||[]).map(x=>{const[j,dy]=Array.isArray(x)?x:[x,5];return ln('wt',o=>[o[j][0]-6,o[j][1]+dy],o=>[o[j][0]+6,o[j][1]+dy])}).join('');
+  const hk=mv?am('cx',P.map(q=>q.hd[0]))+am('cy',P.map(q=>q.hd[1])):'';
   const nen=f.nuoc?`<rect class="wa" x="0" y="${f.nuoc}" width="240" height="${140-f.nuoc}"/><path class="ws" d="M0 ${f.nuoc}q15 -4 30 0${'t30 0'.repeat(7)}"/>`:(f.mat?'<rect class="mat" x="12" y="126" width="216" height="6" rx="3"/>':'')+'<line class="fl" x1="6" y1="132" x2="234" y2="132"/>';
-  return `<svg viewBox="0 0 240 140" role="img" aria-label="Minh họa ${name}">${nen}<g transform="translate(0,${f.dy||0})">${f.pre||''}${l}<circle class="hd" cx="${h[0]}" cy="${h[1]}" r="${f.r||9}">${hk}</circle>${w}${f.post||''}</g></svg>`;
+  return `<svg viewBox="0 0 240 140" role="img" aria-label="Minh họa ${name}">${nen}<g transform="translate(0,${f.dy||0})">${f.pre||''}${l}<circle class="hd" cx="${st.hd[0]}" cy="${st.hd[1]}" r="${f.r||9}">${hk}</circle>${w}${f.post||''}</g></svg>`;
 }
 window.BaiTap={F,E,LV,SES,fig};
 })();
