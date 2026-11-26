@@ -2,7 +2,7 @@
    - File của trang: lấy bản mới trên mạng trước, mất mạng thì dùng bản đã lưu.
    - Thư viện Firebase, phông chữ: dùng bản đã lưu (tên file có số phiên bản, không đổi).
    - Không đụng tới các yêu cầu đăng nhập và Firestore. */
-const V='lcn-v3';
+const V='lcn-v4';
 const GOC=['./','index.html','app.js','lich.js','doc-file.js','../bai-tap-data.js','../dong-bo.js','../firebase-config.js','manifest.webmanifest','icon-192.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(GOC)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

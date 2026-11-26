@@ -118,6 +118,8 @@ function render(){
 }
 
 /* ---------- Ngày ---------- */
+/* Tên ngắn của bài nặng trong danh sách tuần: "Chạy biến tốc (interval)" → "Interval", "Chạy ngưỡng (tempo)" → "Ngưỡng (tempo)" */
+const tenNgan=t=>/\(interval\)/.test(t)?'Interval':t.replace(/^Chạy /,'').replace(/^./,c=>c.toUpperCase());
 const tagOf=d=>(d.dh==='trail'&&(d.loai==='dai'||d.loai==='dai2'))?'Trail':TAG[d.loai];
 const TAG={nghi:'Nghỉ',nhe:'Nhẹ',hoiphuc:'Hồi phục',dai:'Dài',dai2:'Vừa',nang:'Nặng',suc:'Sức mạnh',thi:'Thi',kiem:'Kiểm tra'};
 const CLR={nghi:'var(--line)',nhe:'var(--z2)',hoiphuc:'var(--z1)',dai:'var(--z3)',dai2:'var(--z3)',nang:'var(--z4)',suc:'var(--mut)',thi:'var(--z5)',kiem:'var(--z5)'};
@@ -532,7 +534,7 @@ function vLich(P){
   h+=chart(P)+`<div class="legend">${['nen','tang','cao','giam','kiem'].filter(p=>P.tuan.some(t=>t.pha===p)).map(p=>`<span><i style="background:var(--c-${p})"></i>${LC.TEN_PHA[p]}</span>`).join('')}<span><i style="background:var(--mut);opacity:.55"></i>Tuần giảm tải</span>${X.trail?'<span>- - - số mét leo</span>':''}</div>`;
   const cw=P.byId[TODAY]?P.byId[TODAY].w:-1;
   h+=`<div class="wks">${P.tuan.map(t=>{
-    const ic=t.days.filter(d=>d.km).map(d=>`<span class="${d.loai==='nang'?'q':d.loai==='dai'||d.loai==='dai2'?'l':d.loai==='thi'?'r':''}">${DOW[d.thu]} ${d.loai==='nang'?esc(d.ten.split(' (')[0]):TAG[d.loai]} ${LC.fmtKm(d.km)}</span>`).join('');
+    const ic=t.days.filter(d=>d.km).map(d=>`<span class="${d.loai==='nang'?'q':d.loai==='dai'||d.loai==='dai2'?'l':d.loai==='thi'?'r':''}">${DOW[d.thu]} ${d.loai==='nang'?esc(tenNgan(d.ten)):TAG[d.loai]} ${LC.fmtKm(d.km)}</span>`).join('');
     return `<a class="wk${t.i===cw?' cur':''}" href="#/ngay/${t.i===cw?TODAY:t.start}" style="--c:var(--c-${t.pha})"><span class="n">Tuần ${t.i+1}</span><span><b>${LC.TEN_PHA[t.pha]}${t.deload&&t.pha!=='kiem'?' · giảm tải':''}</b><br><span class="d">${dm(t.start)}–${dm(LC.addD(t.start,6))}${t.leo?' · '+t.leo+' m leo':''}</span></span><span class="k">${LC.fmtKm(t.km)} km</span><span class="ic">${ic}</span></a>`}).join('')}</div>`;
   return h;
 }
