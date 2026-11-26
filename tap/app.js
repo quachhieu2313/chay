@@ -648,8 +648,10 @@ function xemTruoc(){
     h=`<p class="big">${P.N} tuần, ${dm(P.batDau)} – ${dmy(P.ketThuc)} · cao điểm ${P.dinh} km/tuần · chạy dài tối đa ${LC.fmtKm(maxDai)} km</p>
       ${P.canhBao.filter(c=>c[0]!=='info').map(c=>`<p class="msg ${c[0]}" style="margin:8px 0">${esc(c[1])}</p>`).join('')}`;
   }
-  h+=`<div class="row" style="margin-top:10px">${moi?`<button class="btn pri" type="button" data-a="tao"${loi.length?' disabled':''}>Tạo lịch</button>`
-    :`<button class="btn pri" type="button" data-a="luu"${loi.length?' disabled':''}>Lưu, giữ ngày bắt đầu</button><button class="btn" type="button" data-a="moi"${loi.length?' disabled':''}>Bắt đầu lịch mới từ thứ 2 tới</button>`}</div>`;
+  /* Bắt đầu tuần này (từ thứ 2 vừa qua) hoặc thứ 2 tới; hôm nay là thứ 2 thì hai cách như nhau */
+  const thu2=LC.addD(TODAY,-LC.thu(TODAY)),nay=thu2!==TODAY,dis=loi.length?' disabled':'';
+  h+=`<div class="row" style="margin-top:10px">${moi?`<button class="btn pri" type="button" data-a="tao"${dis}>Tạo lịch${nay?', bắt đầu thứ 2 tới':''}</button>${nay?`<button class="btn" type="button" data-a="tao" data-nay="1"${dis}>Bắt đầu ngay tuần này (từ thứ 2, ${dm(thu2)})</button>`:''}`
+    :`<button class="btn pri" type="button" data-a="luu"${dis}>Lưu, giữ ngày bắt đầu</button><button class="btn" type="button" data-a="moi"${dis}>Bắt đầu lịch mới từ thứ 2 tới</button>${nay?`<button class="btn" type="button" data-a="moi" data-nay="1"${dis}>Bắt đầu lịch mới ngay tuần này (từ ${dm(thu2)})</button>`:''}`}</div>`;
   el.innerHTML=h;
 }
 
@@ -855,11 +857,11 @@ document.addEventListener('click',async ev=>{
     case 'in':SYNC&&SYNC.signIn();break;
     case 'out':if(confirm('Đăng xuất? Dữ liệu trên máy này sẽ được xoá; dữ liệu trong tài khoản vẫn giữ.')){await SYNC.signOut();S=trong();save();D=null;PLAN=null;location.hash='#/';render()}break;
     case 'vidu':D=VIDU();keep(()=>{$('#view').innerHTML=vHoSo(true);xemTruoc()});break;
-    case 'tao':S.hs={...D,ngayTao:TODAY};D=null;save();location.hash='#/';render();window.scrollTo(0,0);break;
+    case 'tao':S.hs={...D,ngayTao:a.dataset.nay?LC.addD(TODAY,-LC.thu(TODAY)):TODAY};D=null;save();location.hash='#/';render();window.scrollTo(0,0);break;
     case 'luu':{const old=S.hs,P0=plan(),cut=LC.addD(TODAY,-LC.thu(TODAY));let cu=(old.cu||[]).slice();
       if(P0&&cut>P0.batDau&&cut<=P0.ketThuc){const{cu:_,...o}=old;cu.push({den:cut,hs:o});cu=cu.slice(-8)}
       S.hs={...D,ngayTao:old.ngayTao||TODAY,cu,khoi:old.khoi,khoiLoai:old.khoiLoai,khoiSo:old.khoiSo,khoiTen:old.khoiTen,namGoc:old.namGoc,dinhMoi:old.dinhMoi};D=null;PLAN=null;save();location.hash='#/lich';break}
-    case 'moi':if(confirm('Tạo lịch mới bắt đầu từ thứ 2 tới? Ghi chép cũ vẫn giữ trong Nhật ký.')){const old=S.hs,{cu:_c,khoi:_k,thongBao:_t,...snap}=old;S.hs={...D,ngayTao:TODAY,chinh:{},cu:[],dinhMoi:0,khoiLoai:'',khoiSo:0,khoiTen:'',khoi:[...(old.khoi||[]),{tu:old.ngayTao,den:plan().ketThuc,ten:old.khoiTen||'Khối trước',loai:old.khoiLoai||'',hs:snap}].slice(-12)};D=null;PLAN=null;save();location.hash='#/lich'}break;
+    case 'moi':{const bd=a.dataset.nay?LC.addD(TODAY,-LC.thu(TODAY)):TODAY;if(confirm(a.dataset.nay?'Tạo lịch mới bắt đầu ngay tuần này (từ thứ 2, '+dm(bd)+')? Ghi chép cũ vẫn giữ trong Nhật ký.':'Tạo lịch mới bắt đầu từ thứ 2 tới? Ghi chép cũ vẫn giữ trong Nhật ký.')){const old=S.hs,{cu:_c,khoi:_k,thongBao:_t,...snap}=old;S.hs={...D,ngayTao:bd,chinh:{},cu:[],dinhMoi:0,khoiLoai:'',khoiSo:0,khoiTen:'',khoi:[...(old.khoi||[]),{tu:old.ngayTao,den:plan().ketThuc,ten:old.khoiTen||'Khối trước',loai:old.khoiLoai||'',hs:snap}].slice(-12)};D=null;PLAN=null;save();location.hash='#/lich'}break}
     case 'ics':xuatIcs(plan());break;
     case 'ghi':{const v=($('#ghiNgay')||{}).value;if(v)go(v);break}
     case 'giayThem':{const ten=($('#gTen').value||'').trim();if(!ten){$('#gTen').focus();break}const g={id:'g'+Date.now().toString(36),ten,kmDau:+($('#gKm').value||0)||0,mac:!S.giay.some(x=>!x.nghi)};S.giay.push(g);save();keep(render);break}
