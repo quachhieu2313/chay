@@ -176,6 +176,7 @@ function vNgay(P,id){
   if(d.bt.sm){const ks=d.bt.sm==='trail'?['stepdown','llunge','slrdl','calf1','hike','bal']:BT.SES.find(s=>s.id===d.bt.sm).ex;
     h+=blk('sm',d.bt.sm==='ta'?'Sức mạnh với tạ':d.bt.sm==='trail'?'Sức mạnh cho trail':'Sức mạnh không tạ',d.bt.sm==='ta'?'35–40 phút':'25–30 phút',ks,null,d.loai==='suc')}
   if(d.boi){const x=BT.SES.find(s=>s.id===boiSid(P,d));h+=blk('boi',x.name,x.time,x.ex,x.mini,d.loai==='nghi',x.when+' Không bơi được thì làm bài Chạy dưới nước trong Thư viện, hoặc đạp xe 40–60 phút nhẹ.')}
+  if(d.thu<=4&&d.loai!=='thi'&&d.loai!=='kiem'){const x=BT.SES.find(s=>s.id==='trua');h+=blk('trua','Sau bữa trưa ở văn phòng (tuỳ chọn)','12–15 phút, trước giấc ngủ trưa',x.ex,x.mini,false,x.when)}
   if(d.loai==='nghi'){const x=BT.SES.find(s=>s.id==='mohong');h+=blk('hong','Mở khớp háng (tuỳ chọn)','12–15 phút, buổi tối',x.ex,null,false,x.when)}
   if(d.bt.gc)h+=blk('gc','Sau khi chạy: giãn cơ','8–10 phút, khi cơ còn ấm',['calfst','quad','hams','hipf','fig4'],null,daChay(d));
   if(d.loai==='suc'||d.bt.sm||d.bt.core||d.boi||d.loai==='nghi')h+=`<p class="note" style="margin-top:12px">Thêm bài và bài thay thế: <a href="../bai-tap-bo-tro.html">Thư viện bài tập</a> (có cả bơi, Pilates, mở khớp háng).</p>`;

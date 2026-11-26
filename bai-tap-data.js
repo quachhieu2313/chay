@@ -146,9 +146,16 @@ Object.assign(F,{
   sbreath3:{nuoc:56,dur:2.4,j:{...W0,hd:[62,66],el2:[90,90],ha2:[116,80]},b:{hd:[70,50],el2:[100,46],ha2:[112,58]},s:[...SWIM,['sh','el2'],['el2','ha2']],post:'<circle class="tg" cx="48" cy="76" r="3"/><circle class="tg" cx="40" cy="70" r="2.2"/><circle class="tg" cx="44" cy="84" r="1.8"/>'},
   saqua:{nuoc:44,dur:1.6,j:{hd:[122,28],sh:[120,44],el:[136,62],ha:[150,48],el2:[108,66],ha2:[100,88],hp:[116,104],kn:[144,96],an:[140,124],kn2:[110,132],an2:[86,124]},b:{el:[108,66],ha:[100,88],el2:[136,62],ha2:[150,48],kn:[110,132],an:[86,124],kn2:[144,96],an2:[140,124]},s:[['sh','hp'],['sh','el'],['el','ha'],['sh','el2'],['el2','ha2'],['hp','kn',1],['kn','an',1],['hp','kn2',1],['kn2','an2',1]],post:'<rect class="st" x="104" y="92" width="26" height="9" rx="3"/>'}
 });
+/* văn phòng */
+const DP={to:[206,131],an:[196,130],kn:[174,111],hp:[152,93],sh:[104,52],hd:[90,40],el:[88,68],ha:[70,84]};
+Object.assign(F,{
+  dpush:{dur:2.6,j:DP,b:{...ROT({kn:DP.kn,hp:DP.hp,sh:DP.sh,hd:DP.hd},196,130,-10),el:[92,93]},s:[['an','to'],['an','kn'],['kn','hp'],['hp','sh',1],['sh','el',1],['el','ha',1]],pre:DESK(16,80)},
+  sabd:{dur:2.4,j:{hd:[120,26],ne:[120,38],sl:[108,42],sr:[132,42],hp:[120,76],hl:[112,78],hr:[128,78],el:[98,60],ha:[110,78],el2:[142,60],ha2:[130,78],kn:[110,104],an:[110,130],to:[104,131],kn2:[130,104],an2:[130,130],to2:[136,131]},b:{kn2:[144,102],an2:[158,126],to2:[164,128]},s:[['ne','hp'],['sl','sr'],['hl','hr'],['sl','el'],['el','ha'],['sr','el2'],['el2','ha2'],['hl','kn'],['kn','an'],['an','to'],['hr','kn2',1],['kn2','an2',1],['an2','to2',1]]},
+  wangel:{dur:3,j:{hd:[120,26],ne:[120,38],sl:[108,42],sr:[132,42],hp:[120,76],hl:[112,78],hr:[128,78],el:[88,44],ha:[86,22],el2:[152,44],ha2:[154,22],kn:[114,104],an:[114,130],to:[108,131],kn2:[126,104],an2:[126,130],to2:[132,131]},b:{el:[96,24],ha:[90,4],el2:[144,24],ha2:[150,4]},s:[['ne','hp'],['sl','sr'],['hl','hr'],['sl','el',1],['el','ha',1],['sr','el2',1],['el2','ha2',1],['hl','kn'],['kn','an'],['an','to'],['hr','kn2'],['kn2','an2'],['an2','to2']]}
+});
 F.spull={...F.sfree,post:'<rect class="st" x="150" y="61" width="18" height="14" rx="6"/>'};
 
-/* cat: drill kỹ thuật chạy, bw sức mạnh không tạ, wt tạ, core, mob giãn cơ, hip mở khớp háng, pil Pilates, swim bơi. lv: 1 dễ, 2 vừa, 3 nâng cao. kg: có ô ghi mức tạ. */
+/* cat: drill kỹ thuật chạy, bw sức mạnh không tạ, wt tạ, core, mob giãn cơ, hip mở khớp háng, pil Pilates, swim bơi, van văn phòng. lv: 1 dễ, 2 vừa, 3 nâng cao. kg: có ô ghi mức tạ. */
 const E={
   warm:{mini:1,cat:'warm',name:'Đi bộ nhanh rồi chạy thật chậm',dose:'5 phút',note:'Làm ấm người trước các bài kỹ thuật.'},
   strides:{mini:1,cat:'drill',name:'Chạy tăng tốc (strides)',dose:'4–6 × 80 m',note:'Cuối buổi chạy nhẹ: tăng dần lên khoảng 85% sức trong 15–20 giây, rồi đi bộ về. Chỉ làm khi đã chạy lại 2–3 tuần không đau.'},
@@ -264,7 +271,15 @@ const E={
   sbreath3:{cat:'swim',lv:2,eq:'Không cần',name:'Thở 3 nhịp, đổi bên',dose:'4 × 50 m',sets:4,why:'Thở đều hai bên, bơi thẳng, vai và cổ không lệch.',cues:['Đếm 1-2-3 nhịp tay, hít ở nhịp thứ 3, lần lượt bên trái rồi bên phải','Thở ra hết dưới nước trong lúc đếm','Khi hít, một mắt vẫn ở trong nước','Hụt hơi thì quay về thở 2 nhịp, tập dần']},
   sfree:{cat:'swim',lv:1,eq:'Không cần',name:'Bơi sải liên tục',dose:'6–10 × 50 m, nghỉ 20–30 giây',sets:6,why:'Phần chính của buổi: tim phổi làm việc mà chân được nghỉ.',cues:['Cảm giác 4–5/10, thở đều, nói được vài từ khi dừng','Giữ đều tốc độ, đoạn cuối không nhanh hơn đoạn đầu','Thở ra hết dưới nước','Mệt thì nghỉ lâu hơn chứ không bơi ếch nhanh']},
   spull:{cat:'swim',lv:2,eq:'Phao kẹp chân',name:'Kéo tay với phao kẹp',dose:'4 × 50 m',sets:4,why:'Chỉ dùng tay, chân nghỉ: hợp với ngày chân mỏi sau chạy dài.',cues:['Kẹp phao giữa hai đùi, chân không đập','Kéo nước dài từ trước ra sau đến hông','Xoay người theo nhịp tay','Hông vẫn nằm cao gần mặt nước']},
-  saqua:{cat:'swim',lv:1,eq:'Đai nổi nếu chỗ sâu',name:'Chạy bộ dưới nước',dose:'20–30 phút',sets:1,why:'Giữ động tác chạy mà không có lực tiếp đất: thay buổi chạy khi chân đau hoặc đang hồi phục.',cues:['Chỗ sâu thì đeo đai nổi, người thẳng, hơi nghiêng ra trước','Đánh tay và chạy như trên đường: gối lên trước, đạp ra sau','Không đạp vòng tròn kiểu đạp xe','Bài mẫu: 5 phút nhẹ, 6–8 × (2 phút nhanh vừa, 1 phút chậm), 5 phút nhẹ']}
+  saqua:{cat:'swim',lv:1,eq:'Đai nổi nếu chỗ sâu',name:'Chạy bộ dưới nước',dose:'20–30 phút',sets:1,why:'Giữ động tác chạy mà không có lực tiếp đất: thay buổi chạy khi chân đau hoặc đang hồi phục.',cues:['Chỗ sâu thì đeo đai nổi, người thẳng, hơi nghiêng ra trước','Đánh tay và chạy như trên đường: gối lên trước, đạp ra sau','Không đạp vòng tròn kiểu đạp xe','Bài mẫu: 5 phút nhẹ, 6–8 × (2 phút nhanh vừa, 1 phút chậm), 5 phút nhẹ']},
+
+  /* văn phòng, sau bữa trưa: toàn bài đứng, không ép lên bụng */
+  mwalk:{mini:1,cat:'van',name:'Đi bộ sau ăn',dose:'10 phút',note:'Bắt đầu 15–30 phút sau khi ăn. Đi vừa phải, vẫn nói chuyện được; có cầu thang thì đi lên chậm 3–5 tầng. Đây là phần có tác dụng nhất của cả bài: cơ chân dùng bớt đường trong máu sau bữa ăn.'},
+  calfo:{fig:'calf',cat:'van',lv:1,eq:'Tường / bàn',name:'Nhón gót đứng',dose:'2 × 15',sets:2,why:'Bắp chân bơm máu về tim, đỡ díp mắt và nặng chân khi ngồi lâu.',cues:['Đứng thẳng, tay vịn nhẹ tường hoặc bàn','Nhón lên cao, giữ 1 giây, hạ chậm','Đứng trên sàn là đủ, không cần bậc']},
+  sabd:{cat:'van',lv:1,eq:'Bàn / tường',name:'Đứng đưa chân sang ngang',dose:'2 × 12 mỗi bên',sets:4,side:1,why:'Mông nhỡ khoẻ, giữ hông và gối thẳng hàng khi chạy. Nhẹ, không đè lên bụng.',cues:['Đứng thẳng, một tay vịn bàn','Đưa một chân sang ngang thật chậm, mũi chân hướng ra trước','Thân không nghiêng theo chân','Hạ chậm, chân không chạm sàn giữa các lần']},
+  sitstand:{fig:'squat',cat:'van',lv:1,eq:'Ghế',name:'Đứng lên ngồi xuống ghế',dose:'2 × 10',sets:2,why:'Đùi và mông là nhóm cơ lớn nhất, dùng nhiều đường trong máu mà không cần đổ mồ hôi.',cues:['Ngồi mép ghế, hai chân rộng bằng vai','Đứng lên bằng lực chân, không chống tay','Ngồi xuống chậm 3 giây, vừa chạm ghế thì đứng lên lại','Thở đều, không nín thở']},
+  dpush:{cat:'van',lv:1,eq:'Bàn chắc chắn',name:'Chống đẩy vào bàn',dose:'2 × 10',sets:2,why:'Ngực, vai, tay sau. Thân thẳng và nghiêng nên không ép lên bụng no.',cues:['Hai tay chống mép bàn rộng hơn vai, lùi chân ra sau','Thân thẳng từ đầu đến gót','Hạ ngực về mép bàn, khuỷu tay chếch khoảng 45°','Thở ra khi đẩy lên']},
+  wangel:{cat:'van',lv:1,eq:'Tường',name:'Tựa tường đưa tay lên',dose:'2 × 8',sets:2,why:'Mở ngực, kéo vai về sau, bù cho cả buổi sáng cúi vào màn hình.',cues:['Lưng, mông và đầu tựa tường, gót cách tường một gang tay','Tay hình chữ W, khuỷu và mu bàn tay chạm tường','Trượt tay lên thành chữ Y rồi kéo về chữ W','Lưng dưới không vồng ra khỏi tường']}
 };
 const LV={1:'Dễ',2:'Vừa',3:'Nâng cao'};
 
@@ -283,7 +298,8 @@ const SES=[
   {id:'pil3',name:'Pilates nâng cao',time:'40–45 phút',when:'Sau khoảng 8 tuần tập đều, thay 1 buổi trung cấp mỗi tuần. Thêm plank nâng chân và plank nghiêng. Mỏi mà động tác xấu đi thì quay về bản trung cấp.',mini:['pbreath'],ex:['p100','prollup','pball','psls','pdls','psaw','pswim','pleg','side','pside','pbridge','pmermaid']},
   {id:'boi1',name:'Bơi kỹ thuật',time:'30–40 phút',when:'Khởi động 100–200 m bơi chậm, kiểu nào cũng được. Làm lần lượt các bài bên dưới, nghỉ 20–30 giây giữa các đoạn. Thả lỏng 100 m. Tổng khoảng 700–900 m.',mini:['sbub'],ex:['sglide','skick','sside','scatch','sfinger']},
   {id:'boi2',name:'Bơi sức bền nhẹ',time:'35–45 phút',when:'Khởi động 200 m chậm, 2 bài kỹ thuật, rồi phần chính bơi sải liên tục ở mức 4–5/10. Thả lỏng 100 m. Tổng khoảng 1.000–1.200 m. Chân còn mỏi sau chạy dài thì dùng phao kẹp ở phần chính.',ex:['skick','scatch','sbreath3','sfree']},
-  {id:'boi3',name:'Chạy dưới nước',time:'25–35 phút',when:'Thay buổi chạy khi chân đau hoặc đang hồi phục chấn thương: giữ sức bền mà không có lực tiếp đất.',ex:['saqua']}
+  {id:'boi3',name:'Chạy dưới nước',time:'25–35 phút',when:'Thay buổi chạy khi chân đau hoặc đang hồi phục chấn thương: giữ sức bền mà không có lực tiếp đất.',ex:['saqua']},
+  {id:'trua',name:'Sau bữa trưa ở văn phòng',time:'12–15 phút',when:'Bắt đầu 15–30 phút sau khi ăn. Toàn bài đứng, nhẹ, không đổ mồ hôi. Bụng đang no thì không gập bụng, plank, cúi gập người hay nhảy: dễ trào ngược và đau sườn. Tập xong đợi khoảng 10 phút rồi ngủ 15–25 phút, ngả ghế hoặc nằm nghiêng trái; tránh gục mặt xuống bàn ngay sau ăn.',mini:['mwalk'],ex:['calfo','sabd','sitstand','dpush','wangel']}
 ];
 const KT='0;.4;.55;.95;1',KS='.42 0 .58 1;0 0 1 1;.42 0 .58 1;0 0 1 1';
 const am=(at,a,b,d)=>a===b?'':`<animate attributeName="${at}" values="${a};${b};${b};${a};${a}" keyTimes="${KT}" calcMode="spline" keySplines="${KS}" dur="${d}s" repeatCount="indefinite"/>`;
