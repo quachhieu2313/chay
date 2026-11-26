@@ -95,16 +95,17 @@ function acct(){
 }
 
 /* ---------- Khung ---------- */
-const TABS=[['#/','Hôm nay'],['#/lich','Cả lịch'],['#/nhat-ky','Nhật ký'],['#/lo-trinh','Lộ trình'],['#/vung','Vùng tập'],['#/ho-so','Hồ sơ']];
-function route(){const h=location.hash||'#/';const m=h.match(/^#\/(ngay|ghi)\/(\d{4}-\d{2}-\d{2})$/);return m?{v:m[1],d:m[2]}:{v:{'#/':'ngay','#/lich':'lich','#/nhat-ky':'nhat-ky','#/lo-trinh':'lo-trinh','#/vung':'vung','#/ho-so':'ho-so','#/du-lieu':'du-lieu','#/huong-dan':'huong-dan'}[h]||'ngay'}}
+const TABS=[['#/','Hôm nay'],['#/lich','Cả lịch'],['#/nhat-ky','Nhật ký'],['#/lo-trinh','Lộ trình'],['#/vung','Vùng tập'],['#/pilates','Pilates · Bơi'],['#/ho-so','Hồ sơ']];
+function route(){const h=location.hash||'#/';const m=h.match(/^#\/(ngay|ghi)\/(\d{4}-\d{2}-\d{2})$/);return m?{v:m[1],d:m[2]}:{v:{'#/':'ngay','#/lich':'lich','#/nhat-ky':'nhat-ky','#/lo-trinh':'lo-trinh','#/vung':'vung','#/ho-so':'ho-so','#/du-lieu':'du-lieu','#/huong-dan':'huong-dan','#/pilates':'pilates'}[h]||'ngay'}}
 function render(){
   if(S.hs)tuNoi();
   const r=route(),P=plan();
-  const cur=r.v==='ngay'?'#/':'#/'+({lich:'lich',vung:'vung','ho-so':'ho-so','du-lieu':'ho-so',ghi:'nhat-ky','nhat-ky':'nhat-ky','lo-trinh':'lo-trinh','huong-dan':'huong-dan'}[r.v]);
+  const cur=r.v==='ngay'?'#/':'#/'+({lich:'lich',vung:'vung','ho-so':'ho-so','du-lieu':'ho-so',ghi:'nhat-ky','nhat-ky':'nhat-ky','lo-trinh':'lo-trinh','huong-dan':'huong-dan',pilates:'pilates'}[r.v]);
   $('#tabs').innerHTML=TABS.map(([h,t])=>`<a href="${h}"${h===cur?' aria-current="page"':''}>${t}</a>`).join('');
   let h;
   if(r.v==='du-lieu')h=vDuLieu();
   else if(r.v==='huong-dan')h=vHuongDan();
+  else if(r.v==='pilates'||(!P&&S.pil&&r.v==='ngay'))h=vPilates();
   else if(!P||r.v==='ho-so')h=vHoSo(!P);
   else if(r.v==='nhat-ky')h=vNhatKy(P);
   else if(r.v==='lo-trinh')h=vLoTrinh(P);
@@ -113,7 +114,7 @@ function render(){
   else if(r.v==='vung')h=vVung(P);
   else h=vNgay(P,r.d);
   $('#view').innerHTML=h;
-  if(r.v==='ho-so'||!P)xemTruoc();
+  if(r.v==='ho-so'||(!P&&r.v!=='pilates'&&r.v!=='du-lieu'&&r.v!=='huong-dan'&&!(S.pil&&r.v==='ngay')))xemTruoc();
   prog();
 }
 
@@ -123,6 +124,8 @@ const tenNgan=t=>/\(interval\)/.test(t)?'Interval':t.replace(/^Chạy /,'').repl
 const tagOf=d=>(d.dh==='trail'&&(d.loai==='dai'||d.loai==='dai2'))?'Trail':d.boi&&d.loai==='nghi'?'Bơi':d.boi&&d.loai==='suc'?'Sức mạnh + bơi':TAG[d.loai];
 const TAG={nghi:'Nghỉ',nhe:'Nhẹ',hoiphuc:'Hồi phục',dai:'Dài',dai2:'Vừa',nang:'Nặng',suc:'Sức mạnh',thi:'Thi',kiem:'Kiểm tra'};
 const CLR={nghi:'var(--line)',nhe:'var(--z2)',hoiphuc:'var(--z1)',dai:'var(--z3)',dai2:'var(--z3)',nang:'var(--z4)',suc:'var(--mut)',thi:'var(--z5)',kiem:'var(--z5)'};
+/* Bài bơi trong lịch chạy: 3 tuần đầu và tuần giảm tải tập kỹ thuật, còn lại bơi sức bền nhẹ */
+const boiSid=(P,d)=>{const t=P&&P.byId[d.date]?P.tuan[P.byId[d.date].w]:null;return !t||t.deload||t.pha==='kiem'||P.byId[d.date].w<3?'boi1':'boi2'};
 const daChay=d=>!!(S.done[d.date+':run']||[])[0];
 function strip(P,w,sel){
   const t=P.tuan[w];
@@ -165,15 +168,17 @@ function vNgay(P,id){
   if(d.km&&d.loai!=='suc'&&d.loai!=='thi')h+=nongBox(d);
 
   /* Bài tập kèm theo */
-  const blk=(id2,title,sub,keys,mini,open)=>`<details class="blk"${open?' open':''}><summary><h3>${title}</h3><span class="mut">${sub}</span></summary><div class="blkin">${mini?`<div class="minis">${mini.map(k=>miniCard(d.date,k)).join('')}</div>`:''}<div class="grid">${keys.map(k=>exCard(d.date,k)).join('')}</div></div></details>`;
+  const blk=(id2,title,sub,keys,mini,open,note)=>`<details class="blk"${open?' open':''}><summary><h3>${title}</h3><span class="mut">${sub}</span></summary><div class="blkin">${note?`<p class="note">${note}</p>`:''}${mini?`<div class="minis">${mini.map(k=>miniCard(d.date,k)).join('')}</div>`:''}<div class="grid">${keys.map(k=>exCard(d.date,k)).join('')}</div></div></details>`;
   if(d.bt.kd){const ks=d.loai==='nang'?['swing','lswing','hipc','march','aski','butt']:['swing','lswing','hipc','march'];h+=blk('kd','Trước khi chạy: khởi động','8–10 phút',ks,['warm'],d.date===TODAY&&!daChay(d))}
   if(d.km&&d.loai!=='suc')h+=logForm(P,d);
   else if(d.date<=TODAY)h+=`<details class="blk"${S.log[id]?' open':''}><summary><h3>Hôm nay vẫn chạy?</h3><span class="mut">ghi buổi chạy thêm, được tính vào nhật ký và tiến bộ</span></summary><div class="blkin">${logForm(P,dayOf(P,id))}</div></details>`;
   if(d.bt.core)h+=blk('core','Core','15 phút, sau buổi chạy hoặc buổi tối',BT.SES.find(s=>s.id==='core').ex,null,false);
   if(d.bt.sm){const ks=d.bt.sm==='trail'?['stepdown','llunge','slrdl','calf1','hike','bal']:BT.SES.find(s=>s.id===d.bt.sm).ex;
     h+=blk('sm',d.bt.sm==='ta'?'Sức mạnh với tạ':d.bt.sm==='trail'?'Sức mạnh cho trail':'Sức mạnh không tạ',d.bt.sm==='ta'?'35–40 phút':'25–30 phút',ks,null,d.loai==='suc')}
+  if(d.boi){const x=BT.SES.find(s=>s.id===boiSid(P,d));h+=blk('boi',x.name,x.time,x.ex,x.mini,d.loai==='nghi',x.when+' Không bơi được thì làm bài Chạy dưới nước trong Thư viện, hoặc đạp xe 40–60 phút nhẹ.')}
+  if(d.loai==='nghi'){const x=BT.SES.find(s=>s.id==='mohong');h+=blk('hong','Mở khớp háng (tuỳ chọn)','12–15 phút, buổi tối',x.ex,null,false,x.when)}
   if(d.bt.gc)h+=blk('gc','Sau khi chạy: giãn cơ','8–10 phút, khi cơ còn ấm',['calfst','quad','hams','hipf','fig4'],null,daChay(d));
-  if(d.loai==='suc'||d.bt.sm||d.bt.core)h+=`<p class="note" style="margin-top:12px">Thêm bài và bài thay thế: <a href="../bai-tap-bo-tro.html">Thư viện bài bổ trợ</a>.</p>`;
+  if(d.loai==='suc'||d.bt.sm||d.bt.core||d.boi||d.loai==='nghi')h+=`<p class="note" style="margin-top:12px">Thêm bài và bài thay thế: <a href="../bai-tap-bo-tro.html">Thư viện bài tập</a> (có cả bơi, Pilates, mở khớp háng).</p>`;
   h+=`<div id="ttw">${tuanTomTat(P,t)}</div>`;
   return h;
 }
@@ -250,11 +255,14 @@ function dayKeys(d){
   if(d.bt.core)add(BT.SES.find(s=>s.id==='core').ex);
   if(d.bt.sm)add(d.bt.sm==='trail'?['stepdown','llunge','slrdl','calf1','hike','bal']:BT.SES.find(s=>s.id===d.bt.sm).ex);
   if(d.bt.gc)add(['calfst','quad','hams','hipf','fig4']);
+  if(d.boi){const x=BT.SES.find(s=>s.id===boiSid(PLAN,d));add([...(x.mini||[]),...x.ex])}
   return ks;
 }
 function ttw(){const w=$('#ttw'),P=PLAN;if(w&&P&&P.byId[CUR])w.innerHTML=tuanTomTat(P,P.tuan[P.byId[CUR].w])}
 function prog(){
-  const el=$('#pg'),P=PLAN,r=route();if(!el||!P)return;
+  const el=$('#pg'),P=PLAN,r=route();
+  if(el&&r.v==='pilates'||el&&!P&&S.pil&&r.v==='ngay'){let n=0,t=0;for(const[k,c]of pilKeys(PSEL)){t+=c;const a=S.done['p'+PSEL+':'+k]||[];for(let i=0;i<c;i++)if(a[i])n++}el.textContent=t?`${n}/${t} bài tập`:'';return}
+  if(!el||!P)return;
   const d=P.byId[CUR];if(!d)return;
   let n=0,t=0;for(const[k,c]of dayKeys(d)){t+=c;const a=S.done[d.date+':'+k]||[];for(let i=0;i<c;i++)if(a[i])n++}
   el.textContent=t?`${n}/${t} bài tập`:'';
@@ -795,6 +803,80 @@ function vGiay(){
   ${ds.length?`<div class="wks" style="margin-top:14px">${ds.map(g=>{const km=giayKm(g);return `<div class="wk" style="--c:${g.nghi?'var(--line)':km>=800?'var(--z5)':km>=600?'var(--z4)':'var(--z3)'};grid-template-columns:1fr auto"><span><b>${esc(g.ten)}</b>${g.mac&&!g.nghi?' · mặc định':''}${g.nghi?' · đã ngừng dùng':''}<br><span class="d">${km>=800?'Nên thay':km>=600?'Sắp đến lúc thay':'Còn tốt'}</span></span><span class="k">${Math.round(km)} km</span><span class="ic" style="grid-column:1/-1">${!g.mac&&!g.nghi?`<button class="btn sm" type="button" data-giay="${esc(g.id)}" data-op="mac">Đặt mặc định</button>`:''}<button class="btn sm" type="button" data-giay="${esc(g.id)}" data-op="nghi">${g.nghi?'Dùng lại':'Ngừng dùng'}</button><button class="btn sm" type="button" data-giay="${esc(g.id)}" data-op="xoa">Xoá</button></span></div>`}).join('')}</div>`:''}
   <div class="row" style="margin-top:14px;align-items:flex-end"><label class="f" style="max-width:260px">Tên giày<input id="gTen" type="text" placeholder="Ví dụ: Pegasus 41 xanh"></label><label class="f" style="max-width:160px">Đã chạy (km)<input id="gKm" type="number" inputmode="decimal" placeholder="0"></label><button class="btn" type="button" data-a="giayThem">Thêm giày</button></div>`;
 }
+/* ---------- Pilates và bơi: lịch riêng, không phụ thuộc lịch chạy (dùng cho người nhà hoặc ngày không chạy) ---------- */
+let PD=null,PSEL=TODAY;
+const PMAU=()=>({pil:[0,2,4],boi:[5],muc:'moi',mucBoi:'moi',hong:1,bd:LC.addD(TODAY,-LC.thu(TODAY))});
+const PX=()=>S.pil||PD||(PD=PMAU());
+const ngayGiua=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+const PHA_PIL=['Nền tảng','Tăng dần','Nâng cao'];
+/* Buổi của một ngày: tuần 1–4 Pilates cơ bản, 5–8 xen kẽ trung cấp, từ tuần 9 trung cấp + 1 buổi nâng cao. Cứ tuần thứ 4 là tuần nhẹ. */
+function pilNgay(x,date){
+  const w=Math.floor(ngayGiua(x.bd,date)/7);if(w<0)return {w,ds:[],nhe:false,pha:0};
+  const t=LC.thu(date),ds=[],nhe=w%4===3,e=w+(x.muc==='vua'?4:x.muc==='cao'?8:0),pha=e<4?0:e<8?1:2;
+  const pi=x.pil.indexOf(t);
+  if(pi>=0)ds.push(pha===0?'pil1':pha===1?(pi%2===0&&!nhe?'pil2':'pil1'):(pi===x.pil.length-1&&x.pil.length>1&&!nhe?'pil3':'pil2'));
+  const bi=x.boi.indexOf(t);
+  if(bi>=0){let sid;
+    if(nhe||(x.mucBoi==='moi'&&w<4))sid='boi1';
+    else if(x.boi.length>1)sid=(bi===0)===(x.mucBoi==='moi')?'boi1':'boi2';
+    else sid=x.mucBoi==='moi'&&w%2?'boi1':'boi2';
+    ds.push(sid)}
+  if(!ds.length&&x.hong){const tu=[0,1,2,3,4,5,6].filter(i=>!x.pil.includes(i)&&!x.boi.includes(i));if(tu.indexOf(t)<tu.length-1)ds.push('mohong')}
+  return {w,ds,nhe,pha};
+}
+const PTAG={pil1:'Pilates',pil2:'Pilates',pil3:'Pilates',boi1:'Bơi',boi2:'Bơi',boi3:'Bơi',mohong:'Mở háng'};
+const PCLR={pil1:'var(--z3)',pil2:'var(--z3)',pil3:'var(--z3)',boi1:'var(--z2)',boi2:'var(--z2)',boi3:'var(--z2)',mohong:'var(--z1)'};
+const pTag=ds=>!ds.length?'Nghỉ':ds.length>1?'Pilates + bơi':PTAG[ds[0]];
+function pilKeys(date){const ks=[];for(const sid of pilNgay(PX(),date).ds){const x=BT.SES.find(s=>s.id===sid);for(const k of [...(x.mini||[]),...x.ex]){const e=BT.E[k];ks.push([k,e.mini?1:e.sets])}}return ks}
+function pilForm(x,moi){
+  const dows=(f,lb,help)=>`<div><span class="help" style="display:block;margin-bottom:6px;font-weight:600;color:var(--mut);font-size:13.5px">${lb}</span><div class="dows">${DOW.map((t,i)=>`<label><input type="checkbox" data-pf="${f}" data-v="${i}" ${x[f].includes(i)?'checked':''}> ${t}</label>`).join('')}</div>${help?`<p class="help" style="margin:6px 0 0">${help}</p>`:''}</div>`;
+  const sl=(f,lb,opts)=>`<label class="f"><span class="lb">${lb}</span><select data-pf="${f}">${opts.map(([v,t])=>`<option value="${v}"${String(x[f])===String(v)?' selected':''}>${t}</option>`).join('')}</select></label>`;
+  const m0=LC.addD(TODAY,-LC.thu(TODAY)),bds=[[m0,'Tuần này (thứ 2, '+dm(m0)+')'],[LC.addD(m0,7),'Tuần sau (thứ 2, '+dm(LC.addD(m0,7))+')']];
+  if(!bds.some(b=>b[0]===x.bd))bds.unshift([x.bd,'Đang dùng: thứ 2, '+dmy(x.bd)]);
+  return `<div class="form" style="gap:18px">
+    ${dows('pil','Ngày tập Pilates','Nên 3 buổi, cách nhau 1 ngày (ví dụ T2, T4, T6). Mới tập thì 2 buổi cũng được.')}
+    ${dows('boi','Ngày bơi','1–2 buổi mỗi tuần. Trùng ngày Pilates thì tập Pilates trước, bơi sau, hoặc tách sáng và chiều.')}
+    <div class="fr">${sl('muc','Pilates',[['moi','Mới bắt đầu'],['vua','Đã tập 2–3 tháng'],['cao','Đã tập trên 6 tháng']])}${sl('mucBoi','Bơi',[['moi','Chưa bơi sải được 50 m liền'],['kha','Bơi sải được 50 m trở lên']])}${sl('bd','Bắt đầu',bds)}</div>
+    <label class="row" style="gap:8px;font-weight:600"><input type="checkbox" data-pf="hong" ${x.hong?'checked':''}> Ngày không tập thì gợi ý 12–15 phút mở khớp háng (chừa 1 ngày nghỉ hẳn)</label>
+    ${moi?`<div class="row"><button class="btn pri" data-a="pilTao">Tạo lịch Pilates và bơi</button></div>`:''}
+  </div>`;
+}
+function vPilates(){
+  const x=PX(),moi=!S.pil;
+  let h=`<h2>Pilates và bơi</h2><p class="sub">Lịch riêng, không phụ thuộc lịch chạy: hợp cho người nhà, hoặc cho bạn ở những ngày không chạy. Người khác dùng thì nên đăng nhập tài khoản Google của họ trên máy của họ để đánh dấu không lẫn với bạn.</p><div style="height:14px"></div>`;
+  if(moi)return h+`<p class="msg info">Chọn ngày tập rồi bấm <b>Tạo lịch</b>. Lịch chạy 12 tuần: 4 tuần nền tảng, 4 tuần tăng dần, 4 tuần nâng cao; tuần thứ 4 mỗi chặng là tuần nhẹ. Hết 12 tuần lịch vẫn tiếp tục ở mức nâng cao.</p>`+pilForm(x,true);
+  if(!x.pil.length&&!x.boi.length)h+=`<p class="msg warn">Chưa chọn ngày Pilates hay ngày bơi nào. Mở <b>Cài đặt</b> ở cuối trang để chọn.</p>`;
+  if(PSEL<x.bd)PSEL=x.bd;
+  const st=LC.addD(PSEL,-LC.thu(PSEL)),N0=pilNgay(x,PSEL),w=N0.w,da=[0,1,2,3,4,5,6].map(i=>LC.addD(st,i));
+  const dn=(d)=>{const k=pilKeys(d);if(!k.length)return false;return k.every(([kk,c])=>{const a=S.done['p'+d+':'+kk]||[];for(let i=0;i<c;i++)if(!a[i])return false;return true})};
+  h+=`<div class="wkbar"><button class="nv" data-pd="${LC.addD(st,-7)}" aria-label="Tuần trước"${st<=x.bd?' disabled':''}>‹</button>
+    <span class="t">Tuần ${w+1} · ${dm(st)}–${dm(LC.addD(st,6))} · ${PHA_PIL[N0.pha]}${N0.nhe?' · tuần nhẹ':''}</span>
+    <button class="nv" data-pd="${LC.addD(st,7)}" aria-label="Tuần sau">›</button>${PSEL!==TODAY&&TODAY>=x.bd?`<button class="nv td" data-pd="${TODAY}">Hôm nay</button>`:''}</div>
+  <div class="strip">${da.map((d,i)=>{const n=pilNgay(x,d);return `<button class="day" data-pd="${d}" aria-pressed="${d===PSEL}" style="--c:${n.ds.length?PCLR[n.ds[0]]:'var(--line)'}" aria-label="${DOWF[i]} ${dm(d)}: ${pTag(n.ds)}">${d===TODAY?'<span class="tdot"></span>':''}${dn(d)?'<span class="ck">✓</span>':''}<b>${DOW[i]}</b><span class="dn">${+d.slice(8)}</span><i>${pTag(n.ds)}</i></button>`}).join('')}</div>`;
+  const ss=N0.ds.map(id=>BT.SES.find(s=>s.id===id));
+  h+=`<div class="dhead"><div><p class="kick">${DOWF[LC.thu(PSEL)]}, ${dmy(PSEL)}${PSEL===TODAY?' · hôm nay':''}</p><h2>${ss.length?ss.map(s=>s.id==='mohong'?'Mở khớp háng (tuỳ chọn)':s.name).join(' + '):'Nghỉ'}</h2><div class="chips">${ss.map(s=>`<span>${esc(s.time)}</span>`).join('')}<span>${PHA_PIL[N0.pha]}</span></div></div>
+    ${ss.length?`<div class="row"><span class="prog num" id="pg" style="font-size:22px;font-weight:700"></span><button class="btn sm" id="rstp" type="button">Bỏ đánh dấu</button></div>`:''}</div>`;
+  if(N0.nhe&&ss.some(s=>s.id!=='mohong'))h+=`<p class="msg info">Tuần nhẹ: mỗi bài làm khoảng 2/3 số lần, bơi ngắn hơn khoảng 1/3. Cơ thể cần tuần này để hấp thụ 3 tuần trước.</p>`;
+  if(!ss.length)h+=`<p class="note">Ngày nghỉ hẳn. Đi bộ nhẹ thì tốt; không cần tập thêm.</p>`;
+  for(const s of ss){
+    h+=`<details class="blk" open><summary><h3>${s.id==='mohong'?'Mở khớp háng':s.name}</h3><span class="mut">${s.time}</span></summary><div class="blkin"><p class="note">${s.when}</p>${s.mini?`<div class="minis">${s.mini.map(k=>miniCard('p'+PSEL,k)).join('')}</div>`:''}<div class="grid">${s.ex.map(k=>exCard('p'+PSEL,k)).join('')}</div></div></details>`;
+  }
+  h+=`<details class="blk"><summary><h3>An toàn</h3><span class="mut">đọc một lần trước khi tập</span></summary><div class="blkin"><ul class="steps">
+    <li>Đang mang thai, sinh con dưới 6 tháng (nhất là khi bụng bị tách cơ), thoát vị đĩa đệm hoặc loãng xương: hỏi bác sĩ trước. Thường phải bỏ các bài cuộn người như Cuộn người lên xuống, Lăn như quả bóng, Duỗi hai chân, Cưa.</li>
+    <li>Mỏi cổ khi nâng đầu là bình thường lúc đầu: hạ đầu xuống nghỉ rồi làm tiếp. Đau lưng dưới thì dừng bài đó, kiểm tra lại lưng có vồng lên không.</li>
+    <li>Không ăn no 1–2 tiếng trước buổi tập. Bơi: không bơi một mình ở chỗ sâu, dừng ngay khi chuột rút hoặc chóng mặt.</li>
+    <li>Tập đều 3 buổi mỗi tuần thì sau khoảng 4–6 tuần thấy bụng và lưng chắc hơn, sau 8–12 tuần thấy rõ dáng đứng và độ dẻo.</li></ul></div></details>`;
+  h+=`<details class="blk"><summary><h3>Cả 12 tuần</h3><span class="mut">buổi nào vào tuần nào</span></summary><div class="blkin"><table class="zt"><thead><tr><th>Tuần</th><th>Giai đoạn</th><th>Pilates</th><th>Bơi</th></tr></thead><tbody>${Array.from({length:12},(_,i)=>{const s0=LC.addD(x.bd,i*7),ns=[0,1,2,3,4,5,6].map(j=>pilNgay(x,LC.addD(s0,j))),f=p=>ns.flatMap(n=>n.ds.filter(d=>d.startsWith(p))).map(d=>BT.SES.find(s=>s.id===d).name.replace(/^Pilates |^Bơi /,'')).join(', ')||'–';return `<tr${s0===st?' style="font-weight:700"':''}><td>${i+1} · ${dm(s0)}</td><td>${PHA_PIL[ns[0].pha]}${ns[0].nhe?' (nhẹ)':''}</td><td>${f('pil')}</td><td>${f('boi')}</td></tr>`}).join('')}</tbody></table><p class="note" style="margin-top:10px">Xem từng động tác và hình minh họa trong <a href="../bai-tap-bo-tro.html#pil">Thư viện bài tập</a>.</p></div></details>`;
+  h+=`<details class="blk"><summary><h3>Cài đặt</h3><span class="mut">ngày tập, trình độ, ngày bắt đầu</span></summary><div class="blkin">${pilForm(x,false)}<div class="row" style="margin-top:14px"><button class="btn" data-a="pilXoa">Xoá lịch Pilates và bơi</button></div></div></details>`;
+  return h;
+}
+function pilSet(t){
+  const x=PX(),f=t.dataset.pf;
+  if(f==='pil'||f==='boi'){const i=+t.dataset.v;x[f]=t.checked?[...new Set([...x[f],i])].sort():x[f].filter(v=>v!==i)}
+  else if(f==='hong')x.hong=t.checked?1:0;
+  else x[f]=t.value;
+  if(S.pil)save();keep(render);
+}
 function vHuongDan(){
   const q=(t,b)=>`<details class="blk"><summary><h3>${t}</h3></summary><div class="blkin">${b}</div></details>`;
   return `<h2>Hướng dẫn</h2><p class="sub">Cách trang tạo lịch, ý nghĩa các con số, và cách dùng hằng ngày.</p><div style="height:12px"></div>`
@@ -804,6 +886,7 @@ function vHuongDan(){
   +q('Các loại buổi chạy','<ul class="steps"><li><b>Chạy nhẹ:</b> vùng 2, nói chuyện được cả câu. Là phần lớn khối lượng, xây nền sức bền.</li><li><b>Chạy hồi phục:</b> chậm nhất tuần, sau ngày chạy dài.</li><li><b>Chạy dài:</b> buổi dài nhất tuần, vẫn ở vùng nhẹ.</li><li><b>Strides:</b> 4–6 lần tăng tốc 20 giây cuối buổi nhẹ, giữ dáng chạy và guồng chân.</li><li><b>Tempo (ngưỡng):</b> nhanh nhưng kiểm soát được, cảm giác 7–8/10, nâng tốc độ chịu được lâu.</li><li><b>Interval:</b> lần chạy 3–5 phút khó, nghỉ bằng thời gian chạy, nâng VO2max.</li><li><b>Chạy lên dốc ngắn:</b> sức mạnh chân mà ít va đập.</li><li><b>Leo dốc (trail):</b> chạy hoặc đi bộ nhanh lên dốc ở vùng 3–4; tập cả hai vì trong giải sẽ dùng cả hai.</li><li><b>Chạy dài hai ngày liền (trail):</b> tập chạy khi chân đã mỏi, như nửa sau giải dài.</li></ul>')
   +q('Ý nghĩa các con số','<ul class="steps"><li><b>Vùng nhịp tim:</b> tính từ nhịp nghỉ và nhịp tối đa (Karvonen), hoặc từ nhịp tim ngưỡng nếu bạn điền.</li><li><b>VDOT:</b> chỉ số thể lực tính từ một kết quả chạy hết sức (Jack Daniels). Từ đó ra pace cho từng loại bài và thời gian dự đoán.</li><li><b>Nhịp tim mỗi km:</b> nhịp tim trung bình × số phút mỗi km. Cùng loại đường mà số này giảm dần là thể lực đang lên. Trail tính trên km quy đổi: mỗi 100 m leo tính thêm 1 km.</li><li><b>Tim trôi:</b> nửa sau buổi chạy tim cao hơn nửa đầu bao nhiêu % ở cùng tốc độ. Dưới 5% là nền sức bền tốt; trên 8% là quá sức, nóng hoặc thiếu nước.</li><li><b>Điểm sương:</b> đo độ oi. Nhiệt độ và điểm sương càng cao, pace càng phải chậm lại.</li></ul>')
   +q('Lấy file từ Garmin','<ol class="steps"><li>Mở connect.garmin.com trên máy tính hoặc trình duyệt điện thoại (ứng dụng Garmin Connect không xuất được file).</li><li>Mở buổi chạy, bấm biểu tượng bánh răng, chọn Export Original (.zip), Export to TCX hoặc Export to GPX.</li><li>Trong trang này, mở ngày đó, bấm Tải file từ đồng hồ hoặc kéo thả file vào khung Sau buổi chạy.</li></ol><p><b>Lấy nhiều năm một lần:</b> trên connect.garmin.com vào Hoạt động → Tất cả hoạt động, lọc Chạy, cuộn xuống đến khi hiện hết các năm, bấm Xuất CSV (Export CSV). Ở trang <a href="#/lo-trinh">Lộ trình</a> bấm Nhập lịch sử từ Garmin và chọn file đó. Cũng chọn được nhiều file .fit, .tcx, .gpx, .zip cùng lúc.</p><p class="note">File chỉ được đọc trên máy bạn; trang không lưu đường chạy.</p>')
+  +q('Pilates, bơi và mở khớp háng','<ul class="steps"><li><b>Trong lịch chạy:</b> chọn ngày bơi ở Hồ sơ (ô Bơi hoặc đạp xe). Ngày đó có bài bơi chi tiết: 3 tuần đầu và tuần giảm tải tập kỹ thuật, còn lại bơi sức bền nhẹ. Ngày nghỉ có thêm bài mở khớp háng tuỳ chọn.</li><li><b>Tab Pilates · Bơi:</b> lịch riêng 12 tuần, không phụ thuộc lịch chạy. Chọn ngày Pilates, ngày bơi, trình độ. Hợp cho người nhà, hoặc cho bạn ở những ngày không chạy.</li><li>Người khác dùng thì nên đăng nhập tài khoản Google của họ trên máy của họ, để đánh dấu không lẫn với bạn.</li><li>Mọi động tác có hình minh họa trong <a href="../bai-tap-bo-tro.html">Thư viện bài tập</a>, các tab Bơi, Pilates, Mở khớp háng.</li></ul>')
   +q('Cài lên điện thoại','<ul class="steps"><li><b>Android (Chrome):</b> mở trang, bấm menu ⋮, chọn Thêm vào màn hình chính hoặc Cài đặt ứng dụng.</li><li><b>iPhone (Safari):</b> bấm nút Chia sẻ, chọn Thêm vào MH chính.</li><li>Sau khi cài, trang mở như ứng dụng và vẫn xem được lịch khi không có mạng; ghi chép sẽ gửi lên tài khoản khi có mạng lại.</li></ul>')
   +q('Giới hạn','<ul class="steps"><li>Lịch tạo theo quy tắc, không thay huấn luyện viên. Bạn hiểu cơ thể mình nhất: đau nhói, chóng mặt, tức ngực thì dừng và đi khám.</li><li>Pace từ "pace chạy nhẹ" kém chính xác hơn pace từ kết quả chạy hết sức.</li><li>Mỗi lúc chỉ theo một mục tiêu chính. Có cả giải road và trail thì chọn giải đến trước.</li></ul>');
 }
@@ -841,6 +924,8 @@ function go(id){const P=plan();location.hash=(P&&P.byId[id]?'#/ngay/':'#/ghi/')+
 document.addEventListener('click',async ev=>{
   const t=ev.target,a=t.closest('[data-a]');
   const g=t.closest('[data-go]');if(g){if(g.dataset.go)go(g.dataset.go);return}
+  const pd=t.closest('[data-pd]');if(pd){PSEL=pd.dataset.pd;keep(render);return}
+  if(t.closest('#rstp')){Object.keys(S.done).forEach(k=>{if(k.startsWith('p'+PSEL+':'))delete S.done[k]});save();keep(render);return}
   const dot=t.closest('.dot');if(dot){const k=dot.dataset.k,i=+dot.dataset.i,v=!isDone(k,i);const arr=S.done[k]||(S.done[k]=[]);arr[i]=v?1:0;if(!v&&!arr.some(Boolean))delete S.done[k];save();dot.setAttribute('aria-pressed',String(v));prog();
     if(k.endsWith(':run')){ttw();const b=document.querySelector(`.day[data-go="${k.slice(0,10)}"]`);if(b){const c=b.querySelector('.ck');if(v&&!c)b.insertAdjacentHTML('afterbegin','<span class="ck">✓</span>');if(!v&&c)c.remove()}}return}
   const dhb=t.closest('[data-dh]');if(dhb){const L=S.log[dhb.dataset.d]||(S.log[dhb.dataset.d]={});const P=plan(),d=dayOf(P,dhb.dataset.d);L.dh=dhb.dataset.dh===d.dh?undefined:dhb.dataset.dh;if(L.dh===undefined)delete L.dh;if(!Object.keys(L).length)delete S.log[dhb.dataset.d];save();const lg=document.querySelector('.log[data-log]');if(lg)keep(()=>{lg.outerHTML=logForm(P,dayOf(P,d.date))});return}
@@ -863,6 +948,8 @@ document.addEventListener('click',async ev=>{
       S.hs={...D,ngayTao:old.ngayTao||TODAY,cu,khoi:old.khoi,khoiLoai:old.khoiLoai,khoiSo:old.khoiSo,khoiTen:old.khoiTen,namGoc:old.namGoc,dinhMoi:old.dinhMoi};D=null;PLAN=null;save();location.hash='#/lich';break}
     case 'moi':{const bd=a.dataset.nay?LC.addD(TODAY,-LC.thu(TODAY)):TODAY;if(confirm(a.dataset.nay?'Tạo lịch mới bắt đầu ngay tuần này (từ thứ 2, '+dm(bd)+')? Ghi chép cũ vẫn giữ trong Nhật ký.':'Tạo lịch mới bắt đầu từ thứ 2 tới? Ghi chép cũ vẫn giữ trong Nhật ký.')){const old=S.hs,{cu:_c,khoi:_k,thongBao:_t,...snap}=old;S.hs={...D,ngayTao:bd,chinh:{},cu:[],dinhMoi:0,khoiLoai:'',khoiSo:0,khoiTen:'',khoi:[...(old.khoi||[]),{tu:old.ngayTao,den:plan().ketThuc,ten:old.khoiTen||'Khối trước',loai:old.khoiLoai||'',hs:snap}].slice(-12)};D=null;PLAN=null;save();location.hash='#/lich'}break}
     case 'ics':xuatIcs(plan());break;
+    case 'pilTao':S.pil={...PX()};PD=null;PSEL=TODAY<S.pil.bd?S.pil.bd:TODAY;save();keep(render);break;
+    case 'pilXoa':if(confirm('Xoá lịch Pilates và bơi? Các đánh dấu đã tập cũng xoá.')){S.pil=null;PD=null;Object.keys(S.done).forEach(k=>{if(/^p\d/.test(k))delete S.done[k]});save();render();window.scrollTo(0,0)}break;
     case 'ghi':{const v=($('#ghiNgay')||{}).value;if(v)go(v);break}
     case 'giayThem':{const ten=($('#gTen').value||'').trim();if(!ten){$('#gTen').focus();break}const g={id:'g'+Date.now().toString(36),ten,kmDau:+($('#gKm').value||0)||0,mac:!S.giay.some(x=>!x.nghi)};S.giay.push(g);save();keep(render);break}
     case 'chuyen':chuyenCu();break;
@@ -878,9 +965,10 @@ document.addEventListener('click',async ev=>{
 function keep(fn){const y=scrollY;fn();window.scrollTo(0,y)}
 document.addEventListener('change',ev=>{
   const t=ev.target;
+  if(t.dataset.pf){pilSet(t);return}
   if(t.id==='nhieu'&&t.files.length){nhapNhieu([...t.files]);t.value='';return}
   if(t.dataset.ff&&t.files[0]){napFile(t.files[0],t.dataset.ff);t.value='';return}
-  if(t.id==='nhap'&&t.files[0]){t.files[0].text().then(x=>{try{const d=JSON.parse(x);if(!d||typeof d!=='object'||!('hs' in d))throw 0;if(!confirm('Thay dữ liệu hiện tại bằng dữ liệu trong file?'))return;S={...trong(),hs:d.hs,log:d.log||{},done:d.done||{},sang:d.sang||{},giay:d.giay||[],anim:S.anim};save();PLAN=null;D=null;location.hash='#/';render()}catch(e){alert('File không đúng định dạng.')}});return}
+  if(t.id==='nhap'&&t.files[0]){t.files[0].text().then(x=>{try{const d=JSON.parse(x);if(!d||typeof d!=='object'||!('hs' in d))throw 0;if(!confirm('Thay dữ liệu hiện tại bằng dữ liệu trong file?'))return;S={...trong(),hs:d.hs,log:d.log||{},done:d.done||{},sang:d.sang||{},giay:d.giay||[],pil:d.pil||null,anim:S.anim};save();PLAN=null;D=null;location.hash='#/';render()}catch(e){alert('File không đúng định dạng.')}});return}
   if(t.dataset.l&&(t.tagName==='SELECT'||t.type==='checkbox')){luuLog(t);return}
   if(t.dataset.sang&&t.tagName==='SELECT'){t.dispatchEvent(new Event('input',{bubbles:true}));return}
   if(t.dataset.dow!=null){const i=+t.dataset.dow;D.ngayRanh=t.checked?[...new Set([...D.ngayRanh,i])].sort():D.ngayRanh.filter(x=>x!==i);xemTruoc();return}

@@ -92,6 +92,8 @@ svg .wl{stroke:var(--mut);stroke-width:3;opacity:.6}
 svg .tg{fill:none;stroke:var(--acc);stroke-width:2}
 svg .dk{fill:color-mix(in srgb,var(--mut) 42%,var(--pan))}
 svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;stroke-linecap:round}
+svg .wa{fill:color-mix(in srgb,var(--z2) 14%,var(--bg))}
+svg .ws{stroke:var(--z2);stroke-width:2;fill:none;opacity:.55}
 .plan{background:var(--pan)}
 .phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px;margin-top:20px}
 .phase{background:var(--bg);border-radius:14px;padding:16px;border-top:6px solid var(--c)}
@@ -151,8 +153,8 @@ svg .dl{stroke:color-mix(in srgb,var(--mut) 42%,var(--pan));stroke-width:4;strok
 {
 const K='bai-tap-bo-tro-v1';
 const {F,E,LV,SES}=window.BaiTap;
-const TABS=[['ses','Buổi mẫu'],['warm','Khởi động'],['drill','Kỹ thuật chạy'],['bw','Sức mạnh không tạ'],['wt','Tạ'],['core','Core'],['mob','Giãn cơ']];
-const INTRO={warm:'Trước mọi buổi chạy, 8–10 phút. Động tác nhẹ, biên độ tăng dần, không giữ lâu như giãn cơ. Buổi mẫu "Khởi động trước chạy" xếp sẵn thứ tự.',drill:'Làm sau 5 phút đi bộ hoặc chạy chậm, trước buổi chạy nhẹ. Không làm trước buổi chạy dài khi chân đang mỏi.',bw:'Nền tảng cho những tuần đầu chạy lại. Khi làm đủ số lần mà vẫn dễ thì chuyển sang bản có tạ.',wt:'Chọn tạ sao cho hết hiệp vẫn còn làm được thêm 2–3 lần. Ghi mức tạ vào ô trên thẻ để lần sau nhớ.',core:'10–15 phút, 2–3 lần mỗi tuần. Giữ đúng tư thế quan trọng hơn giữ lâu.',mob:'Sau buổi chạy hoặc buổi tối. Giữ mỗi tư thế 30 giây, thở đều, không ép tới đau.'};
+const TABS=[['ses','Buổi mẫu'],['warm','Khởi động'],['drill','Kỹ thuật chạy'],['bw','Sức mạnh không tạ'],['wt','Tạ'],['core','Core'],['mob','Giãn cơ'],['hip','Mở khớp háng'],['pil','Pilates'],['swim','Bơi']];
+const INTRO={warm:'Trước mọi buổi chạy, 8–10 phút. Động tác nhẹ, biên độ tăng dần, không giữ lâu như giãn cơ. Buổi mẫu "Khởi động trước chạy" xếp sẵn thứ tự.',drill:'Làm sau 5 phút đi bộ hoặc chạy chậm, trước buổi chạy nhẹ. Không làm trước buổi chạy dài khi chân đang mỏi.',bw:'Nền tảng cho những tuần đầu chạy lại. Khi làm đủ số lần mà vẫn dễ thì chuyển sang bản có tạ.',wt:'Chọn tạ sao cho hết hiệp vẫn còn làm được thêm 2–3 lần. Ghi mức tạ vào ô trên thẻ để lần sau nhớ.',core:'10–15 phút, 2–3 lần mỗi tuần. Giữ đúng tư thế quan trọng hơn giữ lâu.',mob:'Sau buổi chạy hoặc buổi tối. Giữ mỗi tư thế 30 giây, thở đều, không ép tới đau.',hip:'Giữ khớp háng linh hoạt theo mọi hướng: xoay trong, xoay ngoài, mở ngang. Người chạy chủ yếu dùng hông theo một hướng nên các hướng khác dễ cứng, kéo căng hông ngoài. Làm 3–4 lần mỗi tuần, chậm, không ép tới đau.',pil:'Pilates trên thảm: chậm, có kiểm soát, đi cùng nhịp thở. Bụng dưới hóp nhẹ suốt bài, cột sống giữ đường cong tự nhiên. Người mới bắt đầu từ buổi mẫu Pilates cơ bản. Đang mang thai, mới sinh, hoặc có thoát vị đĩa đệm, loãng xương thì hỏi bác sĩ trước và bỏ các bài cuộn người.',swim:'Bài kỹ thuật cho bơi sải, cùng bài chạy dưới nước. Với người chạy, bơi là buổi tập tim phổi mà chân được nghỉ. Hạn chế đạp chân ếch mạnh nếu gối hay đau, vì động tác xoắn gối.'};
 
 const now=new Date();
 const TODAY=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');

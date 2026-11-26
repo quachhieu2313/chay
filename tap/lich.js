@@ -319,7 +319,7 @@ function taoLich(p,homNay){
     plan.forEach(x=>moTa(x,{X,Z,pc,hr,pha,deload,diBo,i,giaiDoanSM,isRace,p,N,mt}));
     plan.forEach(x=>{if(!x.boi)return;
       const ph=deload||pha==='kiem'?'30':'30–45';
-      const bai=[`Bơi nhẹ ${ph} phút, liên tục hoặc từng đoạn 50–100 m nghỉ 20–30 giây. Cảm giác 4–5/10, thở đều.`,'Chưa bơi giỏi: chạy bộ dưới nước (aqua jogging) ở chỗ ngập ngực, hoặc đạp xe 40–60 phút nhẹ. Tác dụng tương tự.','Gối còn nhạy cảm thì ưu tiên bơi sải, hạn chế đạp chân ếch mạnh.'];
+      const bai=[`Bơi nhẹ ${ph} phút theo bài bên dưới: 3 tuần đầu và tuần giảm tải tập kỹ thuật, các tuần khác bơi sức bền nhẹ. Cảm giác 4–5/10, thở đều.`,'Chưa bơi giỏi: chạy bộ dưới nước (aqua jogging) ở chỗ ngập ngực, hoặc đạp xe 40–60 phút nhẹ. Tác dụng tương tự.','Gối còn nhạy cảm thì ưu tiên bơi sải, hạn chế đạp chân ếch mạnh.'];
       if(x.loai==='nghi'){x.ten=`Bơi ${ph} phút`;x.buoc=bai}
       else if(x.loai==='suc'){x.ten='Sức mạnh + bơi';x.buoc=[...(x.buoc||[]),'Bơi '+ph+' phút nhẹ, tốt nhất cách buổi sức mạnh vài tiếng.',...bai.slice(1)]}
       else x.buoc=[...(x.buoc||[]),'Buổi chiều (tuỳ chọn): bơi nhẹ 20–30 phút để thả lỏng, không bơi nhanh.'];
