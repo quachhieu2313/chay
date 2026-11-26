@@ -178,7 +178,10 @@ function taoLich(p,homNay){
   const tocDo=diBo?1.06:quayLai?1.07:moi?1.08:1.10;
   let W0=quayLai?Math.max(8,kmNow*0.7):Math.max(diBo?6:8,kmNow);
   W0=Math.min(W0,dinh);
-  const coBan=Math.max(quayLai?4:2,Math.round(M*0.4)),caoDiem=M>=10?3:M>=6?2:M>=3?1:0;
+  /* Tiến độ nhanh: giai đoạn nền ngắn hơn, bài nặng đến sớm hơn; khối lượng vẫn tăng tối đa khoảng 10% mỗi tuần. */
+  const nhanh=p.tienDo==='nhanh'&&!quayLai&&!diBo;
+  if(nhanh)canhBao.push(['info','Tiến độ nhanh: chạy dốc từ tuần 2, tempo và interval sớm hơn khoảng 2 tuần. Khối lượng vẫn tăng tối đa khoảng 10% mỗi tuần; có đau hoặc mỏi kéo dài thì chuyển về Bình thường.']);
+  const coBan=Math.max(quayLai?4:2,Math.round(M*(nhanh?0.25:0.4))),caoDiem=M>=10?3:M>=6?2:M>=3?1:0;
   const tuan=[];let nen=W0,daiTruoc=Math.max(daiNow,W0*0.3),dem={};
   for(let i=0;i<N;i++){
     const sau=i>=M,ix=i-M;
@@ -199,7 +202,7 @@ function taoLich(p,homNay){
     /* Số buổi nặng */
     let q=0;
     if(pha==='tang'||pha==='cao')q=(chay.length>=4&&!moi&&!quayLai&&(thanhTich||nam>=1))?2:1;
-    else if(pha==='nen')q=(!quayLai&&!diBo&&i>=2&&chay.length>=3)?1:0;
+    else if(pha==='nen')q=(!quayLai&&!diBo&&i>=(nhanh?1:2)&&chay.length>=3)?1:0;
     else if(pha==='giam')q=(ix<giam-1)?1:0;
     if(deload&&pha!=='kiem')q=Math.min(q,moi?0:1);
     if(quayLai&&i<4)q=0;
@@ -272,6 +275,8 @@ function taoLich(p,homNay){
     const kmMin=diBo?2:clamp(+p.kmMin||3,2,8);
     nhe.forEach(x=>{x.km=clamp(w?du*(x.loai==='hoiphuc'?0.7:1)/w:0,kmMin,Math.max(tran,kmMin))});
     if(isRace)nhe.forEach(x=>x.km=clamp(Math.min(x.km,X.D<=10?5:7),3,7));
+    /* Buổi ngắn nhất bị giữ ở mức tối thiểu có thể đẩy tổng tuần vượt mục tiêu: bớt chạy dài phần dư (tối đa 15%). */
+    if(!isRace&&!X.trail){const tong=kmNang+(dai2?dai2.km:0)+nhe.reduce((a,x)=>a+x.km,0)+dai,du2=tong-km*1.08;if(du2>0){dai=Math.max(dai-du2,dai*0.85,kmMin+1)}}
     plan.forEach(x=>{if(x.loai==='dai'||x.loai==='kiem')x.km=x.loai==='kiem'?(X.trail?6:5):dai;if(x.loai==='thi')x.km=X.D});
 
     /* Strides: một buổi nhẹ mỗi tuần (không ở tuần đầu chạy lại, không ở ngày hồi phục). */
@@ -295,12 +300,15 @@ function taoLich(p,homNay){
       if(pha==='tang'||pha==='cao'){const s=plan.find(x=>x.loai==='nhe'&&!x.strides);if(s)s.xuong=1}
     }
 
+    /* Bơi (hoặc đạp xe) 1 buổi mỗi tuần vào ngày người dùng chọn: tập tim phổi không va đập. */
+    const nb=p.ngayBoi==null||p.ngayBoi===''?-1:+p.ngayBoi;
+    if(nb>=0&&nb<=6&&!isRace&&!plan[nb].truocThi&&!plan[nb].sauThi&&plan[nb].loai!=='thi')plan[nb].boi=1;
     /* Bổ trợ: 2 buổi sức mạnh vào ngày không chạy (không phải ngày trước chạy dài/bài nặng), core 1 buổi. */
     const sm=plan.filter(x=>x.loai==='nghi'&&!x.sauThi&&!x.truocThi&&!(plan[(x.thu+1)%7].loai==='dai'||plan[(x.thu+1)%7].loai==='nang'||plan[(x.thu+1)%7].loai==='thi'||plan[(x.thu+1)%7].loai==='kiem'));
-    const nghiThat=plan.filter(x=>x.loai==='nghi').length;
+    const nghiThat=plan.filter(x=>x.loai==='nghi'&&!x.boi).length;sm.sort((a,b)=>(b.boi||0)-(a.boi||0));
     let soSM=isRace?0:(pha==='giam'?1:2);
     const smDays=[];
-    for(const x of sm){if(smDays.length>=soSM)break;if(nghiThat-smDays.length<=1&&chay.length<6)break;if(smDays.some(y=>kc(y.thu,x.thu)<2))continue;smDays.push(x)}
+    for(const x of sm){if(smDays.length>=soSM)break;if(!x.boi&&nghiThat-smDays.filter(y=>!y.boi).length<=1&&chay.length<6)continue;if(smDays.some(y=>kc(y.thu,x.thu)<2))continue;smDays.push(x)}
     smDays.forEach(x=>{x.loai='suc';});
     if(smDays.length<soSM){const e=plan.filter(x=>x.loai==='nhe').filter(x=>plan[(x.thu+1)%7].loai!=='dai'&&plan[(x.thu+1)%7].loai!=='nang');
       for(const x of e){if(smDays.length>=soSM)break;if(smDays.some(y=>kc(y.thu,x.thu)<2))continue;x.sucSau=1;smDays.push(x)}}
@@ -309,6 +317,13 @@ function taoLich(p,homNay){
     /* Mô tả từng ngày */
     const giaiDoanSM=(quayLai&&i<4)||i<3?'kt':p.ta?'ta':'kt';
     plan.forEach(x=>moTa(x,{X,Z,pc,hr,pha,deload,diBo,i,giaiDoanSM,isRace,p,N,mt}));
+    plan.forEach(x=>{if(!x.boi)return;
+      const ph=deload||pha==='kiem'?'30':'30–45';
+      const bai=[`Bơi nhẹ ${ph} phút, liên tục hoặc từng đoạn 50–100 m nghỉ 20–30 giây. Cảm giác 4–5/10, thở đều.`,'Chưa bơi giỏi: chạy bộ dưới nước (aqua jogging) ở chỗ ngập ngực, hoặc đạp xe 40–60 phút nhẹ. Tác dụng tương tự.','Gối còn nhạy cảm thì ưu tiên bơi sải, hạn chế đạp chân ếch mạnh.'];
+      if(x.loai==='nghi'){x.ten=`Bơi ${ph} phút`;x.buoc=bai}
+      else if(x.loai==='suc'){x.ten='Sức mạnh + bơi';x.buoc=[...(x.buoc||[]),'Bơi '+ph+' phút nhẹ, tốt nhất cách buổi sức mạnh vài tiếng.',...bai.slice(1)]}
+      else x.buoc=[...(x.buoc||[]),'Buổi chiều (tuỳ chọn): bơi nhẹ 20–30 phút để thả lỏng, không bơi nhanh.'];
+    });
     tuanObj.days=plan;
     tuanObj.km=plan.reduce((a,x)=>a+(x.km||0),0);
     tuanObj.leo=plan.reduce((a,x)=>a+(x.leo||0),0);
