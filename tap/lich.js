@@ -122,6 +122,55 @@ const BAI={
 };
 const DS_BAI={road:{5:['bien','nhanh'],10:['bien','tempo'],21:['tempo','bien'],42:['tempo','doc']},trail:['leo','tempo','leoDai']};
 
+/* ---------- Giải phụ: giải người dùng tự thêm vào giữa lịch ----------
+   cach: 'het' chạy hết sức, 'tempo' chạy nhanh vừa như một bài nặng, 'nhe' chạy vui như buổi dài nhẹ.
+   Cửa sổ (ngày): truoc = số ngày trước giải không chạy nặng/dài; nghi = số ngày nghỉ ngay sau;
+   sau = số ngày sau giải chưa chạy bài nặng (nửa đầu chỉ chạy hồi phục); sm = số ngày chưa tập sức mạnh.
+   Theo quy tắc quen dùng: hồi phục sau giải hết sức mất khoảng 1 ngày cho mỗi 1,5–2 km. */
+const dmS=s=>s.slice(8)+'/'+s.slice(5,7);
+function cuaSo(g){
+  const e=+g.km+(+g.dPlus||0)/100,c=g.cach||'het';
+  if(c==='het')return{sau:e<=5.5?3:e<=11?6:e<=22?10:e<=32?14:e<=43?21:28,nghi:e<=5.5?0:e<=22?1:e<=32?2:e<=43?3:4,truoc:e<=11?2:3,sm:e<=11?2:e<=22?4:7};
+  if(c==='tempo')return{sau:e<=11?2:e<=22?4:e<=43?10:14,nghi:e<=22?0:1,truoc:1,sm:e<=22?1:4};
+  return{sau:e<=11?1:e<=22?2:e<=43?7:10,nghi:e<=22?0:e<=43?1:2,truoc:1,sm:e<=22?0:3};
+}
+const CHAY=['nhe','hoiphuc','dai','dai2','nang'];
+function apGiai(plan,GP,o){
+  if(o.isRace)return;
+  const nghi=(x,k)=>{x.loai='nghi';x.km=0;x[k]=1;['bai','strides','sucSau','core','xuong','leo'].forEach(f=>delete x[f])};
+  for(const x of plan){
+    if(x.loai==='thi'||x.truocThi||x.sauThi)continue;
+    const g0=GP.find(g=>g.date===x.date);
+    if(g0){
+      x.doi={loai:x.loai,km:x.km||0,ten:x.bai&&x.bai.ten};x.loai='giai';x.giai=g0;x.km=+g0.km;x.dh=g0.dh==='trail'?'trail':'road';x.leo=+g0.dPlus||0;
+      ['boi','strides','sucSau','core','bai','xuong'].forEach(f=>delete x[f]);continue}
+    if(x.loai==='kiem'||x.loai==='giai')continue;
+    for(const g of GP){
+      const dd=soNgay(g.date,x.date),w=cuaSo(g),e=+g.km+(+g.dPlus||0)/100;
+      if(!(dd>0&&dd<=w.sau||dd<0&&-dd<=w.truoc))continue;
+      const truoc={loai:x.loai,km:x.km||0,ten:x.bai&&x.bai.ten},chay=CHAY.includes(x.loai);
+      if(dd>0){
+        if(dd<=w.nghi){if(chay||x.loai==='suc')nghi(x,'sauGiai')}
+        else if(dd<=Math.ceil(w.sau/2)){
+          if(chay){x.loai='hoiphuc';x.km=Math.max(o.kmMin,Math.min(x.km*0.7,e<=11?6:8));['bai','xuong'].forEach(f=>delete x[f]);x.sauGiai=1;if(dd<=w.sm)delete x.sucSau}
+          else if(x.loai==='suc'&&dd<=w.sm)nghi(x,'sauGiai');
+        }else{
+          if(x.loai==='nang'){x.loai='nhe';x.km=Math.max(o.kmMin,x.km*0.8);delete x.bai;x.sauGiai=1}
+          else if(x.loai==='dai'||x.loai==='dai2'){x.km*=0.8;x.sauGiai=1}
+          else if(x.loai==='suc'&&dd<=w.sm)nghi(x,'sauGiai');
+          if(x.sauGiai&&dd<=w.sm)delete x.sucSau;
+        }
+      }else{
+        if(dd===-1){
+          if(chay){x.loai='nhe';x.km=Math.min(x.km,Math.max(o.kmMin,5));['bai','xuong','sucSau'].forEach(f=>delete x[f]);x.truocGiai=1;if((g.cach||'het')!=='nhe')x.strides=1}
+          else if(x.loai==='suc')nghi(x,'truocGiai');
+        }else if(x.loai==='nang'||x.loai==='dai'||x.loai==='dai2'){x.loai='nhe';x.km=Math.min(x.km,Math.max(o.kmMin,6));['bai','xuong'].forEach(f=>delete x[f]);x.truocGiai=1}
+      }
+      if(x.loai!==truoc.loai||Math.abs((x.km||0)-truoc.km)>=0.75){if(!x.doi)x.doi=truoc;x.vi={date:g.date,km:+g.km,sau:dd>0}}
+    }
+  }
+}
+
 /* ---------- Tạo lịch ---------- */
 function taoLich(p,homNay){
   homNay=homNay||ymd(new Date());
@@ -157,6 +206,13 @@ function taoLich(p,homNay){
       else if(can<=kha)canhBao.push(['info',`Mục tiêu ${fmtT(T)} khả thi nếu tập đều: cần tăng khoảng ${mt.can} điểm VDOT trong ${N} tuần (ước tính thường đạt được khoảng ${mt.kha}).`]);
       else{mt.paceThi=tDat*60/X.D;mt.kho=1;canhBao.push(['warn',`Mục tiêu ${fmtT(T)} khó trong ${N} tuần: cần tăng ${mt.can} điểm VDOT, thường chỉ đạt khoảng ${mt.kha}. Mục tiêu thực tế hơn: khoảng ${fmtT(tDat)}. Các đoạn chạy pace thi trong lịch dùng mức này.`])}
     }else canhBao.push(['info','Điền một kết quả road gần đây ở hồ sơ để kiểm tra thời gian mục tiêu có thực tế không.']);
+  }
+  /* Giải phụ */
+  const GP=Object.entries(p.giaiPhu||{}).map(([date,g])=>({...g,date,km:+g.km||0})).filter(g=>g.km>0).sort((a,b)=>a.date<b.date?-1:1);
+  if(ngayDua)for(const g of GP){
+    const gap=soNgay(g.date,ngayDua),e=g.km+(+g.dPlus||0)/100;
+    if(gap>0&&gap<7)canhBao.push(['warn',`Giải ${fmtKm(g.km)} km ngày ${dmS(g.date)} chỉ cách giải chính ${gap} ngày, rơi vào tuần thi: lịch không đổi theo giải này. Nên bỏ, hoặc chỉ chạy rất nhẹ.`]);
+    else if(gap>0&&(g.cach||'het')==='het'&&((e>=21&&gap<28)||(e>=10&&gap<12)))canhBao.push(['warn',`Giải ${fmtKm(g.km)} km ngày ${dmS(g.date)} cách giải chính ${gap} ngày: chạy hết sức thì chưa kịp hồi phục. Nên chạy như buổi tập (nhanh vừa hoặc nhẹ).`]);
   }
   if(!pc)canhBao.push(['info','Chưa có kết quả gần đây nên lịch chỉ dùng nhịp tim. Điền thời gian một lần chạy 5 km hết sức (hoặc pace chạy nhẹ) ở hồ sơ để có pace cho từng bài.']);
 
@@ -314,6 +370,13 @@ function taoLich(p,homNay){
       for(const x of e){if(smDays.length>=soSM)break;if(smDays.some(y=>kc(y.thu,x.thu)<2))continue;x.sucSau=1;smDays.push(x)}}
     const coreDay=plan.find(x=>(x.loai==='nhe'||x.loai==='hoiphuc')&&!x.sucSau);if(coreDay&&!isRace)coreDay.core=1;
 
+    /* Giải phụ: ngày giải thay buổi của lịch, các ngày quanh giải nhẹ lại */
+    if(GP.length){
+      apGiai(plan,GP,{isRace,kmMin});
+      for(const x of plan)if(x.loai==='giai'&&x.km>Math.max(12,daiTruoc*1.35)&&!canhBao.some(c=>c[1].includes(dmS(x.date))))
+        canhBao.push(['warn',`Giải ${fmtKm(x.km)} km ngày ${dmS(x.date)} dài hơn nhiều so với buổi chạy dài lúc đó trong lịch (khoảng ${fmtKm(Math.round(daiTruoc))} km). Chạy nhẹ, đi bộ xen kẽ, hoặc chọn cự ly ngắn hơn.`]);
+      if(isRace&&GP.some(g=>g.date>=start&&g.date<=addD(start,6)&&g.date!==ngayDua)&&!canhBao.some(c=>c[1].includes('tuần thi')))canhBao.push(['warn','Có giải phụ trong tuần thi chính: lịch không đổi theo giải đó.']);
+    }
     /* Mô tả từng ngày */
     const giaiDoanSM=(quayLai&&i<4)||i<3?'kt':p.ta?'ta':'kt';
     plan.forEach(x=>moTa(x,{X,Z,pc,hr,pha,deload,diBo,i,giaiDoanSM,isRace,p,N,mt}));
@@ -329,6 +392,8 @@ function taoLich(p,homNay){
     tuanObj.leo=plan.reduce((a,x)=>a+(x.leo||0),0);
     tuanObj.phut=plan.reduce((a,x)=>a+(x.phut||0),0);
     tuanObj.ghiChu=ghiChuTuan(tuanObj,{X,isRace,N,pha,deload,diBo});
+    const gT=plan.filter(x=>x.loai==='giai');
+    if(gT.length)tuanObj.ghiChu=gT.map(x=>`Tuần có giải ${fmtKm(x.km)} km (${dmS(x.date)}): các ngày quanh giải đã chỉnh nhẹ lại.`).join(' ')+' '+tuanObj.ghiChu;
     tuan.push(tuanObj);
   }
   return {mt,batDau:bd,ketThuc:addD(bd,N*7-1),ngayDua,N,tuan,vung:Z,canhBao,X,dinh:Math.round(dinh),ngayChay:chay,ngayDai:L};
@@ -352,7 +417,7 @@ function moTa(x,c){
   const tg=(km,pace)=>(km+(x.leo||0)/100)*(pace||eMid)*(x.dh==='trail'?tf0:1)/60;
   const nhip=a=>a?`${a[0]}–${a[1]}`:'';
   const chayDi=['1 phút chạy / 1 phút đi bộ','2 phút chạy / 1 phút đi bộ','3 phút chạy / 1 phút đi bộ','4 phút chạy / 1 phút đi bộ','5 phút chạy / 1 phút đi bộ','8 phút chạy / 1 phút đi bộ'][Math.min(i,5)];
-  x.km=x.km?r05(x.km):0;
+  x.km=x.km?(x.loai==='giai'?Math.round(x.km*10)/10:r05(x.km)):0;
   if(!x.dh)x.dh=X.trail&&(x.loai==='dai'||x.loai==='dai2'||x.loai==='thi'||(x.loai==='nang'&&x.bai&&x.bai.leo)||x.xuong)?'trail':'road';
   const trl=x.dh==='trail';
   x.bt={};
@@ -364,6 +429,8 @@ function moTa(x,c){
       x.phut=tg(x.km,hp?eMid+20:eMid);
       x.buoc=[(diBo&&i<6?`Xen kẽ ${chayDi}. `:'')+(hp?'Chậm nhất tuần, cho chân hồi lại sau chạy dài.':'Chạy đều, nói chuyện được cả câu. Km đầu chậm nhất buổi.')];
       if(x.strides)x.buoc.push('Cuối buổi: 4–6 lần tăng tốc 20 giây (strides) lên khoảng 85% sức, đi bộ 1 phút giữa các lần.');
+      if(x.sauGiai&&x.vi)x.buoc.push(`Đang hồi phục sau giải ngày ${dmS(x.vi.date)}: chạy thật nhẹ, tim cao hơn thường thì đi bộ xen kẽ. Chưa chạy nhanh. Chân còn đau mỏi nhiều thì nghỉ hoặc bơi, đạp xe nhẹ.`);
+      if(x.truocGiai&&x.vi)x.buoc.push(x.strides?'Ngày trước giải: chạy ngắn cho chân nhẹ, vài lần tăng tốc là đủ.':'Vài ngày trước giải: chạy nhẹ, không chạy nặng hay chạy dài để chân còn sung.');
       if(x.xuong)x.buoc.push('Có đoạn dốc: thêm 5–6 lần chạy xuống dốc thoải 1 phút, bước ngắn và nhanh, chân đặt dưới người. Tập cho đùi trước quen xuống dốc.');
       x.bt={kd:1,gc:1};break;
     }
@@ -372,6 +439,7 @@ function moTa(x,c){
       x.ten=(trl?(d2?'Trail vừa ':'Chạy dài trail '):(d2?'Chạy vừa ':'Chạy dài '))+fmtKm(x.km)+' km'+(x.leo?` · ${x.leo} m leo`:'');
       x.hr=hr.dai;x.pace=ep&&!trl?[ep[0],ep[1]+15]:null;x.phut=tg(x.km);
       x.buoc=[trl?'Tính theo thời gian, không theo pace. Lên dốc gắt thì đi bộ nhanh, giữ nhịp tim dưới '+hr.tran+'. Xuống dốc thả lỏng, bước ngắn.':'Chạy đều ở vùng 2. Nửa sau tim hay vượt '+hr.tran+' thì chạy chậm lại hoặc đi bộ 1 phút.'];
+      if(x.sauGiai&&x.vi)x.buoc.push(`Ngắn hơn thường vì còn đang hồi phục sau giải ngày ${dmS(x.vi.date)}.`);
       if(d2)x.buoc.push('Hôm sau chạy dài: tập chạy khi chân đã mỏi, giống nửa sau của giải.');
       /* Chạy dài có đoạn pace thi (21/42 km, giai đoạn tăng cường trở đi, tuần không giảm tải) */
       if(!trl&&X.D>=21&&(c.pha==='tang'||c.pha==='cao')&&!c.deload&&pc&&c.p.muc.mucTieu==='thanh-tich'&&i%2===1){
@@ -403,14 +471,39 @@ function moTa(x,c){
         :[du?`Thể lực hiện tại dự đoán khoảng ${fmtT(du[1])} (${fmtP(du[1]*60/X.D)}/km). Km đầu chậm hơn pace này 5–10 giây.`:'Km đầu chậm hơn dự định, tăng dần.',X.D>=21?'Ăn gel hoặc tinh bột mỗi 30–40 phút từ phút 40, uống ở các trạm.':'Khởi động 10–15 phút trước giờ xuất phát.','Nửa sau còn sức thì mới tăng tốc.'];
       x.bt={};break;
     }
+    case 'giai':{
+      const g=x.giai,D=x.km,c0=g.cach||'het',e=D+(x.leo||0)/100,w=cuaSo(g),Zh=hr.z;
+      x.ten=(g.ten?g.ten+' · ':trl?'Giải trail ':'Giải ')+fmtKm(D)+' km'+(x.leo?` · ${x.leo} m leo`:'');
+      x.buoc=[];x.hr=null;x.pace=null;
+      if(c0==='het'){
+        if(pc&&!trl){const T=thoiGianDua(pc.V,D),p0=T*60/D;x.pace=[p0-3,p0+3];x.du=T;x.phut=T;
+          x.buoc.push(`Thể lực hiện tại dự đoán khoảng ${fmtT(T)} (${fmtP(p0)}/km). Km đầu chậm hơn pace này 5–10 giây, nửa sau còn sức mới tăng.`)}
+        else{x.phut=tg(D);x.buoc.push(trl?'Đi bộ các dốc gắt ngay từ đầu, giữ sức cho nửa sau. Xuống dốc thả lỏng, mắt nhìn 3–4 m phía trước.':'Km đầu chậm hơn dự định, tăng dần.')}
+        x.hr=trl?hr.leo:e<=6?[Zh[3][3],hr.max]:e<=12?[Math.round((Zh[3][2]+Zh[3][3])/2),Zh[4][2]+3]:e<=25?[Zh[3][2],Zh[3][3]]:e<=45?[Math.round((Zh[2][2]+Zh[2][3])/2),Zh[3][2]+2]:hr.leo;
+        x.buoc.push(e<=25?'Khởi động 10–15 phút chạy nhẹ và 3–4 lần tăng tốc ngắn, xong trước giờ xuất phát khoảng 10 phút.':'Khởi động 5–10 phút đi bộ và chạy rất nhẹ là đủ; tiết kiệm sức cho quãng dài.');
+        x.buoc.push('Hôm nay pace và nhịp tim cao hơn các buổi tập là đúng: trang không so buổi này với vùng tập. Nhịp tim ở trên chỉ để tham khảo, chạy theo cảm giác và pace.');
+      }else if(c0==='tempo'){
+        if(pc&&!trl){x.pace=e<=12?[pc.T+5,pc.T+20]:e<=25?[pc.M-5,pc.M+10]:[pc.M+10,pc.M+30];x.phut=D*(x.pace[0]+x.pace[1])/120}else x.phut=tg(D,eMid*0.9);
+        x.hr=e<=12?hr.tempo:[Zh[2][2],Zh[3][2]];
+        x.buoc.push('Chạy như một bài nặng: nhanh vừa, chỉ nói được vài từ, không đua theo người khác.','Khởi động 10 phút chạy nhẹ trước giờ xuất phát.','Giải này thay cho bài nặng hoặc chạy dài của tuần. Km cuối còn sức thì giữ nguyên, đừng nước rút.');
+      }else{
+        x.pace=ep&&!trl?[ep[0],ep[1]+15]:null;x.hr=hr.dai;x.phut=tg(D);
+        x.buoc.push('Chạy như buổi chạy dài nhẹ: nói chuyện được cả câu. Đi bộ ở trạm nước cũng được.','Xuất phát ở nhóm sau để không bị đám đông kéo nhanh.','Tim vượt '+hr.tran+' thì chạy chậm lại. Hôm nay để vui và tập quen không khí giải.');
+      }
+      if(x.phut>75)x.buoc.push(`Ăn 30–60 g tinh bột mỗi giờ (gel, chuối) từ phút 40, uống ở các trạm${x.phut>90?', có điện giải':''}.`);
+      else x.buoc.push('Ăn sáng nhẹ, quen bụng, trước giờ chạy 2–3 tiếng.');
+      x.hoiPhuc=(w.nghi?`${w.nghi} ngày nghỉ hoặc đi bộ, rồi `:'')+(w.sau>w.nghi?`chạy hồi phục đến khoảng ngày thứ ${Math.ceil(w.sau/2)}; chưa chạy bài nặng trong ${w.sau} ngày.`:'chạy lại bình thường.')+(w.sm?` Sức mạnh tập lại sau ${w.sm} ngày.`:'');
+      x.buoc.push('Sau giải: '+x.hoiPhuc+' Lịch các ngày sau đã tự chỉnh theo.');
+      x.bt={kd:1,gc:1};break;
+    }
     case 'suc':{
       x.ten='Sức mạnh và core';x.phut=c.giaiDoanSM==='ta'?40:30;
       x.buoc=[X.trail?'Bài chân một bên, bước xuống bậc, cổ chân: giúp leo dốc khoẻ và xuống dốc không đau gối.':'Bài chân và mông giúp chạy khoẻ, ít chấn thương.','Hết hiệp vẫn còn làm thêm được 2–3 lần là mức vừa.'];
       x.bt={sm:X.trail?'trail':c.giaiDoanSM};break;
     }
     default:{
-      x.ten=x.sauThi?'Nghỉ sau giải':x.truocThi?'Nghỉ trước giải':'Nghỉ';x.phut=0;
-      x.buoc=[x.truocThi?'Nghỉ hoặc đi bộ nhẹ 20 phút. Chuẩn bị đồ, ngủ sớm.':x.sauThi?'Đi bộ nhẹ. Vài ngày sau giải chỉ chạy nhẹ nếu thấy khoẻ.':'Nghỉ hoàn toàn hoặc đi bộ nhẹ. Ngủ đủ 7–8 tiếng.'];
+      x.ten=x.sauThi||x.sauGiai?'Nghỉ sau giải':x.truocThi||x.truocGiai?'Nghỉ trước giải':'Nghỉ';x.phut=0;
+      x.buoc=[x.sauGiai?'Đi bộ nhẹ 20–30 phút cho chân bớt cứng. Ăn đủ tinh bột và đạm, ngủ sớm.':x.truocGiai?'Nghỉ hoặc đi bộ nhẹ, giãn cơ. Chuẩn bị đồ chạy giải, ngủ sớm.':x.truocThi?'Nghỉ hoặc đi bộ nhẹ 20 phút. Chuẩn bị đồ, ngủ sớm.':x.sauThi?'Đi bộ nhẹ. Vài ngày sau giải chỉ chạy nhẹ nếu thấy khoẻ.':'Nghỉ hoàn toàn hoặc đi bộ nhẹ. Ngủ đủ 7–8 tiếng.'];
     }
   }
   if(x.sucSau){x.bt.sm=X.trail?'trail':c.giaiDoanSM;x.buoc.push('Sau buổi chạy: tập sức mạnh (bài bên dưới).')}
